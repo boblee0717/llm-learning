@@ -1,0 +1,7 @@
+# Phase 1: 深度学习基础
+numpy
+matplotlib
+
+# Phase 2: Transformer 架构
+torch
+tiktoken
