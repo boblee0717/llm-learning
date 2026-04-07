@@ -2,3 +2,4 @@
 __pycache__/
 *.pyc
 .env
+phase1-foundations/gradient_visualization.png
