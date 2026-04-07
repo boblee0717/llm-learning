@@ -21,6 +21,9 @@
 """
 
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 # ============================================================
 # 第一部分：什么是损失函数
@@ -87,6 +90,86 @@ dw, db = compute_gradients(X, y_true, w, b)
 print(f"当前 w={w}, b={b}")
 print(f"w 的梯度: {dw:.4f}  (负数 → w 应该增大)")
 print(f"b 的梯度: {db:.4f}  (负数 → b 应该增大)")
+print()
+
+# ---- 可视化：梯度到底在说什么？ ----
+
+plt.rcParams['font.size'] = 12
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5))
+
+# ========== 图1：损失函数的"山谷"曲线 ==========
+w_range = np.linspace(-1, 5, 200)
+losses = [mse_loss(wi * X + 0, y_true) for wi in w_range]  # 固定 b=0，只看 w 的影响
+
+axes[0].plot(w_range, losses, 'b-', linewidth=2)
+axes[0].set_xlabel('w (weight)')
+axes[0].set_ylabel('Loss')
+axes[0].set_title('Loss vs w\n(Goal: find the valley bottom)')
+
+w_demo_points = [0.0, 1.0, 2.0, 3.0, 4.0]
+for wp in w_demo_points:
+    lp = mse_loss(wp * X + 0, y_true)
+    gp, _ = compute_gradients(X, y_true, wp, 0)
+    axes[0].plot(wp, lp, 'ro', markersize=8)
+    axes[0].annotate(f'grad={gp:.1f}', (wp, lp),
+                     textcoords="offset points", xytext=(5, 10), fontsize=9,
+                     color='red')
+    arrow_len = -gp * 0.08
+    axes[0].annotate('', xy=(wp + arrow_len, lp - abs(arrow_len) * 5),
+                     xytext=(wp, lp),
+                     arrowprops=dict(arrowstyle='->', color='green', lw=2))
+
+axes[0].axvline(x=2.0, color='gray', linestyle='--', alpha=0.5, label='optimal w=2')
+axes[0].legend(fontsize=10)
+
+# ========== 图2：梯度下降的轨迹 ==========
+w_path, b_path, loss_path = [0.0], [0.0], [mse_loss(0, y_true)]
+w_t, b_t = 0.0, 0.0
+lr = 0.02
+for _ in range(80):
+    dw_t, db_t = compute_gradients(X, y_true, w_t, b_t)
+    w_t = w_t - lr * dw_t
+    b_t = b_t - lr * db_t
+    w_path.append(w_t)
+    b_path.append(b_t)
+    loss_path.append(mse_loss(w_t * X + b_t, y_true))
+
+axes[1].plot(loss_path, 'g-o', markersize=3, linewidth=1.5)
+axes[1].set_xlabel('Epoch')
+axes[1].set_ylabel('Loss')
+axes[1].set_title('Gradient Descent Process\n(Loss decreasing over time)')
+axes[1].set_yscale('log')
+
+axes[1].annotate('Start: loss={:.1f}'.format(loss_path[0]),
+                 xy=(0, loss_path[0]),
+                 textcoords="offset points", xytext=(30, -5), fontsize=10,
+                 arrowprops=dict(arrowstyle='->', color='red'))
+axes[1].annotate('End: loss={:.4f}'.format(loss_path[-1]),
+                 xy=(len(loss_path)-1, loss_path[-1]),
+                 textcoords="offset points", xytext=(-80, 20), fontsize=10,
+                 arrowprops=dict(arrowstyle='->', color='blue'))
+
+# ========== 图3：参数 w 在"山谷"上的移动轨迹 ==========
+w_range2 = np.linspace(-0.5, 3.5, 200)
+b_at_end = b_path[-1]
+losses2 = [mse_loss(wi * X + b_at_end, y_true) for wi in w_range2]
+
+axes[2].plot(w_range2, losses2, 'b-', linewidth=2, alpha=0.5, label='Loss curve')
+w_sub = w_path[::5]
+loss_sub = [mse_loss(ws * X + b_at_end, y_true) for ws in w_sub]
+axes[2].plot(w_sub, loss_sub, 'r-o', markersize=6, linewidth=1.5, label='w trajectory')
+axes[2].plot(w_sub[0], loss_sub[0], 'r^', markersize=14, label='Start')
+axes[2].plot(w_sub[-1], loss_sub[-1], 'g*', markersize=14, label='End')
+axes[2].set_xlabel('w (weight)')
+axes[2].set_ylabel('Loss')
+axes[2].set_title('w Moving Down the Valley\n(Gradient points uphill, we go downhill)')
+axes[2].legend(fontsize=9)
+
+plt.tight_layout()
+plt.savefig('phase1-foundations/gradient_visualization.png', dpi=150, bbox_inches='tight')
+plt.close()
+print(">> Gradient visualization saved to: phase1-foundations/gradient_visualization.png")
 print()
 
 
