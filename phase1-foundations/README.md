@@ -41,6 +41,7 @@ conda install numpy matplotlib
 ## 推荐配套资源
 
 - [3Blue1Brown - 神经网络](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) - 最直观的数学可视化
+- [3Blue1Brown - Attention in Transformers](https://www.youtube.com/watch?v=eMlx5fFNoYc) - 用可视化理解注意力机制（可提前看，建立直觉）
 - [Andrej Karpathy - micrograd](https://www.youtube.com/watch?v=VMj-3S1tku0) - 用 Python 从零实现自动微分
 - [李宏毅机器学习](https://speech.ee.ntu.edu.tw/~hylee/ml/2023-spring.php) - 最好的中文 ML 课程
 
