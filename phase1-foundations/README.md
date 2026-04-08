@@ -54,7 +54,17 @@ conda install numpy matplotlib
 ### 其他
 
 - [Andrej Karpathy - micrograd](https://www.youtube.com/watch?v=VMj-3S1tku0) - 用 Python 从零实现自动微分
-- [李宏毅机器学习](https://speech.ee.ntu.edu.tw/~hylee/ml/2023-spring.php) - 最好的中文 ML 课程
+
+### 李宏毅机器学习（按当前阶段推荐）
+
+- [Brief Introduction of Deep Learning](https://youtu.be/Dr-WRlEFefw) - 先建立神经网络整体直觉
+- [Gradient Descent](https://youtu.be/yKKNr-QKz2Q) - 对应本阶段第 2 课，理解损失函数与参数更新
+- [Backpropagation](https://youtu.be/ibJpTrp5mcE) - 对应本阶段第 3 课，理解反向传播与链式法则
+- [自注意力机制 (Self-attention) (上)](https://www.youtube.com/watch?v=hYdO9CscNes) - 读 Transformer 论文前最重要的入门视频
+- [自注意力机制 (Self-attention) (下)](https://www.youtube.com/watch?v=gmsMY5kc-zw) - 重点看矩阵形式、Multi-Head、位置编码
+- [Self-attention 讲义 `self_v7.pdf`](https://speech.ee.ntu.edu.tw/~hylee/ml/ml2021-course-data/self_v7.pdf) - 配合上下两集一起看效果最好
+- [机器学习 2023 课程主页](https://speech.ee.ntu.edu.tw/~hylee/ml/2023-spring.php) - 继续读论文时，重点找 `HW 4 | Self-attention` 和 `HW 5 | Transformer`
+- [机器学习 2021 中文版播放列表](https://www.youtube.com/playlist?list=PLJV_el3uVTsMhtt7_Y6sgTHGHp1Vb2P2J) - 如果要系统补课，可在列表中继续找 `Transformer (上)` / `Transformer (下)`
 
 ## 下一步
 
