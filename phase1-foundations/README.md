@@ -40,31 +40,35 @@ conda install numpy matplotlib
 
 ## 推荐配套资源
 
-### 数学基础（3Blue1Brown 微积分系列）
+### 建议学习顺序
 
-- [Essence of Calculus（微积分的本质）](https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr) - 完整系列（12集），用动画直观理解导数、积分、极限
-  - 重点看前 5 集：导数的几何含义、链式法则（反向传播的数学基础）
-  - 第 11 集 Taylor Series 对理解函数近似很有帮助
+1. 先按顺序完成本目录 3 节代码课
+2. 补看李宏毅的 `Deep Learning / Gradient Descent / Backpropagation`
+3. 用 3Blue1Brown 建立更强的数学直觉
+4. 开始看 `Self-attention`，为第二阶段和论文做准备
 
-### 深度学习可视化
-
-- [3Blue1Brown - 神经网络](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) - 最直观的数学可视化
-- [3Blue1Brown - Attention in Transformers](https://www.youtube.com/watch?v=eMlx5fFNoYc) - 用可视化理解注意力机制（可提前看，建立直觉）
-
-### 其他
-
-- [Andrej Karpathy - micrograd](https://www.youtube.com/watch?v=VMj-3S1tku0) - 用 Python 从零实现自动微分
-
-### 李宏毅机器学习（按当前阶段推荐）
+### 李宏毅机器学习（最推荐）
 
 - [Brief Introduction of Deep Learning](https://youtu.be/Dr-WRlEFefw) - 先建立神经网络整体直觉
 - [Gradient Descent](https://youtu.be/yKKNr-QKz2Q) - 对应本阶段第 2 课，理解损失函数与参数更新
 - [Backpropagation](https://youtu.be/ibJpTrp5mcE) - 对应本阶段第 3 课，理解反向传播与链式法则
-- [自注意力机制 (Self-attention) (上)](https://www.youtube.com/watch?v=hYdO9CscNes) - 读 Transformer 论文前最重要的入门视频
+- [自注意力机制 (Self-attention) (上)](https://www.youtube.com/watch?v=hYdO9CscNes) - 进入 Transformer 前最重要的入门视频
 - [自注意力机制 (Self-attention) (下)](https://www.youtube.com/watch?v=gmsMY5kc-zw) - 重点看矩阵形式、Multi-Head、位置编码
 - [Self-attention 讲义 `self_v7.pdf`](https://speech.ee.ntu.edu.tw/~hylee/ml/ml2021-course-data/self_v7.pdf) - 配合上下两集一起看效果最好
 - [机器学习 2023 课程主页](https://speech.ee.ntu.edu.tw/~hylee/ml/2023-spring.php) - 继续读论文时，重点找 `HW 4 | Self-attention` 和 `HW 5 | Transformer`
 - [机器学习 2021 中文版播放列表](https://www.youtube.com/playlist?list=PLJV_el3uVTsMhtt7_Y6sgTHGHp1Vb2P2J) - 如果要系统补课，可在列表中继续找 `Transformer (上)` / `Transformer (下)`
+
+### 3Blue1Brown（建立直觉）
+
+- [Essence of Calculus（微积分的本质）](https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr) - 完整系列（12 集），用动画直观理解导数、积分、极限
+- `Essence of Calculus` 前 5 集 - 重点看导数的几何含义、链式法则，这些是反向传播的数学基础
+- `Essence of Calculus` 第 11 集 - Taylor Series 对理解函数近似很有帮助
+- [3Blue1Brown - 神经网络](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) - 最直观的神经网络可视化
+- [3Blue1Brown - Attention in Transformers](https://www.youtube.com/watch?v=eMlx5fFNoYc) - 用可视化理解注意力机制，可提前看建立直觉
+
+### 进阶补充
+
+- [Andrej Karpathy - micrograd](https://www.youtube.com/watch?v=VMj-3S1tku0) - 用 Python 从零实现自动微分，适合学完第 3 课后再看
 
 ## 下一步
 
