@@ -2,137 +2,154 @@
 
 > 面向后端开发者的大模型入门 —— 用代码理解原理
 
-## 环境准备
+这一阶段的目标是：先用最小可运行例子吃透“模型是怎么学会的”，再进入 Transformer 细节。
+
+## 快速开始（建议先跑通）
 
 ```bash
-# 安装依赖（只需要 NumPy 和 Matplotlib）
-sudo apt install python3-pip
-pip install numpy matplotlib
+# 进入目录
+cd phase1-foundations
 
-# 或者用 conda
-conda install numpy matplotlib
+# 建议使用 venv（避免系统 Python 的 pip 限制）
+python3 -m venv .venv
+source .venv/bin/activate
+
+# 安装依赖
+python3 -m pip install --upgrade pip
+python3 -m pip install numpy matplotlib
+
+# 先跑主课代码
+python3 01_numpy_basics.py
+python3 02_gradient_descent.py
+python3 03_neural_network.py
 ```
 
 ## 课程结构
 
 按顺序学习，每课约 30-60 分钟：
 
-| 课程 | 文件 | 核心内容 | 与大模型的关系 |
-|------|------|----------|---------------|
-| 第 1 课 | `01_numpy_basics.py` | 张量运算、矩阵乘法、Softmax | Transformer 的底层运算 |
-| 第 2 课 | `02_gradient_descent.py` | 损失函数、梯度、参数更新 | 模型训练的核心机制 |
-| 第 3 课 | `03_neural_network.py` | 前向/反向传播、激活函数 | 深度学习的完整流程 |
+| 课程 | 主课文件 | 自写练习 | 核心内容 | 与大模型的关系 |
+|------|------|------|------|------|
+| 第 1 课 | `01_numpy_basics.py` | `01_numpy_basics_self_write.py` | 张量运算、矩阵乘法、Softmax | Transformer 底层运算 |
+| 第 2 课 | `02_gradient_descent.py` | `02_gradient_descent_self_write.py` | 损失函数、梯度、参数更新 | 模型训练核心机制 |
+| 第 3 课 | `03_neural_network.py` | （后续补充） | 前向/反向传播、激活函数 | 深度学习完整流程 |
+
+## 推荐学习路径（可执行版）
+
+每课建议按下面节奏走一遍：
+
+1. 先运行主课脚本，确认看懂输出
+2. 再做自写练习脚本，按 TODO 从前往后填
+3. 每完成一个 TODO 就运行一次，利用校验信息修正
+4. 完成后做 5 分钟复盘：写下“本课 3 个关键结论”
+
+## 练习重置脚本
+
+如果你想重复练习，可一键重置 TODO 状态：
+
+```bash
+cd phase1-foundations
+
+# 第1课重置
+python3 reset_exercises_01.py
+
+# 第2课重置
+python3 reset_exercises_02.py
+```
+
+说明：
+
+- 重置后会恢复 TODO 空白实现
+- 讲解、打印和校验模块会保留
+- 适合“重新做一遍”或“教学演示前清空状态”
 
 ## 补充概念速查：axis 与 keepdims
 
-在 NumPy 里，这两个参数经常一起出现，尤其是做 Softmax 和 Attention 时：
+这两个参数在 Softmax/Attention 里非常常见。
 
-- `axis=1`：按行处理（每一行单独做 `max/sum/mean` 等聚合）
-- `axis=0`：按列处理（每一列单独聚合）
-- `keepdims=False`（默认）：被聚合的维度会被压缩掉
-- `keepdims=True`：保留被聚合维度为 1，便于后续广播（broadcasting）
+- `axis=1`：按行聚合（每行单独处理）
+- `axis=0`：按列聚合（每列单独处理）
+- `keepdims=False`：聚合后删除该轴
+- `keepdims=True`：保留该轴且长度变为 1（方便广播）
 
-以 `score.shape = (2, 3)` 为例：
+以 `score.shape=(2,3)` 为例：
 
 - `np.max(score, axis=1).shape == (2,)`
-- `np.max(score, axis=1, keepdims=True).shape == (2, 1)`
+- `np.max(score, axis=1, keepdims=True).shape == (2,1)`
 
-做行级 Softmax 的推荐写法（数值稳定）：
+稳定版行级 softmax：
 
 ```python
 exp_scores = np.exp(score - np.max(score, axis=1, keepdims=True))
 attn = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
 ```
 
-### `axis=0/1/2` 是什么意思（以 `x.shape=(2,3,4)` 为例）
+### 多轴示例（`axis=(1,2)`）
 
-- `axis=0`：跨第 0 维聚合，结果 shape `(3,4)`
-- `axis=1`：跨第 1 维聚合，结果 shape `(2,4)`
-- `axis=2`：跨第 2 维聚合，结果 shape `(2,3)`
-- `axis=(1,2)`：同时聚合第 1 和第 2 维，结果 shape `(2,)`
+如果 `x.shape=(2,3,4)`：
 
-直觉理解：`axis=(1,2)` 就是“把后两维一起压缩，只保留第 0 维”。
-
-### `keepdims=True/False` 的具体差别
-
-以 `x.shape=(2,3,4)` 为例：
-
-- `np.sum(x, axis=(1,2), keepdims=False).shape == (2,)`
+- `np.sum(x, axis=0).shape == (3,4)`
+- `np.sum(x, axis=1).shape == (2,4)`
+- `np.sum(x, axis=2).shape == (2,3)`
+- `np.sum(x, axis=(1,2)).shape == (2,)`
 - `np.sum(x, axis=(1,2), keepdims=True).shape == (2,1,1)`
 
-`keepdims=True` 不是“新增一个陌生维度”，而是“把本来会被删掉的轴保留为长度 1”，这样后续广播更稳定。
+直觉：`axis=(1,2)` 就是“同时压缩后两维，只保留第 0 维”。
 
-### 反例：为什么有时不加 `keepdims` 会报错
+### 常见坑：不加 keepdims 的广播失败
 
 如果 `score.shape=(2,3)`：
 
-- `np.max(score, axis=1).shape == (2,)`
-- `(2,3) - (2,)` 广播规则不匹配，可能报 `operands could not be broadcast together`
+- `row_max = np.max(score, axis=1)` -> `(2,)`
+- `score - row_max` 可能报广播错误
 
-更稳妥的写法是：
+更稳妥：
 
 ```python
 row_max = np.max(score, axis=1, keepdims=True)  # (2,1)
 stable = score - row_max                         # (2,3) - (2,1) 可广播
 ```
 
-## 学习方式
+## 阶段完成标准（自检）
 
-1. **先运行一遍**：`python3 01_numpy_basics.py`，看看输出
-2. **逐段阅读代码**：理解每一步在做什么
-3. **动手修改**：改参数、加代码，看看效果变化
-4. **完成练习**：每课末尾有练习题
+完成第一阶段后，你应该能自己解释：
 
-## 练习重置脚本（第 1 课）
-
-如果你想重复练习第 1 课自写版，可以使用重置脚本一键恢复所有 TODO：
-
-```bash
-cd phase1-foundations
-python3 reset_exercises.py
-```
-
-脚本会把 `01_numpy_basics_self_write.py` 中的 `TODO-1` 到 `TODO-8` 恢复为待填写状态，并重置 `softmax` 的 TODO 模板；讲解内容与校验模块会保留。
-
-## 完成后你将理解
-
-- 为什么大模型训练需要那么多 GPU（大量矩阵运算）
-- 为什么要调学习率（太大震荡、太小收敛慢）
-- 为什么深层网络比浅层网络更强大（非线性叠加）
-- 前向传播和反向传播到底在做什么
-- 大模型训练和我们手写的小网络本质上完全一样，只是规模不同
+- 为什么大模型训练需要大量 GPU（本质是大规模矩阵运算）
+- 学习率为什么会导致“收敛慢 / 震荡 / 发散”
+- 前向传播和反向传播到底分别在做什么
+- 小模型手写训练与 GPT 训练在原理上哪里相同
 
 ## 推荐配套资源
 
-### 建议学习顺序
+### 建议顺序
 
-1. 先按顺序完成本目录 3 节代码课
-2. 补看李宏毅的 `Deep Learning / Gradient Descent / Backpropagation`
-3. 用 3Blue1Brown 建立更强的数学直觉
-4. 开始看 `Self-attention`，为第二阶段和论文做准备
+1. 完成本目录 3 节代码课
+2. 补看李宏毅 `Deep Learning / Gradient Descent / Backpropagation`
+3. 用 3Blue1Brown 强化数学直觉
+4. 再看 `Self-attention`，为第二阶段做准备
 
-### 李宏毅机器学习（最推荐）
+### 李宏毅机器学习（主线推荐）
 
-- [Brief Introduction of Deep Learning](https://youtu.be/Dr-WRlEFefw) - 先建立神经网络整体直觉
-- [Gradient Descent](https://youtu.be/yKKNr-QKz2Q) - 对应本阶段第 2 课，理解损失函数与参数更新
-- [Backpropagation](https://youtu.be/ibJpTrp5mcE) - 对应本阶段第 3 课，理解反向传播与链式法则
-- [自注意力机制 (Self-attention) (上)](https://www.youtube.com/watch?v=hYdO9CscNes) - 进入 Transformer 前最重要的入门视频
+- [Brief Introduction of Deep Learning](https://youtu.be/Dr-WRlEFefw) - 建立神经网络整体直觉
+- [Gradient Descent](https://youtu.be/yKKNr-QKz2Q) - 对应第 2 课，理解损失函数与参数更新
+- [Backpropagation](https://youtu.be/ibJpTrp5mcE) - 对应第 3 课，理解链式法则
+- [自注意力机制 (Self-attention) (上)](https://www.youtube.com/watch?v=hYdO9CscNes) - 进入 Transformer 前必看
 - [自注意力机制 (Self-attention) (下)](https://www.youtube.com/watch?v=gmsMY5kc-zw) - 重点看矩阵形式、Multi-Head、位置编码
-- [Self-attention 讲义 `self_v7.pdf`](https://speech.ee.ntu.edu.tw/~hylee/ml/ml2021-course-data/self_v7.pdf) - 配合上下两集一起看效果最好
-- [机器学习 2023 课程主页](https://speech.ee.ntu.edu.tw/~hylee/ml/2023-spring.php) - 继续读论文时，重点找 `HW 4 | Self-attention` 和 `HW 5 | Transformer`
-- [机器学习 2021 中文版播放列表](https://www.youtube.com/playlist?list=PLJV_el3uVTsMhtt7_Y6sgTHGHp1Vb2P2J) - 如果要系统补课，可在列表中继续找 `Transformer (上)` / `Transformer (下)`
+- [Self-attention 讲义 `self_v7.pdf`](https://speech.ee.ntu.edu.tw/~hylee/ml/ml2021-course-data/self_v7.pdf) - 配合视频效果更好
+- [机器学习 2023 课程主页](https://speech.ee.ntu.edu.tw/~hylee/ml/2023-spring.php) - 后续重点看 `HW 4 | Self-attention` 与 `HW 5 | Transformer`
+- [机器学习 2021 中文版播放列表](https://www.youtube.com/playlist?list=PLJV_el3uVTsMhtt7_Y6sgTHGHp1Vb2P2J) - 适合系统补课
 
-### 3Blue1Brown（建立直觉）
+### 3Blue1Brown（直觉增强）
 
-- [Essence of Calculus（微积分的本质）](https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr) - 完整系列（12 集），用动画直观理解导数、积分、极限
-- `Essence of Calculus` 前 5 集 - 重点看导数的几何含义、链式法则，这些是反向传播的数学基础
-- `Essence of Calculus` 第 11 集 - Taylor Series 对理解函数近似很有帮助
-- [3Blue1Brown - 神经网络](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) - 最直观的神经网络可视化
-- [3Blue1Brown - Attention in Transformers](https://www.youtube.com/watch?v=eMlx5fFNoYc) - 用可视化理解注意力机制，可提前看建立直觉
+- [Essence of Calculus（微积分的本质）](https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr) - 12 集完整系列
+- `Essence of Calculus` 前 5 集 - 导数几何意义与链式法则
+- `Essence of Calculus` 第 11 集 - Taylor Series
+- [3Blue1Brown - 神经网络](https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi) - 神经网络可视化
+- [3Blue1Brown - Attention in Transformers](https://www.youtube.com/watch?v=eMlx5fFNoYc) - 注意力机制直觉
 
 ### 进阶补充
 
-- [Andrej Karpathy - micrograd](https://www.youtube.com/watch?v=VMj-3S1tku0) - 用 Python 从零实现自动微分，适合学完第 3 课后再看
+- [Andrej Karpathy - micrograd](https://www.youtube.com/watch?v=VMj-3S1tku0) - 从零实现自动微分，建议第 3 课后看
 
 ## 下一步
 

@@ -2,7 +2,7 @@
 重置 phase1 第1课自写练习脚本。
 
 用途：
-  python3 reset_exercises.py
+  python3 reset_exercises_01.py
 
 效果：
   - 将 01_numpy_basics_self_write.py 中的 TODO 实现恢复为待填写状态
