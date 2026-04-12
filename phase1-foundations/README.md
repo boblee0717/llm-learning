@@ -23,12 +23,76 @@ conda install numpy matplotlib
 | 第 2 课 | `02_gradient_descent.py` | 损失函数、梯度、参数更新 | 模型训练的核心机制 |
 | 第 3 课 | `03_neural_network.py` | 前向/反向传播、激活函数 | 深度学习的完整流程 |
 
+## 补充概念速查：axis 与 keepdims
+
+在 NumPy 里，这两个参数经常一起出现，尤其是做 Softmax 和 Attention 时：
+
+- `axis=1`：按行处理（每一行单独做 `max/sum/mean` 等聚合）
+- `axis=0`：按列处理（每一列单独聚合）
+- `keepdims=False`（默认）：被聚合的维度会被压缩掉
+- `keepdims=True`：保留被聚合维度为 1，便于后续广播（broadcasting）
+
+以 `score.shape = (2, 3)` 为例：
+
+- `np.max(score, axis=1).shape == (2,)`
+- `np.max(score, axis=1, keepdims=True).shape == (2, 1)`
+
+做行级 Softmax 的推荐写法（数值稳定）：
+
+```python
+exp_scores = np.exp(score - np.max(score, axis=1, keepdims=True))
+attn = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+```
+
+### `axis=0/1/2` 是什么意思（以 `x.shape=(2,3,4)` 为例）
+
+- `axis=0`：跨第 0 维聚合，结果 shape `(3,4)`
+- `axis=1`：跨第 1 维聚合，结果 shape `(2,4)`
+- `axis=2`：跨第 2 维聚合，结果 shape `(2,3)`
+- `axis=(1,2)`：同时聚合第 1 和第 2 维，结果 shape `(2,)`
+
+直觉理解：`axis=(1,2)` 就是“把后两维一起压缩，只保留第 0 维”。
+
+### `keepdims=True/False` 的具体差别
+
+以 `x.shape=(2,3,4)` 为例：
+
+- `np.sum(x, axis=(1,2), keepdims=False).shape == (2,)`
+- `np.sum(x, axis=(1,2), keepdims=True).shape == (2,1,1)`
+
+`keepdims=True` 不是“新增一个陌生维度”，而是“把本来会被删掉的轴保留为长度 1”，这样后续广播更稳定。
+
+### 反例：为什么有时不加 `keepdims` 会报错
+
+如果 `score.shape=(2,3)`：
+
+- `np.max(score, axis=1).shape == (2,)`
+- `(2,3) - (2,)` 广播规则不匹配，可能报 `operands could not be broadcast together`
+
+更稳妥的写法是：
+
+```python
+row_max = np.max(score, axis=1, keepdims=True)  # (2,1)
+stable = score - row_max                         # (2,3) - (2,1) 可广播
+```
+
 ## 学习方式
 
 1. **先运行一遍**：`python3 01_numpy_basics.py`，看看输出
 2. **逐段阅读代码**：理解每一步在做什么
 3. **动手修改**：改参数、加代码，看看效果变化
 4. **完成练习**：每课末尾有练习题
+
+## 练习重置脚本（第 1 课）
+
+如果你想重复练习第 1 课自写版，可以使用重置脚本一键恢复所有 TODO：
+
+```bash
+cd phase1-foundations
+python3 reset_exercises.py
+```
+
+脚本会把 `01_numpy_basics_self_write.py` 中的 `TODO-1` 到 `TODO-8` 恢复为待填写状态，并重置 `softmax` 的 TODO 模板；讲解内容与校验模块会保留。
 
 ## 完成后你将理解
 

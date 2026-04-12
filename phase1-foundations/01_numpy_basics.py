@@ -139,6 +139,57 @@ print("→ 在 Attention 中：logits 是 Q·K 的点积分数")
 print("  Softmax 后得到注意力权重（概率），表示该关注哪些位置")
 print()
 
+# 补充：axis 和 keepdims（后面做多 Query Attention 会用到）
+score_demo = np.array([
+    [1.0, 0.5, 1.5],
+    [0.2, 1.2, 1.4],
+])  # shape (2, 3)
+
+print("【补充概念】axis 与 keepdims")
+print(f"score_demo.shape = {score_demo.shape}")
+print(f"np.max(score_demo, axis=1).shape = {np.max(score_demo, axis=1).shape}  -> 按行取最大值")
+print(
+    "np.max(score_demo, axis=1, keepdims=True).shape = "
+    f"{np.max(score_demo, axis=1, keepdims=True).shape}  -> 保留为列向量方便广播"
+)
+stable_demo = score_demo - np.max(score_demo, axis=1, keepdims=True)
+exp_demo = np.exp(stable_demo)
+print(f"exp_demo=\n{exp_demo}")
+attn_demo = exp_demo / np.sum(exp_demo, axis=1, keepdims=True)
+print(f"attn_demo=\n{attn_demo}")
+print(f"attn_demo.shape = {attn_demo.shape}, 每行和 = {np.sum(attn_demo, axis=1)}")
+print("→ axis=1 表示每一行单独归一化；keepdims=True 让 shape 对齐更稳定")
+print()
+
+# 补充：axis=0/1/2 与 axis=(1,2) 的具体例子
+x3d = np.array([
+    [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]],
+    [[101, 102, 103, 104], [105, 106, 107, 108], [109, 110, 111, 112]],
+])  # shape (2, 3, 4)
+print("【补充概念】axis=0/1/2 与 axis=(1,2)")
+print(f"x3d.shape = {x3d.shape}")
+print(f"sum axis=0 -> shape {np.sum(x3d, axis=0).shape}\n{np.sum(x3d, axis=0)}")
+print(f"sum axis=1 -> shape {np.sum(x3d, axis=1).shape}\n{np.sum(x3d, axis=1)}")
+print(f"sum axis=2 -> shape {np.sum(x3d, axis=2).shape}\n{np.sum(x3d, axis=2)}")
+print(f"sum axis=(1,2), keepdims=False -> {np.sum(x3d, axis=(1,2), keepdims=False)}")
+print(f"sum axis=(1,2), keepdims=True  ->\n{np.sum(x3d, axis=(1,2), keepdims=True)}")
+print("→ axis=(1,2) 表示同时压缩第1和第2维，只保留第0维")
+print()
+
+# 反例：不使用 keepdims 时的广播失败
+print("【反例】不使用 keepdims 可能导致广播报错")
+score_bad = np.array([[1.0, 3.0, 2.0], [4.0, 0.0, 5.0]])  # (2, 3)
+row_max_bad = np.max(score_bad, axis=1)  # (2,)
+print(f"score_bad.shape={score_bad.shape}, row_max_bad.shape={row_max_bad.shape}")
+try:
+    _ = score_bad - row_max_bad
+except ValueError as err:
+    print(f"预期报错: {err}")
+row_max_good = np.max(score_bad, axis=1, keepdims=True)  # (2, 1)
+print(f"row_max_good.shape={row_max_good.shape}")
+print(f"score_bad - row_max_good =\n{score_bad - row_max_good}")
+print()
+
 
 # ============================================================
 # 第五部分：动手练习
