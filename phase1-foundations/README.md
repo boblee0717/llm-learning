@@ -32,7 +32,7 @@ python3 03_neural_network.py
 |------|------|------|------|------|
 | 第 1 课 | `01_numpy_basics.py` | `01_numpy_basics_self_write.py` | 张量运算、矩阵乘法、Softmax | Transformer 底层运算 |
 | 第 2 课 | `02_gradient_descent.py` | `02_gradient_descent_self_write.py` | 损失函数、梯度、参数更新 | 模型训练核心机制 |
-| 第 3 课 | `03_neural_network.py` | （后续补充） | 前向/反向传播、激活函数 | 深度学习完整流程 |
+| 第 3 课 | `03_neural_network.py` | `03_neural_network_self_write.py` | 前向/反向传播、激活函数 | 深度学习完整流程 |
 
 ## 推荐学习路径（可执行版）
 
@@ -55,6 +55,9 @@ python3 reset_exercises_01.py
 
 # 第2课重置
 python3 reset_exercises_02.py
+
+# 第3课重置
+python3 reset_exercises_03.py
 ```
 
 说明：

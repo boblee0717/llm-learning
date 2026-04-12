@@ -264,7 +264,6 @@ keys2 = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 1.0]])  # shape (3, 2)
 # score_matrix = ...
 # attn_matrix = ...
 score_matrix = None
-exp_scores = np.exp(score_matrix - np.max(score_matrix, axis=1, keepdims=True))
 attn_matrix = None
 
 print(f"queries.shape={queries.shape}, keys2.shape={keys2.shape}")

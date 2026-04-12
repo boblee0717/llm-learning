@@ -156,7 +156,7 @@ print("  步子太大，可能震荡甚至发散：")
 try:
     w3, b3 = train_linear_model(X, y_true, learning_rate=0.1, epochs=200, print_every=40)
     print(f"  200轮后: w={w3:.4f}, b={b3:.4f}")
-except:
+except Exception:
     print("  数值溢出了！学习率太大导致参数爆炸")
 print()
 

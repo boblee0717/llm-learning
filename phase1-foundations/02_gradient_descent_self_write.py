@@ -200,11 +200,14 @@ def train_linear_model(
     3) 计算 dw, db
     4) 参数更新
     5) 记录 loss_history
+    6) 每 print_every 轮打印一次进度（可选，方便观察收敛过程）
     """
     # w, b = ...
     # loss_history = ...
     # for epoch in range(epochs):
     #     ...
+    #     if epoch % print_every == 0:
+    #         print(f"Epoch {epoch}: loss={loss:.4f}, w={w:.4f}, b={b:.4f}")
     # return ...
     raise NotImplementedError("TODO-4 未完成：请实现训练循环")
 
@@ -335,8 +338,14 @@ def validate_all() -> None:
         require_true("TODO-6", lr in lr_results, f"lr_results 缺少学习率 {lr} 的结果。")
         w_lr, b_lr, loss_lr = lr_results[lr]
         require_true("TODO-6", np.isscalar(loss_lr), f"学习率 {lr} 的 final_loss 应为标量。")
-        require_true("TODO-6", np.isfinite(loss_lr), f"学习率 {lr} 的 final_loss 不能是 NaN/Inf。")
-        _ = (w_lr, b_lr)  # 仅用于明确元组结构
+        if lr <= 0.02:
+            require_true("TODO-6", np.isfinite(loss_lr), f"学习率 {lr} 的 final_loss 不能是 NaN/Inf。")
+
+    # lr=0.1 在该数据集上超出稳定上界（约 0.085），发散是预期行为
+    if np.isfinite(lr_results[0.1][2]):
+        print("校验提示：lr=0.1 未发散，可能轮数较少或实现有差异，不影响正确性。")
+    else:
+        print("校验提示：lr=0.1 发散产生了 Inf/NaN，这是预期行为（学习率过大）。")
 
     # 规律性检查：合适学习率应该优于过小学习率
     require_true(
