@@ -39,7 +39,15 @@ def relu_derivative(x):
     return (x > 0).astype(float)
 
 def sigmoid(x):
-    """Sigmoid: 把任意实数压缩到 (0, 1) 之间，可以理解为'概率'"""
+    """
+    Sigmoid: 把任意实数压缩到 (0, 1) 之间，可以理解为'概率'
+      sigmoid(x) = 1 / (1 + exp(-x))
+
+    为什么要 clip？
+      当 x 是很大的负数（如 -1000）时，-x = 1000，e^1000 超出 float64 范围 → inf
+      后续 1/(1+inf) 虽然数学上等于 0，但中间的 inf 可能在其他运算中传播成 NaN。
+      clip 到 ±500 就能避免溢出，同时 |x|>20 时 sigmoid 已经非常接近 0 或 1，不影响结果。
+    """
     return 1 / (1 + np.exp(-np.clip(x, -500, 500)))
 
 def sigmoid_derivative(x):
@@ -117,7 +125,22 @@ class NeuralNetwork:
     """一个2层全连接神经网络，纯 NumPy 实现"""
 
     def __init__(self, input_dim, hidden_dim, output_dim):
-        # Xavier 初始化：让每层输出的方差保持一致，避免梯度消失/爆炸
+        # He 初始化（也叫 Kaiming 初始化），专为 ReLU 设计
+        #
+        # 核心问题：如果权重初始化不当，信号逐层传播时会"爆炸"或"消失"
+        #   - 每层输出方差放大（如 ×1.1），100 层后 → 1.1^100 ≈ 13781（梯度爆炸）
+        #   - 每层输出方差缩小（如 ×0.9），100 层后 → 0.9^100 ≈ 0.00003（梯度消失）
+        #
+        # 推导：z = W @ x 时 Var(z) = fan_in * Var(W) * Var(x)
+        #   要 Var(z) = Var(x) → 需要 Var(W) = 1/fan_in → W ~ randn * sqrt(1/fan_in)
+        #   ReLU 砍掉一半负值（方差减半），所以补偿 ×2 → W ~ randn * sqrt(2/fan_in)
+        #
+        # 常见变体：
+        #   Xavier:  sqrt(1/fan_in) — 适合 Sigmoid/Tanh
+        #   He:      sqrt(2/fan_in) — 适合 ReLU
+        #
+        # W1 后接 ReLU → 用 He；W2 后接 Sigmoid → 严格说应该用 Xavier sqrt(1/fan_in)
+        # 这里为教学简洁统一用了 He，小网络下两者差异可忽略
         self.W1 = np.random.randn(input_dim, hidden_dim) * np.sqrt(2.0 / input_dim)
         self.b1 = np.zeros((1, hidden_dim))
         self.W2 = np.random.randn(hidden_dim, output_dim) * np.sqrt(2.0 / hidden_dim)

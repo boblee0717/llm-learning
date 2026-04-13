@@ -120,6 +120,7 @@ def relu(x):
 
     提示：可以使用 np.maximum(0, x)
     """
+    return np.maximum(0, x)
     raise NotImplementedError("TODO-1a 未完成：请实现 relu")
 
 
@@ -132,6 +133,7 @@ def relu_derivative(x):
 
     提示：(x > 0) 得到布尔数组，用 .astype(float) 转成 0/1
     """
+    return (x > 0).astype(float)
     raise NotImplementedError("TODO-1b 未完成：请实现 relu_derivative")
 
 
@@ -141,8 +143,11 @@ def sigmoid(x):
     实现 Sigmoid 激活函数：
       sigmoid(x) = 1 / (1 + exp(-x))
 
-    数值稳定提示：np.exp(-np.clip(x, -500, 500)) 防止溢出
+    数值稳定提示：用 np.clip(x, -500, 500) 再取 exp，防止溢出。
+    原因：当 x 是很大的负数（如 -1000）时，-x = 1000，e^1000 超出 float64 范围变成 inf。
+    clip 到 ±500 不影响结果（|x|>20 时 sigmoid 已经非常接近 0 或 1）。
     """
+    return 1 / (1 + np.exp(-np.clip(x, -500, 500)))
     raise NotImplementedError("TODO-2a 未完成：请实现 sigmoid")
 
 
@@ -154,6 +159,8 @@ def sigmoid_derivative(x):
 
     提示：先调用你写好的 sigmoid(x)，再计算 s * (1 - s)
     """
+    s = sigmoid(x)
+    return s * (1 - s)
     raise NotImplementedError("TODO-2b 未完成：请实现 sigmoid_derivative")
 
 
@@ -256,14 +263,32 @@ class NeuralNetwork:
         TODO-3:
         初始化权重和偏置。
 
-        使用 Xavier 初始化（让每层输出方差保持一致，避免梯度消失/爆炸）：
+        使用 He 初始化（也叫 Kaiming 初始化），专为 ReLU 设计：
           W1 = np.random.randn(input_dim, hidden_dim) * np.sqrt(2.0 / input_dim)
           b1 = np.zeros((1, hidden_dim))
           W2 = np.random.randn(hidden_dim, output_dim) * np.sqrt(2.0 / hidden_dim)
           b2 = np.zeros((1, output_dim))
 
+        为什么这样初始化？
+          目标：让每一层输出的方差 ≈ 输入的方差，防止信号逐层爆炸或消失。
+          推导：z = W @ x → Var(z) = fan_in * Var(W) * Var(x)
+                要 Var(z) = Var(x) → Var(W) = 1/fan_in → W ~ randn * sqrt(1/fan_in)
+                ReLU 砍掉一半负值（方差减半），补偿 ×2 → W ~ randn * sqrt(2/fan_in)
+
+        常见变体对比：
+          Xavier:  sqrt(1/fan_in) — 适合 Sigmoid/Tanh
+          He:      sqrt(2/fan_in) — 适合 ReLU
+
+        注意：严格来说，W1 后接 ReLU 应该用 He，W2 后接 Sigmoid 应该用 Xavier。
+        这里为教学简洁统一用了 He，小网络下两者差异可忽略。
+
         把它们存成 self.W1, self.b1, self.W2, self.b2
         """
+        self.W1 = np.random.randn(input_dim, hidden_dim) * np.sqrt(2.0 / input_dim)
+        self.b1 = np.zeros((1, hidden_dim))
+        self.W2 = np.random.randn(hidden_dim, output_dim) * np.sqrt(1.0 / hidden_dim)
+        self.b2 = np.zeros((1, output_dim))
+        return
         raise NotImplementedError("TODO-3 未完成：请实现权重初始化")
 
 
