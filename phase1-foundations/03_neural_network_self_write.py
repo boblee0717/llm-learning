@@ -305,6 +305,16 @@ class NeuralNetwork:
 
         返回 self.a2
         """
+        self.z1 = X @ self.W1 + self.b1
+        self.a1 = relu(self.z1)
+        self.z2 = self.a1 @ self.W2 + self.b2
+        self.a2 = sigmoid(self.z2)
+        return self.a2
+        self.z1 = X @ self.W1 + self.b1
+        self.a1 = relu(self.z1)
+        self.z2 = self.a1 @ self.W2 + self.b2
+        self.a2 = sigmoid(self.z2)
+        return self.a2
         raise NotImplementedError("TODO-4 未完成：请实现前向传播")
 
 
@@ -317,6 +327,16 @@ class NeuralNetwork:
         数值稳定提示：在 y_pred 上加一个极小值 eps = 1e-8 防止 log(0)
           np.log(y_pred + eps) 和 np.log(1 - y_pred + eps)
         """
+        eps = 1e-8
+        return -np.mean(
+            y_true * np.log(y_pred + eps) +
+            (1 - y_true) * np.log(1 - y_pred + eps)
+        )
+        eps = 1e-8
+        return -np.mean(
+            y_true * np.log(y_pred + eps) +
+            (1 - y_true) * np.log(1 - y_pred + eps)
+        )
         raise NotImplementedError("TODO-5 未完成：请实现交叉熵损失")
 
 
@@ -351,6 +371,10 @@ class NeuralNetwork:
            self.W2 -= learning_rate * dW2
            self.b2 -= learning_rate * db2
         """
+        dz2 = y_pred - y_true
+        dW2 = (1/n) * self.a1.T @ dz2
+        db2 = (1/n) * np.sum(dz2, axis=0, keepdims=True)
+        
         raise NotImplementedError("TODO-6 未完成：请实现反向传播")
 
 
