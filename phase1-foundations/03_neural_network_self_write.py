@@ -120,7 +120,6 @@ def relu(x):
 
     提示：可以使用 np.maximum(0, x)
     """
-    return np.maximum(0, x)
     raise NotImplementedError("TODO-1a 未完成：请实现 relu")
 
 
@@ -133,7 +132,6 @@ def relu_derivative(x):
 
     提示：(x > 0) 得到布尔数组，用 .astype(float) 转成 0/1
     """
-    return (x > 0).astype(float)
     raise NotImplementedError("TODO-1b 未完成：请实现 relu_derivative")
 
 
@@ -147,7 +145,6 @@ def sigmoid(x):
     原因：当 x 是很大的负数（如 -1000）时，-x = 1000，e^1000 超出 float64 范围变成 inf。
     clip 到 ±500 不影响结果（|x|>20 时 sigmoid 已经非常接近 0 或 1）。
     """
-    return 1 / (1 + np.exp(-np.clip(x, -500, 500)))
     raise NotImplementedError("TODO-2a 未完成：请实现 sigmoid")
 
 
@@ -159,8 +156,6 @@ def sigmoid_derivative(x):
 
     提示：先调用你写好的 sigmoid(x)，再计算 s * (1 - s)
     """
-    s = sigmoid(x)
-    return s * (1 - s)
     raise NotImplementedError("TODO-2b 未完成：请实现 sigmoid_derivative")
 
 
@@ -284,11 +279,6 @@ class NeuralNetwork:
 
         把它们存成 self.W1, self.b1, self.W2, self.b2
         """
-        self.W1 = np.random.randn(input_dim, hidden_dim) * np.sqrt(2.0 / input_dim)
-        self.b1 = np.zeros((1, hidden_dim))
-        self.W2 = np.random.randn(hidden_dim, output_dim) * np.sqrt(1.0 / hidden_dim)
-        self.b2 = np.zeros((1, output_dim))
-        return
         raise NotImplementedError("TODO-3 未完成：请实现权重初始化")
 
 
@@ -305,16 +295,6 @@ class NeuralNetwork:
 
         返回 self.a2
         """
-        self.z1 = X @ self.W1 + self.b1
-        self.a1 = relu(self.z1)
-        self.z2 = self.a1 @ self.W2 + self.b2
-        self.a2 = sigmoid(self.z2)
-        return self.a2
-        self.z1 = X @ self.W1 + self.b1
-        self.a1 = relu(self.z1)
-        self.z2 = self.a1 @ self.W2 + self.b2
-        self.a2 = sigmoid(self.z2)
-        return self.a2
         raise NotImplementedError("TODO-4 未完成：请实现前向传播")
 
 
@@ -327,16 +307,6 @@ class NeuralNetwork:
         数值稳定提示：在 y_pred 上加一个极小值 eps = 1e-8 防止 log(0)
           np.log(y_pred + eps) 和 np.log(1 - y_pred + eps)
         """
-        eps = 1e-8
-        return -np.mean(
-            y_true * np.log(y_pred + eps) +
-            (1 - y_true) * np.log(1 - y_pred + eps)
-        )
-        eps = 1e-8
-        return -np.mean(
-            y_true * np.log(y_pred + eps) +
-            (1 - y_true) * np.log(1 - y_pred + eps)
-        )
         raise NotImplementedError("TODO-5 未完成：请实现交叉熵损失")
 
 
@@ -371,10 +341,6 @@ class NeuralNetwork:
            self.W2 -= learning_rate * dW2
            self.b2 -= learning_rate * db2
         """
-        dz2 = y_pred - y_true
-        dW2 = (1/n) * self.a1.T @ dz2
-        db2 = (1/n) * np.sum(dz2, axis=0, keepdims=True)
-        
         raise NotImplementedError("TODO-6 未完成：请实现反向传播")
 
 
