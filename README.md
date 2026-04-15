@@ -44,6 +44,7 @@ llm-learning/
 │   └── README.md                         # 论文阅读顺序与建议
 │
 ├── karpathy-best-resources.md       # Karpathy 精选文章/视频与学习路径
+├── github-copilot-claude-code.md    # GitHub Copilot + Claude Code 配置指南
 │
 ├── attention_paper_prerequisites.md # 读论文的前置知识清单
 ├── requirements.txt
@@ -155,6 +156,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 如果你希望配合本项目学习一条高质量主线，建议从 Karpathy 的内容开始：
 
 - [karpathy-best-resources.md](karpathy-best-resources.md)（项目内整理：优先级、推荐理由、建议顺序）
+- [github-copilot-claude-code.md](github-copilot-claude-code.md)（用 Copilot 订阅跑 Claude Code 的配置步骤）
 
 ## 依赖
 

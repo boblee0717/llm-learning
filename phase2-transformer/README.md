@@ -21,7 +21,7 @@ pip install -r requirements.txt
 
 ## 课程结构
 
-按顺序学习，每课约 60-90 分钟：
+按顺序学习，每课约 90-120 分钟：
 
 | 课程 | 文件 | 核心内容 | 关键概念 |
 |------|------|----------|----------|
@@ -55,120 +55,140 @@ python3 phase2-transformer/reset_exercises_01.py   # 重置第二阶段第 1 课
 
 ### 论文阅读建议
 
-1. **先读 Attention Is All You Need** —— 配合第 2-4 课的代码理解
-2. **不用逐字精读** —— 重点看 Architecture 和 Results 部分
-3. **带着问题读** —— 为什么用 Scaled Dot-Product？为什么要多头？
-4. **跳过数学证明** —— 先建立直觉，数学后面再补
+1. **不用逐字精读** —— 重点看 Architecture 和 Results 部分
+2. **带着问题读** —— 为什么用 Scaled Dot-Product？为什么要多头？
+3. **跳过数学证明** —— 先建立直觉，数学后面再补
+4. **每课只读指定章节** —— 下面每课都标注了该读哪几节，不要贪多
+
+---
+
+## 每课统一节奏
+
+每一课都按以下 6 步执行，不要跳步：
+
+| 步骤 | 做什么 | 时间 | 要点 |
+|------|--------|------|------|
+| **① 看视频** | 看当课指定视频 | 20-40 min | 只记 3 个关键词，建立直觉，不求全懂 |
+| **② 读论文** | 读当课指定的论文章节 | 15-20 min | 只读指定小节，带着视频中的印象去对照 |
+| **③ 跑代码** | 运行当课 `.py`，逐段读输出 | 10-15 min | 先跑通看效果，不急着改 |
+| **④ 对照理解** | 把代码和论文公式逐行对齐 | 15-20 min | 重点：维度变化、公式中每个符号对应代码哪一行 |
+| **⑤ 动手写** | 完成自写练习（如有）或改超参数 | 20-30 min | 自写练习 > 改超参数 > 加注释，优先级递减 |
+| **⑥ 复盘** | 回答 3 个问题，记录到笔记 | 5-10 min | 输入是什么？核心计算是什么？输出是什么？ |
+
+> **卡住时**：直接回看视频中对应概念的片段，不要整段重看。
+
+---
 
 ## 每课详细大纲
 
 ### 第 1 课：词嵌入与位置编码
 
+**核心概念**
 - 为什么不能直接用 one-hot？维度灾难
 - Word2Vec 的核心思想：相似的词有相似的向量
 - 位置编码：正弦/余弦编码 vs 可学习编码
-- 动手实现：构建一个简单的嵌入层
 - **与 LLM 的关系**：GPT 的第一层就是嵌入层
 
-**配套资源与实践**
-- 视频：`Day 1` [3Blue1Brown - Transformers, the tech behind LLMs](https://www.youtube.com/watch?v=wjZofJX0v4M)
-- 代码：`01_word_embeddings.py`
-- 完成标准：能解释 `token -> embedding -> positional encoding`
+**按顺序做**
 
-**对应论文与章节（先读这些）**
-- `Attention Is All You Need`：`3.4 Embeddings and Softmax`、`3.5 Positional Encoding`
-- `BERT`：`3.2 Input/Output Representations`（看 token / segment / position embedding 的输入构成）
-- `GPT-2`：`2. Model`（关注 decoder-only 的输入嵌入处理方式）
+1. **① 看视频**（20-40 min）：[3Blue1Brown - Transformers, the tech behind LLMs](https://www.youtube.com/watch?v=wjZofJX0v4M)
+   - 关键词：embedding、positional encoding、token
+2. **② 读论文**（15-20 min）：
+   - `Attention Is All You Need` → `3.4 Embeddings and Softmax`、`3.5 Positional Encoding`
+   - `BERT` → `3.2 Input/Output Representations`（看 token / segment / position embedding 的输入构成）
+   - `GPT-2` → `2. Model`（关注 decoder-only 的输入嵌入处理方式）
+3. **③ 跑代码**：运行 `01_word_embeddings.py`，观察嵌入向量的维度和可视化输出
+4. **④ 对照理解**：把论文中正弦位置编码公式和代码实现逐行对齐
+5. **⑤ 动手写**：完成 `01_word_embeddings_self_write.py`（重置用 `reset_exercises_01.py`）
+6. **⑥ 复盘**：能口述 `token → embedding → positional encoding` 的完整流程
 
 ### 第 2 课：自注意力机制
 
+**核心概念**
 - 注意力的直觉：哪些词对当前词重要？
 - Q (Query)、K (Key)、V (Value) 的含义
 - Scaled Dot-Product Attention 的完整推导
 - 因果掩码 (Causal Mask)：防止看到未来的词
-- 动手实现：纯 NumPy 实现自注意力
 - **与 LLM 的关系**：这就是 Transformer 的心脏
 
-**配套资源与实践**
-- 视频：`Day 2` [3Blue1Brown - Attention in Transformers](https://www.youtube.com/watch?v=eMlx5fFNoYc)
-- 代码：`02_self_attention.py`
-- 完成标准：能画出 Q/K/V 维度并说明 mask 的作用
+**按顺序做**
 
-**对应论文与章节（先读这些）**
-- `Attention Is All You Need`：`3.2 Attention`、`3.2.1 Scaled Dot-Product Attention`
-- `GPT-2`：`2. Model`（重点看 masked self-attention / 自回归约束）
-- `GPT-3`：`2.1 Model and Architectures`（看 decoder 堆叠中 attention 的使用）
+1. **① 看视频**（20-40 min）：[3Blue1Brown - Attention in Transformers](https://www.youtube.com/watch?v=eMlx5fFNoYc)
+   - 关键词：Q/K/V、scaled dot-product、mask
+2. **② 读论文**（15-20 min）：
+   - `Attention Is All You Need` → `3.2 Attention`、`3.2.1 Scaled Dot-Product Attention`
+   - `GPT-2` → `2. Model`（重点看 masked self-attention / 自回归约束）
+   - `GPT-3` → `2.1 Model and Architectures`（看 decoder 堆叠中 attention 的使用）
+3. **③ 跑代码**：运行 `02_self_attention.py`，观察注意力分数矩阵的热力图
+4. **④ 对照理解**：把 Attention(Q,K,V) = softmax(QK^T / √d_k) V 和代码逐行对齐
+5. **⑤ 动手写**：手动修改 mask，观察输出变化；尝试去掉 scale（不除以 √d_k）看效果
+6. **⑥ 复盘**：能画出 Q/K/V 的维度变化图，并说明 mask 的作用
 
 ### 第 3 课：多头注意力与残差
 
+**核心概念**
 - 单头 → 多头：不同的头关注不同的模式
 - 残差连接：解决深层网络的退化问题
 - Layer Normalization：稳定训练过程
-- 动手实现：用 PyTorch 实现多头注意力
 - **与 LLM 的关系**：GPT-3 有 96 个注意力头
 
-**配套资源与实践**
-- 视频：`Day 3` [Jay Alammar - The Narrated Transformer](https://www.youtube.com/watch?v=-QH8fRhqFHM)
-- 代码：`03_multi_head_attention.py`
-- 完成标准：能说明单头 vs 多头，并跑通代码
+**按顺序做**
 
-**对应论文与章节（先读这些）**
-- `Attention Is All You Need`：`3.1 Encoder and Decoder Stacks`（残差 + LayerNorm）、`3.2.2 Multi-Head Attention`
-- `GPT-3`：`2.1 Model and Architectures`（关注层数、头数、宽度这些规模配置）
-- `BERT`：`3.1 BERT Model Architecture`（对照 encoder 结构中的多头注意力）
+1. **① 看视频**（20-40 min）：[Jay Alammar - The Narrated Transformer](https://www.youtube.com/watch?v=-QH8fRhqFHM)
+   - 关键词：multi-head、residual、LayerNorm
+2. **② 读论文**（15-20 min）：
+   - `Attention Is All You Need` → `3.1 Encoder and Decoder Stacks`（残差 + LayerNorm）、`3.2.2 Multi-Head Attention`
+   - `GPT-3` → `2.1 Model and Architectures`（关注层数、头数、宽度这些规模配置）
+   - `BERT` → `3.1 BERT Model Architecture`（对照 encoder 结构中的多头注意力）
+3. **③ 跑代码**：运行 `03_multi_head_attention.py`，观察不同 head 的注意力模式差异
+4. **④ 对照理解**：把 MultiHead(Q,K,V) = Concat(head_1,...,head_h) W^O 与代码实现对齐
+5. **⑤ 动手写**：修改 head 数量（1/2/4/8），对比输出差异；尝试去掉残差连接看梯度变化
+6. **⑥ 复盘**：能说清"单头 vs 多头"的区别，以及残差连接为什么不可或缺
 
 ### 第 4 课：Transformer Block
 
+**核心概念**
 - 完整的 Transformer Block 结构
 - Feed-Forward Network (FFN)：两层 MLP + 激活函数
 - Pre-Norm vs Post-Norm 的区别
 - 堆叠多个 Block：从 1 层到 N 层
-- 动手实现：完整的 Transformer Block
 - **与 LLM 的关系**：GPT-3 就是 96 个这样的 Block 堆叠
 
-**配套资源与实践**
-- 视频：`Day 4` [Andrej Karpathy - Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY)（前半段）
-- 代码：`04_transformer_block.py`
-- 完成标准：能跑通 block 前向，理解残差 + LayerNorm 位置
+**按顺序做**
 
-**对应论文与章节（先读这些）**
-- `Attention Is All You Need`：`3.1 Encoder and Decoder Stacks`、`3.3 Position-wise Feed-Forward Networks`
-- `GPT-2`：`2. Model`（把论文中的 block 结构与你代码逐项对齐）
-- `GPT-3`：`2.1 Model and Architectures`（理解“同构 block 堆叠 + 扩大规模”的主线）
+1. **① 看视频**（20-40 min）：[Andrej Karpathy - Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY)（**前半段**，到 Block 搭建完为止）
+   - 关键词：FFN、Pre-Norm、Block 堆叠
+2. **② 读论文**（15-20 min）：
+   - `Attention Is All You Need` → `3.1 Encoder and Decoder Stacks`、`3.3 Position-wise Feed-Forward Networks`
+   - `GPT-2` → `2. Model`（把论文中的 block 结构与你代码逐项对齐）
+   - `GPT-3` → `2.1 Model and Architectures`（理解"同构 block 堆叠 + 扩大规模"的主线）
+3. **③ 跑代码**：运行 `04_transformer_block.py`，跑通前向传播，观察中间张量维度
+4. **④ 对照理解**：画一张 Block 内部流程图（Attention → Add & Norm → FFN → Add & Norm），对齐代码
+5. **⑤ 动手写**：修改 FFN 隐藏层维度、堆叠层数，观察参数量和输出变化；尝试切换 Pre-Norm / Post-Norm
+6. **⑥ 复盘**：能口述 Block 内部的完整数据流，说清残差 + LayerNorm 在 Block 内的位置
 
 ### 第 5 课：从零构建 GPT
 
+**核心概念**
 - 完整模型：Embedding → N × Block → Linear → Softmax
 - 训练循环：用小数据集训练一个迷你 GPT
 - 文本生成：贪心搜索、Temperature、Top-K 采样
-- 动手实现：一个能生成 Shakespeare 风格文本的小模型
 - **与 LLM 的关系**：你写的就是 GPT 的完整架构，只是小了 1000 倍
 
-**配套资源与实践**
-- 视频：`Day 5` [Andrej Karpathy - Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY)（后半段）
-- 代码：`05_gpt_from_scratch.py`
-- 完成标准：完成一次小训练并生成可读文本
+**按顺序做**
 
-**对应论文与章节（先读这些）**
-- `GPT-2`：`2. Model`、`3. Experiments`（先看模型，再看训练与生成设置）
-- `GPT-3`：`2. Training Dataset and Model`、`3. Methodology`（理解数据规模、训练范式和 few-shot 评估）
-- `InstructGPT`：`3. Methods`（在你完成基础 GPT 后，预习“预训练模型如何对齐”）
+1. **① 看视频**（20-40 min）：[Andrej Karpathy - Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY)（**后半段**，从训练循环到文本生成）
+   - 关键词：training loop、temperature、top-k
+2. **② 读论文**（15-20 min）：
+   - `GPT-2` → `2. Model`、`3. Experiments`（先看模型结构，再看训练与生成设置）
+   - `GPT-3` → `2. Training Dataset and Model`、`3. Methodology`（理解数据规模、训练范式和 few-shot 评估）
+3. **③ 跑代码**：运行 `05_gpt_from_scratch.py`，完成一次完整训练（观察 loss 下降曲线）
+4. **④ 对照理解**：把 GPT-2 论文的模型描述和你的代码逐模块对齐（Embedding → Blocks → LM Head）
+5. **⑤ 动手写**：调整 temperature 和 top-k 参数生成文本，感受不同采样策略的效果差异
+6. **⑥ 复盘**：能口述完整 GPT 的前向流程，并解释训练目标（next token prediction）
+7. **⑦ 延伸阅读**（可选）：`InstructGPT` → `3. Methods`（预习"预训练模型如何通过 RLHF 对齐"）
 
-## 学习方式
-
-1. **先读论文的对应章节**：比如学注意力前，先读 Attention Is All You Need 的 3.2 节
-2. **跑代码看效果**：每课都有可视化输出
-3. **对照论文的公式和代码**：确认自己真正理解了
-4. **修改超参数**：改 head 数、layer 数、embedding 维度，观察效果
-
-## 完成后你将理解
-
-- Transformer 为什么能取代 RNN/LSTM
-- 自注意力机制到底在计算什么
-- GPT 和 BERT 的本质区别（Decoder vs Encoder）
-- 为什么模型越大效果越好（Scaling Law 的直觉）
-- 为什么训练大模型需要那么多数据和算力
-- RLHF 是如何让模型变得"听话"的
+---
 
 ## 复习与补充资源
 
@@ -176,13 +196,6 @@ python3 phase2-transformer/reset_exercises_01.py   # 重置第二阶段第 1 课
 - `Day 6`：[B 站 - Transformer 从零详细解读](https://www.bilibili.com/video/BV1Di4y1c7Zm/) + 回看 `02_self_attention.py`、`03_multi_head_attention.py`
 - `Day 7`：[B 站 - Transformer 理论到实战系列](https://www.bilibili.com/video/BV12bfPY1E1S/) + 回看 `04_transformer_block.py`、`05_gpt_from_scratch.py`
 - 复盘目标：补齐注释、修正命名、能口述完整 GPT 前向流程
-
-### 每次学习的固定节奏（建议）
-
-1. **先看 20-40 分钟视频**：只记 3 个关键词（例如 Q/K/V、mask、residual）
-2. **再写 45-90 分钟代码**：只实现当天一个文件，不跨天
-3. **最后 10 分钟复盘**：回答 3 个问题：输入是什么？核心计算是什么？输出是什么？
-4. **卡住就回看视频对应片段**：不要整段重看，直接定位到该概念章节
 
 可选补充：
 - [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/)（图解）
