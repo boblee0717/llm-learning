@@ -31,6 +31,16 @@ pip install -r requirements.txt
 | 第 4 课 | `04_transformer_block.py` | 完整 Transformer Block、FFN | 把所有组件拼起来 |
 | 第 5 课 | `05_gpt_from_scratch.py` | 完整 GPT 模型、文本生成 | 从零搭建一个能生成文本的模型 |
 
+### 自写练习与重置（当前进度）
+
+- 第 1 课已提供自写练习：`01_word_embeddings_self_write.py`
+- 对应重置脚本：`reset_exercises_01.py`
+
+```bash
+# 在项目根目录执行
+python3 phase2-transformer/reset_exercises_01.py   # 重置第二阶段第 1 课练习
+```
+
 ## 必读论文
 
 在 `papers/` 目录下提供了核心论文的 PDF：

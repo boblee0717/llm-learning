@@ -24,10 +24,12 @@ llm-learning/
 │
 ├── phase2-transformer/              # 第二阶段：Transformer 架构
 │   ├── 01_word_embeddings.py             # 词嵌入、位置编码
+│   ├── 01_word_embeddings_self_write.py  # ↳ 自写练习（第 1 课）
 │   ├── 02_self_attention.py              # Q/K/V、注意力分数、掩码
 │   ├── 03_multi_head_attention.py        # 多头注意力、残差连接、LayerNorm
 │   ├── 04_transformer_block.py           # 完整 Transformer Block
 │   ├── 05_gpt_from_scratch.py            # 从零搭建 GPT，文本生成
+│   ├── reset_exercises_01.py             # 重置第 1 课练习
 │   └── README.md
 │
 ├── phase3-training/                 # 第三阶段：训练与微调
@@ -40,6 +42,8 @@ llm-learning/
 │
 ├── papers/                          # 核心论文
 │   └── README.md                         # 论文阅读顺序与建议
+│
+├── karpathy-best-resources.md       # Karpathy 精选文章/视频与学习路径
 │
 ├── attention_paper_prerequisites.md # 读论文的前置知识清单
 ├── requirements.txt
@@ -76,7 +80,7 @@ python3 phase1-foundations/01_numpy_basics.py
 
 ## 每课的学习方式
 
-每课包含 **主课文件** 和 **自写练习** 两部分（第一阶段已全部配备）：
+每课包含 **主课文件** 和 **自写练习** 两部分（第一阶段已全部配备，第二阶段已开始配备）：
 
 | 步骤 | 做什么 | 目的 |
 |------|--------|------|
@@ -108,7 +112,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 > 详见 [phase1-foundations/README.md](phase1-foundations/README.md)
 
-### 第二阶段：Transformer 架构
+### 第二阶段：Transformer 架构（第 1 课已配自写练习）
 
 | 课程 | 文件 | 核心内容 |
 |------|------|----------|
@@ -145,6 +149,12 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | InstructGPT | 2022 | RLHF 落地，让模型遵循人类指令 |
 
 > 详见 [papers/README.md](papers/README.md)
+
+### 推荐外部资源
+
+如果你希望配合本项目学习一条高质量主线，建议从 Karpathy 的内容开始：
+
+- [karpathy-best-resources.md](karpathy-best-resources.md)（项目内整理：优先级、推荐理由、建议顺序）
 
 ## 依赖
 
