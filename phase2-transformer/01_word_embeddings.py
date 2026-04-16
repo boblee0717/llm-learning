@@ -18,6 +18,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+plt.rcParams['font.sans-serif'] = ['Sarasa Mono SC', 'Noto Sans CJK SC', 'SimHei']
+plt.rcParams['axes.unicode_minus'] = False
+
 
 # ============================================================
 # Part 1: 为什么需要词嵌入？
