@@ -148,6 +148,8 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | GPT-2 | 2019 | 纯 Decoder 语言模型，无监督多任务 |
 | GPT-3 | 2020 | 175B 参数，In-context Learning |
 | InstructGPT | 2022 | RLHF 落地，让模型遵循人类指令 |
+| Harness engineering（OpenAI） | 2026 | Agent 为先：人设计环境与反馈回路，Codex 产出代码与工程资产 |
+| Harness Engineering Is Cybernetics（George Zhang，X 原文） | 2026 | 将 Harness 置于控制论史：反馈回路在架构层闭合时的工程含义 |
 
 > 详见 [papers/README.md](papers/README.md)
 
