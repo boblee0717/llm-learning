@@ -42,7 +42,7 @@
 - **一句话**: 在「以 agent 为先」的团队里，人负责设计环境、表达意图与搭建反馈回路，让 Codex 类 agent 可靠地产出代码与配套资产（测试、CI、文档、可观测性等），而不是以手写代码为主业。
 
 ### 7. Harness Engineering Is Cybernetics（George Zhang, 2026）
-- **链接（中文转载，原文讨论首发于 X [@odysseus0z](https://x.com/odysseus0z)）**: [微信公众号 · 海外独角兽](https://mp.weixin.qq.com/s/SVUybMZb6uh5OCR3ceoBVA)
+- **链接（X 原文长帖）**: [x.com/odysseus0z/status/2030416758138634583](https://x.com/odysseus0z/status/2030416758138634583)
 - **作者**: George Zhang（OpenClaw 维护者）
 - **一句话**: 把 Harness engineering 放进控制论视角：从瓦特调速器到 Kubernetes 控制器，再到在架构层用 LLM 闭合反馈回路——工程师从「拧阀门」转向「设计调速器与约束」。
 
