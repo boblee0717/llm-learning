@@ -87,7 +87,7 @@ embedding_dim = 4
 # 构造 embedding_matrix，形状应为 (vocab_size, embedding_dim)
 # 建议：np.random.randn(vocab_size, embedding_dim) * 0.1
 # embedding_matrix = ...
-embedding_matrix = None
+embedding_matrix = np.random.randn(vocab_size, embedding_dim) * 0.1
 
 target_word = "猫"
 target_idx = word_to_idx[target_word]
@@ -95,7 +95,7 @@ target_idx = word_to_idx[target_word]
 # TODO-2:
 # 取出 target_word 的 embedding 向量
 # cat_embedding = ...
-cat_embedding = None
+cat_embedding = embedding_matrix[word_to_idx[target_word]]
 
 print(f"embedding_matrix.shape = {getattr(embedding_matrix, 'shape', None)}")
 print(f"{target_word} 的向量 = {cat_embedding}")
@@ -113,8 +113,8 @@ semantic_embeddings = {
 # 计算两组余弦相似度
 # sim_cat_dog = ...
 # sim_cat_love = ...
-sim_cat_dog = None
-sim_cat_love = None
+sim_cat_dog = cosine_similarity(semantic_embeddings["猫"], semantic_embeddings["狗"])
+sim_cat_love = cosine_similarity(semantic_embeddings["猫"], semantic_embeddings["爱"])
 
 print(f"sim(猫, 狗) = {sim_cat_dog}")
 print(f"sim(猫, 爱) = {sim_cat_love}")
@@ -137,6 +137,12 @@ def sinusoidal_position_encoding(max_len: int, d_model: int) -> np.ndarray:
     # pe[:, 0::2] = ...
     # pe[:, 1::2] = ...
     # return pe
+    pe = np.zeros((max_len, d_model))
+    position = np.arange(max_len)[:, np.newaxis]
+    div_term = np.exp(np.arange(0, d_model, 2) * -(np.log(10000.0) / d_model))
+    pe[:, 0::2] = np.sin(position * div_term)
+    pe[:, 1::2] = np.cos(position * div_term)
+    return pe
     raise NotImplementedError("TODO-4 未完成：请实现 sinusoidal_position_encoding")
 
 
@@ -166,7 +172,7 @@ pos_vecs = pos_encoding[: len(sentence)]
 # TODO-5:
 # 计算最终输入：final_embedding = token_vecs + pos_vecs
 # final_embedding = ...
-final_embedding = None
+final_embedding = token_vecs + pos_vecs
 
 print(f"token_vecs.shape = {token_vecs.shape}")
 print(f"pos_vecs.shape = {pos_vecs.shape}")
@@ -179,8 +185,8 @@ section("第六部分：位置相似度（TODO-6）")
 # 用 pe（第四部分生成的位置编码）比较位置相似度：
 # pos01_sim = cosine_similarity(pe[0], pe[1])
 # pos049_sim = cosine_similarity(pe[0], pe[9])
-pos01_sim = None
-pos049_sim = None
+pos01_sim = cosine_similarity(pe[0], pe[1])
+pos049_sim = cosine_similarity(pe[0], pe[9])
 
 print(f"sim(pos0, pos1) = {pos01_sim}")
 print(f"sim(pos0, pos9) = {pos049_sim}")
