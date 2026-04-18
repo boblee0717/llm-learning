@@ -145,6 +145,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | 论文 | 年份 | 一句话概括 |
 |------|------|-----------|
 | Attention Is All You Need | 2017 | Transformer 的开山之作 |
+| GPT-1（*Improving Language Understanding by Generative Pre-Training*） | 2018 | 生成式预训练 + 判别式微调，Decoder 迁移学习 |
 | BERT | 2018 | 双向编码器，预训练+微调范式 |
 | GPT-2 | 2019 | 纯 Decoder 语言模型，无监督多任务 |
 | GPT-3 | 2020 | 175B 参数，In-context Learning |
