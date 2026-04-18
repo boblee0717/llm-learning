@@ -5,6 +5,8 @@
 ## 我的学习进度
 
 - 2026-04-14：完成第一阶段第 3 课（神经网络前向/反向传播与 XOR 分类）自写练习，并已重置练习文件准备二刷。
+- 2026-04-18：完成第二阶段第 1 课（词嵌入与位置编码）。跑通 `01_word_embeddings.py`、吃透正弦位置编码公式与 `div_term` 的 `exp(log)` 写法，看懂位置编码热力图/曲线图，完成自写练习 `01_word_embeddings_self_write.py`，并在 [phase2-transformer/README.md](phase2-transformer/README.md) 沉淀了"放大镜 + 望远镜（小维度高频看近处、大维度低频看远处）"等 5 点关键领悟。可用 `reset_exercises_01.py` 重置练习准备二刷。
+- 2026-04-18：补充 GPT-1 论文 PDF（`papers/GPT1_2018_improving_language_understanding.pdf`），并整理 [phase2-transformer/notes_gpt2_input_and_model.md](phase2-transformer/notes_gpt2_input_and_model.md) 笔记，配合第 1 课对照理解 decoder-only 的输入表示。
 
 ## 项目结构
 
@@ -58,7 +60,7 @@ llm-learning/
 第一阶段 (3课)            第二阶段 (5课)             第三阶段 (5课)
 NumPy/梯度/神经网络    →  Attention/Transformer/GPT  →  LoRA/量化/RLHF/推理优化
    基础数学                   核心架构                     工业实践
-   ✅ 含自写练习+校验          待学习                       待学习
+   ✅ 已完成三课               🚧 第 1 课已完成             待学习
 ```
 
 ## 快速开始
