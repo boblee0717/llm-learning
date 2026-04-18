@@ -45,6 +45,7 @@ llm-learning/
 │
 ├── karpathy-best-resources.md       # Karpathy 精选文章/视频与学习路径
 ├── github-copilot-claude-code.md    # GitHub Copilot + Claude Code 配置指南
+├── llm-interview-questions.md       # 大模型面试题整理（含精修参考答案）
 │
 ├── attention_paper_prerequisites.md # 读论文的前置知识清单
 ├── requirements.txt
@@ -159,6 +160,10 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 - [karpathy-best-resources.md](karpathy-best-resources.md)（项目内整理：优先级、推荐理由、建议顺序）
 - [github-copilot-claude-code.md](github-copilot-claude-code.md)（用 Copilot 订阅跑 Claude Code 的配置步骤）
+
+## 面试复习
+
+- [llm-interview-questions.md](llm-interview-questions.md)：大模型面试题整理（含精修参考答案），覆盖**应用开发一/二面、LLM 基础面、进阶面、微调与领域训练面**共 5 大板块 80+ 题，配有显存估算、解码策略速查表和「一页纸」速记。
 
 ## 依赖
 
