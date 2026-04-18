@@ -95,8 +95,8 @@ python3 phase2-transformer/reset_exercises_01.py   # 重置第二阶段第 1 课
    - 关键词：embedding、positional encoding、token
 2. **② 读论文**（15-20 min）：
    - `Attention Is All You Need` → `3.4 Embeddings and Softmax`、`3.5 Positional Encoding`
-   - `BERT` → `3.2 Input/Output Representations`（看 token / segment / position embedding 的输入构成）
-   - `GPT-2` → `2. Model`（关注 decoder-only 的输入嵌入处理方式）
+   - `BERT` → `Input/Output Representations`（看 token / segment / position embedding 的输入构成）
+   - `GPT-2` → `2.2 Input Representation`、`2.3 Model`（关注 decoder-only 的输入嵌入处理方式）
 3. **③ 跑代码**：运行 `01_word_embeddings.py`，观察嵌入向量的维度和可视化输出
 4. **④ 对照理解**：把论文中正弦位置编码公式和代码实现逐行对齐
 5. **⑤ 动手写**：完成 `01_word_embeddings_self_write.py`（重置用 `reset_exercises_01.py`）
@@ -117,7 +117,7 @@ python3 phase2-transformer/reset_exercises_01.py   # 重置第二阶段第 1 课
    - 关键词：Q/K/V、scaled dot-product、mask
 2. **② 读论文**（15-20 min）：
    - `Attention Is All You Need` → `3.2 Attention`、`3.2.1 Scaled Dot-Product Attention`
-   - `GPT-2` → `2. Model`（重点看 masked self-attention / 自回归约束）
+   - `GPT-2` → `2.3 Model`（重点看 masked self-attention / 自回归约束）
    - `GPT-3` → `2.1 Model and Architectures`（看 decoder 堆叠中 attention 的使用）
 3. **③ 跑代码**：运行 `02_self_attention.py`，观察注意力分数矩阵的热力图
 4. **④ 对照理解**：把 Attention(Q,K,V) = softmax(QK^T / √d_k) V 和代码逐行对齐
@@ -139,7 +139,7 @@ python3 phase2-transformer/reset_exercises_01.py   # 重置第二阶段第 1 课
 2. **② 读论文**（15-20 min）：
    - `Attention Is All You Need` → `3.1 Encoder and Decoder Stacks`（残差 + LayerNorm）、`3.2.2 Multi-Head Attention`
    - `GPT-3` → `2.1 Model and Architectures`（关注层数、头数、宽度这些规模配置）
-   - `BERT` → `3.1 BERT Model Architecture`（对照 encoder 结构中的多头注意力）
+   - `BERT` → `Model Architecture`（对照 encoder 结构中的多头注意力）
 3. **③ 跑代码**：运行 `03_multi_head_attention.py`，观察不同 head 的注意力模式差异
 4. **④ 对照理解**：把 MultiHead(Q,K,V) = Concat(head_1,...,head_h) W^O 与代码实现对齐
 5. **⑤ 动手写**：修改 head 数量（1/2/4/8），对比输出差异；尝试去掉残差连接看梯度变化
@@ -160,7 +160,7 @@ python3 phase2-transformer/reset_exercises_01.py   # 重置第二阶段第 1 课
    - 关键词：FFN、Pre-Norm、Block 堆叠
 2. **② 读论文**（15-20 min）：
    - `Attention Is All You Need` → `3.1 Encoder and Decoder Stacks`、`3.3 Position-wise Feed-Forward Networks`
-   - `GPT-2` → `2. Model`（把论文中的 block 结构与你代码逐项对齐）
+   - `GPT-2` → `2.3 Model`（把论文中的 block 结构与你代码逐项对齐）
    - `GPT-3` → `2.1 Model and Architectures`（理解"同构 block 堆叠 + 扩大规模"的主线）
 3. **③ 跑代码**：运行 `04_transformer_block.py`，跑通前向传播，观察中间张量维度
 4. **④ 对照理解**：画一张 Block 内部流程图（Attention → Add & Norm → FFN → Add & Norm），对齐代码
@@ -180,7 +180,7 @@ python3 phase2-transformer/reset_exercises_01.py   # 重置第二阶段第 1 课
 1. **① 看视频**（20-40 min）：[Andrej Karpathy - Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY)（**后半段**，从训练循环到文本生成）
    - 关键词：training loop、temperature、top-k
 2. **② 读论文**（15-20 min）：
-   - `GPT-2` → `2. Model`、`3. Experiments`（先看模型结构，再看训练与生成设置）
+   - `GPT-2` → `2.3 Model`、`3. Experiments`（先看模型结构，再看训练与生成设置）
    - `GPT-3` → `2. Training Dataset and Model`、`3. Methodology`（理解数据规模、训练范式和 few-shot 评估）
 3. **③ 跑代码**：运行 `05_gpt_from_scratch.py`，完成一次完整训练（观察 loss 下降曲线）
 4. **④ 对照理解**：把 GPT-2 论文的模型描述和你的代码逐模块对齐（Embedding → Blocks → LM Head）
