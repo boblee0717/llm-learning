@@ -113,11 +113,11 @@ div_term = np.exp(
 )  # (d_model/2,)
 ```
 
-它对应论文公式里的分母倒数 \(1/10000^{2i/d_{model}}\)。利用恒等变换：
+它对应论文公式里的分母倒数 $1/10000^{2i/d_{model}}$。利用恒等变换：
 
-\[
+$$
 \frac{1}{10000^{2i/d_{model}}} = e^{-\,2i \cdot \ln(10000)/d_{model}}
-\]
+$$
 
 - `np.arange(0, d_model, 2)` → 公式里的 `2i`，形状 `(d_model/2,)`
 - `-(np.log(10000.0) / d_model)` → 标量 `-ln(10000)/d_model`
@@ -192,6 +192,9 @@ div_term = np.exp(
 
 1. **① 看视频**（20-40 min）：[3Blue1Brown - Attention in Transformers](https://www.youtube.com/watch?v=eMlx5fFNoYc)
    - 关键词：Q/K/V、scaled dot-product、mask
+   - **额外学习内容**（视频结尾推荐，可选，建立更全面的直觉）：
+     - [VCubingX - What is a Language Model? A visual explanation](https://www.youtube.com/watch?v=1il-s4mgNdI)：从可视化角度讲清"语言模型到底在预测什么"，用 `the / blue / sky / green / falling` 的概率分布直观演示 next-token prediction
+     - [Art of the Problem - ChatGPT: 30 Year History | How AI Learned to Talk](https://www.youtube.com/watch?v=OFS90-FX6pg)：从 30 年的语言模型发展史切入，串起统计语言模型 → RNN → Transformer → ChatGPT 的完整脉络
 2. **② 读论文**（15-20 min）：
    - `Attention Is All You Need` → `3.2 Attention`、`3.2.1 Scaled Dot-Product Attention`
    - `GPT-2` → `2.3 Model`（重点看 masked self-attention / 自回归约束）
