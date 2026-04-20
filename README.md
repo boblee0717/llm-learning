@@ -12,6 +12,15 @@
 
 ```
 llm-learning/
+├── phase0-math/                     # 第 0 阶段：矩阵运算补强（按需复习）
+│   ├── 01_vectors_and_axes.py            # 向量、形状、axis、广播
+│   ├── 02_matmul_and_shapes.py           # 矩阵乘法、@ / einsum、batched matmul
+│   ├── 03_reshape_transpose_split.py     # reshape / transpose / split / 多头切分
+│   ├── 04_matrix_calculus.py             # 线性层求导、softmax 雅可比、数值梯度校验
+│   ├── 0X_*_self_write.py                # 每课配套自写练习
+│   ├── reset_exercises_0X.py             # 每课配套重置脚本
+│   └── README.md
+│
 ├── phase1-foundations/              # 第一阶段：深度学习基础
 │   ├── 01_numpy_basics.py               # 张量运算、矩阵乘法、Softmax
 │   ├── 01_numpy_basics_self_write.py     # ↳ 自写练习（8 个 TODO）
@@ -57,11 +66,13 @@ llm-learning/
 ## 学习路线
 
 ```
-第一阶段 (3课)            第二阶段 (5课)             第三阶段 (5课)
-NumPy/梯度/神经网络    →  Attention/Transformer/GPT  →  LoRA/量化/RLHF/推理优化
-   基础数学                   核心架构                     工业实践
-   ✅ 已完成三课               🚧 第 1 课已完成             待学习
+第 0 阶段 (4课, 按需)        第一阶段 (3课)            第二阶段 (5课)             第三阶段 (5课)
+矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT  →  LoRA/量化/RLHF/推理优化
+   形状与反向                  基础数学                   核心架构                     工业实践
+   📐 复习用工具书              ✅ 已完成三课               🚧 第 1 课已完成             待学习
 ```
+
+> **phase0-math 不是必经环节**：当你在 phase1/phase2 遇到形状或求导卡壳时回来跑对应那节即可。
 
 ## 快速开始
 
@@ -105,6 +116,17 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 ```
 
 ## 课程总览
+
+### 第 0 阶段：矩阵运算补强（按需复习，4 课）
+
+| 课程 | 主课文件 | 自写练习 | 核心内容 |
+|------|----------|----------|----------|
+| 第 1 课 | `01_vectors_and_axes.py` | `01_vectors_and_axes_self_write.py` | 向量、形状、`axis` / `keepdims`、广播规则 |
+| 第 2 课 | `02_matmul_and_shapes.py` | `02_matmul_and_shapes_self_write.py` | 矩阵乘法两种解读、`@` / `einsum`、batched matmul |
+| 第 3 课 | `03_reshape_transpose_split.py` | `03_reshape_transpose_split_self_write.py` | reshape / transpose / split、多头注意力切分 |
+| 第 4 课 | `04_matrix_calculus.py` | `04_matrix_calculus_self_write.py` | 线性层反向传播、softmax 雅可比、数值梯度校验 |
+
+> 详见 [phase0-math/README.md](phase0-math/README.md)
 
 ### 第一阶段：深度学习基础（已完成搭建）
 
