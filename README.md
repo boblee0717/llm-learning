@@ -57,6 +57,7 @@ llm-learning/
 ├── karpathy-best-resources.md       # Karpathy 精选文章/视频与学习路径
 ├── github-copilot-claude-code.md    # GitHub Copilot + Claude Code 配置指南
 ├── llm-interview-questions.md       # 大模型面试题整理（含精修参考答案）
+├── harness-engineering-li-hongyi.md # 李宏毅《Harness Engineering》视频总结
 │
 ├── attention_paper_prerequisites.md # 读论文的前置知识清单
 ├── requirements.txt
@@ -185,6 +186,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 - [karpathy-best-resources.md](karpathy-best-resources.md)（项目内整理：优先级、推荐理由、建议顺序）
 - [github-copilot-claude-code.md](github-copilot-claude-code.md)（用 Copilot 订阅跑 Claude Code 的配置步骤）
+- [harness-engineering-li-hongyi.md](harness-engineering-li-hongyi.md)（李宏毅 2026 Spring《Harness Engineering：有时候语言模型不是不够聪明，只是没有人类好好引导》视频精华笔记，含 Gemma 小实验、agents.md 地图论、Ralph Loop、Lifelong Agent 等案例）
 
 ## 面试复习
 
