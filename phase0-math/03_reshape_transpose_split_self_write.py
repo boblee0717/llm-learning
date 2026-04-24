@@ -165,6 +165,68 @@ print("outer =\n", outer)
 
 
 # ============================================================
+section("TODO-6.5：np.triu / np.tril 基础练习（4 个小目标）")
+# ============================================================
+# 这一组练习专门玩熟 np.triu / np.tril 这俩 API。
+# 完成后再做 TODO-7（causal mask 屏蔽）就水到渠成了。
+#
+# API 速记：
+#   np.tril(M, k=0)  → 保留下三角（含主对角线）
+#   np.triu(M, k=0)  → 保留上三角（含主对角线）
+#   k=+1：对角线上方再偏一格（不含主对角）
+#   k=-1：对角线下方再偏一格（不含主对角）
+
+# --- 6.5.1：构造 5×5 的下三角全 1 矩阵（含主对角线）---
+# 提示：np.tril + np.ones
+lower_ones = None  # TODO-6.5-1
+
+require_shape("TODO-6.5-1 lower_ones", lower_ones, (5, 5))
+require_close("TODO-6.5-1 [0,0]", lower_ones[0, 0], 1.0)
+require_close("TODO-6.5-1 [0,4]", lower_ones[0, 4], 0.0)
+require_close("TODO-6.5-1 [4,0]", lower_ones[4, 0], 1.0)
+require_close("TODO-6.5-1 [4,4]", lower_ones[4, 4], 1.0)
+print("lower_ones =\n", lower_ones)
+
+
+# --- 6.5.2：构造 5×5 的"严格上三角"全 1 矩阵（不含主对角线）---
+# 这正是 phase2 第 2 课的 causal mask：1 = 未来位置 = 要屏蔽
+# 提示：np.triu + np.ones + k=1
+causal_mask = None  # TODO-6.5-2
+
+require_shape("TODO-6.5-2 causal_mask", causal_mask, (5, 5))
+require_close("TODO-6.5-2 [0,0]", causal_mask[0, 0], 0.0)  # 主对角线 = 0（允许看自己）
+require_close("TODO-6.5-2 [0,1]", causal_mask[0, 1], 1.0)  # j>i = 1（屏蔽未来）
+require_close("TODO-6.5-2 [4,3]", causal_mask[4, 3], 0.0)  # j<i = 0（允许看过去）
+require_close("TODO-6.5-2 [4,4]", causal_mask[4, 4], 0.0)
+print("causal_mask =\n", causal_mask)
+
+
+# --- 6.5.3：给定一个随机矩阵 R，把它的上三角部分（含主对角线）置零 ---
+# 提示：直接对 R 做 np.tril(...) 就行（保留下三角 = 上三角置零）
+R = np.random.randn(4, 4)
+R_lower = None  # TODO-6.5-3
+
+require_shape("TODO-6.5-3 R_lower", R_lower, (4, 4))
+require_close("TODO-6.5-3 [0,0]", R_lower[0, 0], 0.0)  # 主对角线被置零
+require_close("TODO-6.5-3 [0,3]", R_lower[0, 3], 0.0)  # 上三角被置零
+require_close("TODO-6.5-3 [2,1]", R_lower[2, 1], R[2, 1])  # 下三角保留原值
+require_close("TODO-6.5-3 [3,0]", R_lower[3, 0], R[3, 0])
+print("R_lower =\n", R_lower)
+
+
+# --- 6.5.4：验证互补关系 triu(M, k=1) + tril(M, k=0) == M ---
+# 提示：分别构造两个三角矩阵相加，对比原矩阵
+M = np.arange(1, 17).reshape(4, 4).astype(float)
+upper_strict = None  # TODO-6.5-4-a：严格上三角部分（k=1）
+lower_with_diag = None  # TODO-6.5-4-b：下三角部分（含主对角线，k=0）
+
+require_shape("TODO-6.5-4-a upper_strict", upper_strict, (4, 4))
+require_shape("TODO-6.5-4-b lower_with_diag", lower_with_diag, (4, 4))
+require_close("TODO-6.5-4 互补", upper_strict + lower_with_diag, M)
+print("upper_strict + lower_with_diag == M  ✓")
+
+
+# ============================================================
 section("TODO-7：手写 mask 屏蔽（softmax 前减去 1e9）")
 # ============================================================
 # 给定 scores: (T, T) 和因果 mask（下三角为 1，上三角为 0）。

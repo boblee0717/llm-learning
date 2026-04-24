@@ -23,7 +23,7 @@
 |---|---|---|---|---|
 | 第 1 课 | `01_vectors_and_axes.py` | `01_vectors_and_axes_self_write.py` | 向量、点积、范数、`axis` / `keepdims`、广播规则 | softmax 行归一、cosine 相似度、LayerNorm |
 | 第 2 课 | `02_matmul_and_shapes.py` | `02_matmul_and_shapes_self_write.py` | 矩阵乘法两种解读、`@` / `matmul` / `einsum`、batched matmul | $QK^T$、`attn @ V`、`(B, T, d)` 的批量乘 |
-| 第 3 课 | `03_reshape_transpose_split.py` | `03_reshape_transpose_split_self_write.py` | 转置 / reshape / permute / split / concat / outer / Hadamard | 多头切分、`W_qkv` 拆分、残差拼接 |
+| 第 3 课 | `03_reshape_transpose_split.py` | `03_reshape_transpose_split_self_write.py` | 转置 / reshape / permute / split / concat / outer / Hadamard / **`np.triu`·`np.tril` 三角矩阵构造** | 多头切分、`W_qkv` 拆分、残差拼接、**causal mask** |
 | 第 4 课 | `04_matrix_calculus.py` | `04_matrix_calculus_self_write.py` | 线性层求导、链式法则、softmax 雅可比、数值梯度校验 | 反向传播、训练每一步都在做 |
 
 ## 快速开始
@@ -73,6 +73,7 @@ python3 reset_exercises_04.py
 - [ ] softmax 的雅可比为什么是 $\text{diag}(s) - s s^T$？
 - [ ] `Q @ K.T` 里 K 为什么要转置？转置的是哪两个轴？
 - [ ] 数值梯度校验的核心思想是什么？为什么 $\epsilon$ 不是越小越好？
+- [ ] `np.triu(np.ones((n,n)), k=1)` 和 `np.tril(np.ones((n,n)))` 分别长什么样？哪个对应 GPT 的 causal mask？
 
 能答上来 6/8，就直接去 phase2 复习 attention，矩阵这一关已经过了。
 

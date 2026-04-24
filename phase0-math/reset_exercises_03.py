@@ -43,6 +43,11 @@ def main() -> int:
         (r"^QKV\s*=.*# TODO-5-1.*$",        "QKV = None  # TODO-5-1",        "TODO-5-1"),
         (r"^Q,\s*K,\s*V\s*=.*# TODO-5-2.*$","Q, K, V = None, None, None  # TODO-5-2", "TODO-5-2"),
         (r"^outer\s*=.*# TODO-6.*$",        "outer = None  # TODO-6",        "TODO-6"),
+        (r"^lower_ones\s*=.*# TODO-6\.5-1.*$",       "lower_ones = None  # TODO-6.5-1",       "TODO-6.5-1"),
+        (r"^causal_mask\s*=.*# TODO-6\.5-2.*$",      "causal_mask = None  # TODO-6.5-2",      "TODO-6.5-2"),
+        (r"^R_lower\s*=.*# TODO-6\.5-3.*$",          "R_lower = None  # TODO-6.5-3",          "TODO-6.5-3"),
+        (r"^upper_strict\s*=.*# TODO-6\.5-4-a.*$",   "upper_strict = None  # TODO-6.5-4-a：严格上三角部分（k=1）",   "TODO-6.5-4-a"),
+        (r"^lower_with_diag\s*=.*# TODO-6\.5-4-b.*$","lower_with_diag = None  # TODO-6.5-4-b：下三角部分（含主对角线，k=0）","TODO-6.5-4-b"),
         (r"^scores_masked\s*=.*# TODO-7.*$","scores_masked = None  # TODO-7","TODO-7"),
     ]
     for pattern, replacement, label in line_resets:

@@ -132,6 +132,79 @@ print("a * b (Hadamard) =\n", a * b)
 
 
 # ---------------------------------------------------------------------------
+section("5.5) np.triu / np.tril：上下三角矩阵构造")
+# ---------------------------------------------------------------------------
+# 这一族 API 是构造 attention causal mask 的"基础零件"。
+# phase2 第 2 课你会看到这一行：
+#     mask = np.triu(np.ones((seq_len, seq_len)), k=1)
+# 这里先把 np.triu / np.tril 这俩 API 玩熟，等到了 phase2 一眼就懂。
+
+M = np.arange(1, 17).reshape(4, 4)
+print("原矩阵 M =\n", M)
+# [[ 1  2  3  4]
+#  [ 5  6  7  8]
+#  [ 9 10 11 12]
+#  [13 14 15 16]]
+
+# 1) np.tril(M)：保留下三角（含主对角线），上三角置零
+print("\nnp.tril(M)        =\n", np.tril(M))
+# [[ 1  0  0  0]
+#  [ 5  6  0  0]
+#  [ 9 10 11  0]
+#  [13 14 15 16]]
+
+# 2) np.triu(M)：保留上三角（含主对角线），下三角置零
+print("\nnp.triu(M)        =\n", np.triu(M))
+# [[ 1  2  3  4]
+#  [ 0  6  7  8]
+#  [ 0  0 11 12]
+#  [ 0  0  0 16]]
+
+# 3) k 参数：对角线偏移量
+#    k=0  → 主对角线
+#    k=1  → 主对角线"上方"一条副对角线（不含主对角）
+#    k=-1 → 主对角线"下方"一条副对角线
+print("\nnp.triu(M, k=1)   =\n", np.triu(M, k=1))   # 严格上三角，主对角也被砍
+# [[ 0  2  3  4]
+#  [ 0  0  7  8]
+#  [ 0  0  0 12]
+#  [ 0  0  0  0]]
+
+print("\nnp.tril(M, k=-1)  =\n", np.tril(M, k=-1))  # 严格下三角，主对角也被砍
+# [[ 0  0  0  0]
+#  [ 5  0  0  0]
+#  [ 9 10  0  0]
+#  [13 14 15  0]]
+
+# 4) 最常用的"全 1 三角矩阵"写法
+n = 4
+ones_lower = np.tril(np.ones((n, n)))     # 下三角全 1（含主对角）
+ones_upper_strict = np.triu(np.ones((n, n)), k=1)  # 严格上三角全 1（不含主对角）
+
+print("\nnp.tril(np.ones((4,4)))        =\n", ones_lower)
+# 这就是"允许位置 i 看位置 j（j ≤ i）"的 causal mask：
+#   1 = 允许，0 = 屏蔽
+
+print("\nnp.triu(np.ones((4,4)), k=1)   =\n", ones_upper_strict)
+# 这就是 phase2 那一行 mask 的真身：
+#   1 = 屏蔽（未来位置），0 = 允许
+# 后面用 `scores - mask * 1e9` 把 1 的位置打到 -1e9，softmax 后接近 0
+
+# 5) 互补关系：tril(k=0) + triu(k=1) == 全 1 矩阵
+assert np.allclose(ones_lower + ones_upper_strict, np.ones((n, n)))
+print("\ntril(ones, k=0) + triu(ones, k=1) == ones  ✓")
+# 这意味着两种写法等价：
+#   "允许集" mask：np.tril(np.ones((n,n)))
+#   "屏蔽集" mask：np.triu(np.ones((n,n)), k=1)
+# phase2 代码里用了"屏蔽集"写法（更省一次 1-x），但思路是对偶的。
+
+# 在 LLM 里用得到的地方：
+#   - causal mask：GPT decoder 的核心 (np.triu(ones, k=1))
+#   - 局部窗口注意力：用 np.tril(ones, k=0) - np.tril(ones, k=-w) 切出对角线一条窄带
+#   - 上三角 / 下三角分解（线性代数里的 LU 分解，本课不展开）
+
+
+# ---------------------------------------------------------------------------
 section("6) concat vs stack：合并多个张量")
 # ---------------------------------------------------------------------------
 a = np.zeros((2, 3))
