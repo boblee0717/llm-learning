@@ -81,22 +81,26 @@ def softmax(x, axis=-1):
 
 
 # Step 1: 从输入创建 Q, K, V
-d_k = 4  # Q, K, V 的维度
+d_k = 4  # Q 和 K 的维度（必须相同，否则 Q @ K.T 算不出来）
+d_v = 3  # V 的维度（可以独立设定！它决定 attention 输出的最后一维）
+         # 论文 §3.2.1 中 d_k 和 d_v 就是两个独立符号，
+         # 只是 §3.2.2 多头注意力里为了简化才取 d_k = d_v = d_model/h
 
-# 三个投影矩阵（实际中通过训练学到）
 W_Q = np.random.randn(d_model, d_k) * 0.3
 W_K = np.random.randn(d_model, d_k) * 0.3
-W_V = np.random.randn(d_model, d_k) * 0.3
+W_V = np.random.randn(d_model, d_v) * 0.3
 
-Q = embeddings @ W_Q  # (seq_len, d_k)
-K = embeddings @ W_K  # (seq_len, d_k)
-V = embeddings @ W_V  # (seq_len, d_k)
+Q = embeddings @ W_Q  # (seq_len, d_k)  6 × 4
+K = embeddings @ W_K  # (seq_len, d_k)  6 × 4，必须和 Q 对齐
+V = embeddings @ W_V  # (seq_len, d_v)  6 × 3，独立维度
 
-print(f"\n输入形状: {embeddings.shape}  (序列长度, 模型维度)")
-print(f"W_Q 形状: {W_Q.shape}  (模型维度, Q/K/V 维度)")
-print(f"Q 形状:   {Q.shape}  (序列长度, Q/K/V 维度)")
-print(f"K 形状:   {K.shape}")
-print(f"V 形状:   {V.shape}")
+print(f"\n输入形状: {embeddings.shape}  (seq_len, d_model)")
+print(f"W_Q 形状: {W_Q.shape}  (d_model, d_k)")
+print(f"W_K 形状: {W_K.shape}  (d_model, d_k)")
+print(f"W_V 形状: {W_V.shape}  (d_model, d_v)  ← 注意 d_v 可以和 d_k 不同")
+print(f"Q 形状:   {Q.shape}  (seq_len, d_k)")
+print(f"K 形状:   {K.shape}  (seq_len, d_k)")
+print(f"V 形状:   {V.shape}  (seq_len, d_v)  ← V 用 d_v")
 
 # Step 2: 计算注意力分数
 scores = Q @ K.T  # (seq_len, seq_len)
@@ -125,9 +129,12 @@ for i, word in enumerate(sentence):
     print(f"  {word:4s}: [{weights_str}]")
 
 # Step 5: 加权求和
-output = attention_weights @ V  # (seq_len, d_k)
+output = attention_weights @ V  # (seq_len, d_v) ← 输出维度由 d_v 决定，不是 d_k！
 print(f"\n输出 = 注意力权重 @ V, 形状: {output.shape}")
 print(f"  每个词的新表示 = 它关注的所有词的 V 的加权平均")
+print(f"  → 输出的最后一维 = d_v ({d_v})，与 d_k ({d_k}) 解耦")
+print(f"  → score 的方差由 d_k 决定（所以除以 sqrt(d_k)），")
+print(f"    输出的'宽度'由 d_v 决定，两者职责不同")
 
 
 # ============================================================
@@ -144,11 +151,12 @@ def self_attention(X, W_Q, W_K, W_V):
     Scaled Dot-Product Self-Attention
 
     X: (seq_len, d_model)  输入序列
-    W_Q, W_K, W_V: 投影矩阵
+    W_Q, W_K: (d_model, d_k)  必须共享 d_k，否则 Q @ K.T 算不出来
+    W_V:      (d_model, d_v)  d_v 可以独立，决定输出维度
 
     返回:
-    - output: (seq_len, d_v)  注意力输出
-    - weights: (seq_len, seq_len)  注意力权重
+    - output:  (seq_len, d_v)     注意力输出（最后一维 = d_v）
+    - weights: (seq_len, seq_len) 注意力权重（与 d_k / d_v 都无关）
     """
     Q = X @ W_Q
     K = X @ W_K
@@ -190,8 +198,11 @@ def causal_self_attention(X, W_Q, W_K, W_V):
     scores = Q @ K.T / np.sqrt(d_k)
 
     seq_len = X.shape[0]
-    mask = np.triu(np.ones((seq_len, seq_len)), k=1)  # 上三角矩阵
-    scores = scores - mask * 1e9  # 未来位置 → -∞
+    # np.triu(np.ones(...), k=1)：构造严格上三角全 1 矩阵（不含主对角线）
+    # 1 = 未来位置 = 要屏蔽；0 = 当前及过去位置 = 允许看
+    # （这一族 API 在 phase0-math/03_reshape_transpose_split.py §5.5 详细讲过）
+    mask = np.triu(np.ones((seq_len, seq_len)), k=1)
+    scores = scores - mask * 1e9  # 未来位置 → -∞（softmax 后接近 0）
 
     weights = softmax(scores, axis=-1)
     output = weights @ V
@@ -264,4 +275,9 @@ print("""
 4. (进阶) 实现交叉注意力 (Cross-Attention)：
    - Q 来自一个序列，K 和 V 来自另一个序列
    - 这是机器翻译中 Encoder-Decoder 注意力的核心
+
+5. 修改 d_v（比如 d_v = 16，d_k 保持 4），观察：
+   - output 形状如何变化？(变成 (seq_len, 16))
+   - attention_weights 形状是否变化？(不会，仍然 (seq_len, seq_len))
+   - 这说明：d_k 决定"匹配空间"，d_v 决定"输出宽度"，两者解耦
 """)
