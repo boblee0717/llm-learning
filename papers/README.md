@@ -54,6 +54,15 @@
 - **作者**: George Zhang（OpenClaw 维护者）
 - **一句话**: 把 Harness engineering 放进控制论视角：从瓦特调速器到 Kubernetes 控制器，再到在架构层用 LLM 闭合反馈回路——工程师从「拧阀门」转向「设计调速器与约束」。
 
+#### Harness 延伸阅读（非论文，机制可解释性长文）
+
+> 不是必读论文，但与 Harness #7/#8 的「反馈如何塑造模型行为」主题强相关。李宏毅 Harness Engineering 视频中曾引用，建议读完 #7/#8 后选读。
+
+- **Emotion Concepts and their Function in a Large Language Model**（Anthropic，*Transformer Circuits Thread*，2024）
+  - **链接**: [transformer-circuits.pub/2024/emotions](https://transformer-circuits.pub/2024/emotions/index.html)
+  - **配合笔记**: [harness-engineering-li-hongyi.md](../harness-engineering-li-hongyi.md)
+  - **一句话**: 在电路/特征视角下讨论 LLM 中的「情绪」概念如何形成与起作用，并与交互方式（含对 Agent 的责备方式）对模型行为的影响相关联——可与「Harness 与反馈设计」对照阅读。
+
 ## 阅读技巧
 
 - **不要试图一次读完** —— 每篇花 1-2 小时，分多次读

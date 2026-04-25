@@ -7,6 +7,7 @@
 - 2026-04-14：完成第一阶段第 3 课（神经网络前向/反向传播与 XOR 分类）自写练习，并已重置练习文件准备二刷。
 - 2026-04-18：完成第二阶段第 1 课（词嵌入与位置编码）。跑通 `01_word_embeddings.py`、吃透正弦位置编码公式与 `div_term` 的 `exp(log)` 写法，看懂位置编码热力图/曲线图，完成自写练习 `01_word_embeddings_self_write.py`，并在 [phase2-transformer/README.md](phase2-transformer/README.md) 沉淀了"放大镜 + 望远镜（小维度高频看近处、大维度低频看远处）"等 5 点关键领悟。可用 `reset_exercises_01.py` 重置练习准备二刷。
 - 2026-04-18：补充 GPT-1 论文 PDF（`papers/GPT1_2018_improving_language_understanding.pdf`），并整理 [phase2-transformer/notes_gpt2_input_and_model.md](phase2-transformer/notes_gpt2_input_and_model.md) 笔记，配合第 1 课对照理解 decoder-only 的输入表示。
+- 2026-04-25：完成第二阶段第 2 课（自注意力机制）。跑通 `02_self_attention.py` 并按 8 个 TODO 手写 `02_self_attention_self_write.py`：数值稳定 softmax → Q/K/V 投影 → scores → scale → softmax → 加权 → `self_attention` 函数封装 → 因果掩码 `np.triu` → `causal_self_attention`（GPT 用），全部校验通过。
 
 ## 项目结构
 
@@ -37,6 +38,7 @@ llm-learning/
 │   ├── 01_word_embeddings.py             # 词嵌入、位置编码
 │   ├── 01_word_embeddings_self_write.py  # ↳ 自写练习（第 1 课）
 │   ├── 02_self_attention.py              # Q/K/V、注意力分数、掩码
+│   ├── 02_self_attention_self_write.py   # ↳ 自写练习（第 2 课，8 个 TODO）
 │   ├── 03_multi_head_attention.py        # 多头注意力、残差连接、LayerNorm
 │   ├── 04_transformer_block.py           # 完整 Transformer Block
 │   ├── 05_gpt_from_scratch.py            # 从零搭建 GPT，文本生成
@@ -70,7 +72,7 @@ llm-learning/
 第 0 阶段 (4课, 按需)        第一阶段 (3课)            第二阶段 (5课)             第三阶段 (5课)
 矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT  →  LoRA/量化/RLHF/推理优化
    形状与反向                  基础数学                   核心架构                     工业实践
-   📐 复习用工具书              ✅ 已完成三课               🚧 第 1 课已完成             待学习
+   📐 复习用工具书              ✅ 已完成三课               🚧 第 1-2 课已完成           待学习
 ```
 
 > **phase0-math 不是必经环节**：当你在 phase1/phase2 遇到形状或求导卡壳时回来跑对应那节即可。
@@ -139,15 +141,15 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 > 详见 [phase1-foundations/README.md](phase1-foundations/README.md)
 
-### 第二阶段：Transformer 架构（第 1 课已配自写练习）
+### 第二阶段：Transformer 架构（第 1-2 课已配自写练习）
 
-| 课程 | 文件 | 核心内容 |
-|------|------|----------|
-| 第 1 课 | `01_word_embeddings.py` | 词嵌入、位置编码 |
-| 第 2 课 | `02_self_attention.py` | Q/K/V、注意力分数、因果掩码 |
-| 第 3 课 | `03_multi_head_attention.py` | 多头注意力、残差连接、LayerNorm |
-| 第 4 课 | `04_transformer_block.py` | 完整 Transformer Block、FFN |
-| 第 5 课 | `05_gpt_from_scratch.py` | 完整 GPT 模型、文本生成 |
+| 课程 | 主课文件 | 自写练习 | 核心内容 |
+|------|----------|----------|----------|
+| 第 1 课 | `01_word_embeddings.py` | `01_word_embeddings_self_write.py` | 词嵌入、位置编码 |
+| 第 2 课 | `02_self_attention.py` | `02_self_attention_self_write.py` | Q/K/V、注意力分数、因果掩码 |
+| 第 3 课 | `03_multi_head_attention.py` | — | 多头注意力、残差连接、LayerNorm |
+| 第 4 课 | `04_transformer_block.py` | — | 完整 Transformer Block、FFN |
+| 第 5 课 | `05_gpt_from_scratch.py` | — | 完整 GPT 模型、文本生成 |
 
 > 详见 [phase2-transformer/README.md](phase2-transformer/README.md)
 
@@ -178,7 +180,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | Harness engineering（OpenAI） | 2026 | Agent 为先：人设计环境与反馈回路，Codex 产出代码与工程资产 |
 | Harness Engineering Is Cybernetics（George Zhang，X 原文） | 2026 | 将 Harness 置于控制论史：反馈回路在架构层闭合时的工程含义 |
 
-> 详见 [papers/README.md](papers/README.md)
+> 详见 [papers/README.md](papers/README.md)（Harness 章节附 Anthropic *Emotion Concepts* 长文延伸阅读）
 
 ### 推荐外部资源
 

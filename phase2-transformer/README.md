@@ -23,22 +23,24 @@ pip install -r requirements.txt
 
 按顺序学习，每课约 90-120 分钟：
 
-| 课程 | 文件 | 核心内容 | 关键概念 |
-|------|------|----------|----------|
-| 第 1 课 | `01_word_embeddings.py` | 词嵌入、位置编码 | 文本如何变成数字向量 |
-| 第 2 课 | `02_self_attention.py` | Q/K/V、注意力分数、掩码 | Transformer 的核心机制 |
-| 第 3 课 | `03_multi_head_attention.py` | 多头注意力、残差连接、LayerNorm | 为什么多头比单头好 |
-| 第 4 课 | `04_transformer_block.py` | 完整 Transformer Block、FFN | 把所有组件拼起来 |
-| 第 5 课 | `05_gpt_from_scratch.py` | 完整 GPT 模型、文本生成 | 从零搭建一个能生成文本的模型 |
+| 课程 | 主课文件 | 自写练习 | 核心内容 | 关键概念 |
+|------|----------|----------|----------|----------|
+| 第 1 课 | `01_word_embeddings.py` | `01_word_embeddings_self_write.py` | 词嵌入、位置编码 | 文本如何变成数字向量 |
+| 第 2 课 | `02_self_attention.py` | `02_self_attention_self_write.py` | Q/K/V、注意力分数、掩码 | Transformer 的核心机制 |
+| 第 3 课 | `03_multi_head_attention.py` | — | 多头注意力、残差连接、LayerNorm | 为什么多头比单头好 |
+| 第 4 课 | `04_transformer_block.py` | — | 完整 Transformer Block、FFN | 把所有组件拼起来 |
+| 第 5 课 | `05_gpt_from_scratch.py` | — | 完整 GPT 模型、文本生成 | 从零搭建一个能生成文本的模型 |
 
 ### 自写练习与重置（当前进度）
 
-- 第 1 课已提供自写练习：`01_word_embeddings_self_write.py`
-- 对应重置脚本：`reset_exercises_01.py`
+- ✅ 第 1 课：`01_word_embeddings_self_write.py`（重置脚本：`reset_exercises_01.py`）
+- ✅ 第 2 课：`02_self_attention_self_write.py`（8 个 TODO，覆盖 softmax / Q/K/V / scaled dot-product / 因果掩码；含内置 `require_*` 校验）
+- ⏳ 第 3-5 课：自写练习与重置脚本待补
 
 ```bash
 # 在项目根目录执行
 python3 phase2-transformer/reset_exercises_01.py   # 重置第二阶段第 1 课练习
+python3 phase2-transformer/02_self_attention_self_write.py   # 跑第 2 课练习并自动校验
 ```
 
 ## 必读论文
@@ -201,7 +203,7 @@ $$
    - `GPT-3` → `2.1 Model and Architectures`（看 decoder 堆叠中 attention 的使用）
 3. **③ 跑代码**：运行 `02_self_attention.py`，观察注意力分数矩阵的热力图
 4. **④ 对照理解**：把 Attention(Q,K,V) = softmax(QK^T / √d_k) V 和代码逐行对齐
-5. **⑤ 动手写**：手动修改 mask，观察输出变化；尝试去掉 scale（不除以 √d_k）看效果
+5. **⑤ 动手写**：完成 `02_self_attention_self_write.py`（8 个 TODO，每填一个就跑一次依靠 `require_*` 校验即时纠错）；做完可继续手动修改 mask 或去掉 scale 观察效果
 6. **⑥ 复盘**：能画出 Q/K/V 的维度变化图，并说明 mask 的作用
 
 ### 第 3 课：多头注意力与残差

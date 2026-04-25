@@ -229,3 +229,10 @@ Agent 没工作时自动进入**睡眠状态**,整理过去的记忆——类比
 - B站搬运版(中文字幕参考):<https://www.bilibili.com/video/BV1G7QWBSEvj/>
 - Threads 网友长文总结(本笔记引用自):<https://www.threads.com/@cooljerrett/post/DXMkyYCiXKa>
 - 李宏毅频道:<https://www.youtube.com/@HungyiLeeNTU>
+
+### 视频里提到的 Anthropic 长文（机制可解释性）
+
+- **Emotion Concepts and their Function in a Large Language Model**（Anthropic，*Transformer Circuits Thread*）  
+  **链接**: <https://transformer-circuits.pub/2024/emotions/index.html>  
+  讨论在 LLM 内部如何形成与使用「情绪」相关概念、以及「过度责备 AI Agent」等交互对行为的影响；与本文「Harness / 反馈方式如何塑造模型表现」的主题可对照阅读。  
+  仓库内亦在 [papers/README.md](papers/README.md) 列为网页延伸阅读。
