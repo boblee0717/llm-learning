@@ -228,14 +228,19 @@ $$
    - `Attention Is All You Need` → `3.1 Encoder and Decoder Stacks`（残差 + LayerNorm）、`3.2.2 Multi-Head Attention`
    - `GPT-3` → `2.1 Model and Architectures`（关注层数、头数、宽度这些规模配置）
    - `BERT` → `Model Architecture`（对照 encoder 结构中的多头注意力）
-3. **③ 跑代码**：运行 `03_multi_head_attention.py`，观察不同 head 的注意力模式差异
+3. **③ 跑代码**：运行 `03_multi_head_attention.py`，重点看 5 个 Part 的输出
+   - mask 约定与第 2 课完全一致（1=屏蔽，0=可见），可以直接复用 `np.triu(...)` 那套
 4. **④ 对照理解**：把 MultiHead(Q,K,V) = Concat(head_1,...,head_h) W^O 与代码实现对齐
-5. **⑤ 动手写**：修改 head 数量（1/2/4/8），对比输出差异；尝试去掉残差连接看梯度变化
+   - 关键维度变换：`(seq_len, d_model)` → reshape → `(n_heads, seq_len, d_head)` → concat 回 `(seq_len, d_model)`
+5. **⑤ 动手写**（至少做 2 个）：
+   - 修改 `n_heads`（1/2/8/16），对比输出差异（注意 d_model 必须能被整除）
+   - 完成代码末尾"练习 4"——给 multi_head_attention 加因果掩码（提示已写在代码里）
+   - 把 `pre_norm_block` 堆叠 10 层，对比加不加 final LayerNorm 时输出方差的变化
 6. **⑥ 复盘**：能说清以下 4 点
-   - 单头 vs 多头：为什么"分头"在参数量不变的情况下能学到更丰富的模式
-   - 残差连接的梯度优势：链式求导多出来的那个"+1"为什么能救命
-   - LayerNorm 和 BatchNorm 的关键区别：归一化维度不同 → 在变长序列上谁更友好
-   - Pre-Norm 为什么训练更稳：把残差通路从"经过 LN"变成"绕过 LN"
+   - **单头 vs 多头**：为什么"分头"在参数量不变的情况下能学到更丰富的模式
+   - **残差连接的本质**：那个 +1 不是"保证梯度 ≥ 1"（这个说法不准确），而是提供一条**不被 sublayer 雅可比衰减的恒等高速公路**——即使 sublayer 还没学会（dF/dX ≈ 0），梯度仍能传到前面去
+   - **LayerNorm vs BatchNorm**：归一化维度不同 → 在变长序列上谁更友好
+   - **Pre-Norm 的代价**：残差通路绕过 LN 让训练稳定，但输出方差会随层数累积，所以工业实现末尾必须再加一个 final LayerNorm（nanoGPT 的 `ln_f`，第 5 课会再遇到）
    - 卡住时看这篇：[Pre-Norm vs Post-Norm（含交互动图）](https://mbrenndoerfer.com/writing/pre-norm-vs-post-norm) —— 把"+1 梯度高速公路"和 LayerNorm Jacobian 画成图，是我找到的解释 Pre-Norm 最清楚的一篇
 
 ### 第 4 课：Transformer Block
