@@ -35,7 +35,8 @@ pip install -r requirements.txt
 
 - ✅ 第 1 课：`01_word_embeddings_self_write.py`（重置脚本：`reset_exercises_01.py`）
 - ✅ 第 2 课：`02_self_attention_self_write.py`（8 个 TODO，覆盖 softmax / Q/K/V / scaled dot-product / 因果掩码；含内置 `require_*` 校验）
-- ⏳ 第 3-5 课：自写练习与重置脚本待补
+- 🚧 第 3 课：进行中 —— 已补充中文学习资料（B 站 / 知乎），按"看视频 → 读论文 → 跑 `03_multi_head_attention.py`"的节奏推进
+- ⏳ 第 4-5 课：自写练习与重置脚本待补
 
 ```bash
 # 在项目根目录执行
@@ -212,12 +213,14 @@ $$
 - 单头 → 多头：不同的头关注不同的模式
 - 残差连接：解决深层网络的退化问题
 - Layer Normalization：稳定训练过程
+- Pre-Norm vs Post-Norm：为什么现代大模型几乎都用 Pre-Norm
 - **与 LLM 的关系**：GPT-3 有 96 个注意力头
 
 **按顺序做**
 
 1. **① 看视频**（20-40 min）：[Jay Alammar - The Narrated Transformer](https://www.youtube.com/watch?v=-QH8fRhqFHM)
    - 关键词：multi-head、residual、LayerNorm
+   - **中文首选**（看这一个就够）：[李宏毅 - Self-attention 下集（Multi-Head Attention）](https://www.bilibili.com/video/BV1Wv411h7kN?p=24) —— 把"分头 → 各自注意力 → 拼接 → 投影"讲透
 2. **② 读论文**（15-20 min）：
    - `Attention Is All You Need` → `3.1 Encoder and Decoder Stacks`（残差 + LayerNorm）、`3.2.2 Multi-Head Attention`
    - `GPT-3` → `2.1 Model and Architectures`（关注层数、头数、宽度这些规模配置）
@@ -225,7 +228,11 @@ $$
 3. **③ 跑代码**：运行 `03_multi_head_attention.py`，观察不同 head 的注意力模式差异
 4. **④ 对照理解**：把 MultiHead(Q,K,V) = Concat(head_1,...,head_h) W^O 与代码实现对齐
 5. **⑤ 动手写**：修改 head 数量（1/2/4/8），对比输出差异；尝试去掉残差连接看梯度变化
-6. **⑥ 复盘**：能说清"单头 vs 多头"的区别，以及残差连接为什么不可或缺
+6. **⑥ 复盘**：能说清以下 4 点
+   - 单头 vs 多头：为什么"分头"在参数量不变的情况下能学到更丰富的模式
+   - 残差连接的梯度优势：链式求导多出来的那个"+1"为什么能救命
+   - LayerNorm 和 BatchNorm 的关键区别：归一化维度不同 → 在变长序列上谁更友好
+   - Pre-Norm 为什么训练更稳：把残差通路从"经过 LN"变成"绕过 LN"
 
 ### 第 4 课：Transformer Block
 
@@ -279,10 +286,11 @@ $$
 - `Day 7`：[B 站 - Transformer 理论到实战系列](https://www.bilibili.com/video/BV12bfPY1E1S/) + 回看 `04_transformer_block.py`、`05_gpt_from_scratch.py`
 - 复盘目标：补齐注释、修正命名、能口述完整 GPT 前向流程
 
-可选补充：
-- [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/)（图解）
-- [nanoGPT](https://github.com/karpathy/nanoGPT)（最小 GPT 实现）
-- [李宏毅 - Transformer](https://www.youtube.com/watch?v=ugWDIIOHtPA)（中文课程）
+**最重要的 3 个补充资源**（其他都可以不看）：
+
+1. 🎬 [跟李沐学 AI - Transformer 论文逐段精读](https://www.bilibili.com/video/BV1pu411o7BE/) —— 中文，1.5 小时逐句过《Attention Is All You Need》，配合 phase2 论文阅读用
+2. 🎬 [karpathy - Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY) —— 英文（已在第 4/5 课用），从零手撕一个 GPT，看完整个 phase2 就通了
+3. 📝 [The Illustrated Transformer](https://jalammar.github.io/illustrated-transformer/) ｜ [中译版](https://blog.csdn.net/longxinchen_ml/article/details/86533005) —— 图解经典，卡概念时回来扫一眼
 
 ## 下一步
 
