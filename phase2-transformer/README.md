@@ -218,9 +218,12 @@ $$
 
 **按顺序做**
 
-1. **① 看视频**（20-40 min）：[Jay Alammar - The Narrated Transformer](https://www.youtube.com/watch?v=-QH8fRhqFHM)
+1. **① 看视频**（20-40 min）：[李宏毅 - Self-attention 下集（Multi-Head Attention）](https://www.bilibili.com/video/BV1Wv411h7kN?p=24)
    - 关键词：multi-head、residual、LayerNorm
-   - **中文首选**（看这一个就够）：[李宏毅 - Self-attention 下集（Multi-Head Attention）](https://www.bilibili.com/video/BV1Wv411h7kN?p=24) —— 把"分头 → 各自注意力 → 拼接 → 投影"讲透
+   - 把"分头 → 各自注意力 → 拼接 → 投影"讲得最透
+   - **强力补充**（如果只看一个英文视频，就看这个）：[3Blue1Brown - Attention in transformers, step-by-step (Chapter 6)](https://www.youtube.com/watch?v=eMlx5fFNoYc)（26 min，4M 播放）
+     - 视频 19:19-23:19 用 4 分钟可视化 96 个头如何并行产生 96 个 ΔE 加回 embedding，是目前我看过对 multi-head **几何直觉**最好的解释
+     - 配套图文版（更适合复习）：[Visualizing Attention - Grant Sanderson](https://3blue1brown.substack.com/p/visualizing-attention)，举了"glass ball 砸碎 steel table"为什么需要堆多层 attention block 的反直觉例子
 2. **② 读论文**（15-20 min）：
    - `Attention Is All You Need` → `3.1 Encoder and Decoder Stacks`（残差 + LayerNorm）、`3.2.2 Multi-Head Attention`
    - `GPT-3` → `2.1 Model and Architectures`（关注层数、头数、宽度这些规模配置）
@@ -233,6 +236,7 @@ $$
    - 残差连接的梯度优势：链式求导多出来的那个"+1"为什么能救命
    - LayerNorm 和 BatchNorm 的关键区别：归一化维度不同 → 在变长序列上谁更友好
    - Pre-Norm 为什么训练更稳：把残差通路从"经过 LN"变成"绕过 LN"
+   - 卡住时看这篇：[Pre-Norm vs Post-Norm（含交互动图）](https://mbrenndoerfer.com/writing/pre-norm-vs-post-norm) —— 把"+1 梯度高速公路"和 LayerNorm Jacobian 画成图，是我找到的解释 Pre-Norm 最清楚的一篇
 
 ### 第 4 课：Transformer Block
 
@@ -268,6 +272,7 @@ $$
 
 1. **① 看视频**（20-40 min）：[Andrej Karpathy - Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY)（**后半段**，从训练循环到文本生成）
    - 关键词：training loop、temperature、top-k
+   - **强烈推荐配套看**：[Jay Alammar - The Narrated Transformer](https://www.youtube.com/watch?v=-QH8fRhqFHM)（30 min）—— 这个视频把 GPT 的完整推理流水线（tokenize → embed → blocks → output projection → softmax → 采样）讲得最清楚，正好对应你 `05_gpt_from_scratch.py` 的代码结构
 2. **② 读论文**（15-20 min）：
    - `GPT-2` → `2.3 Model`、`3. Experiments`（先看模型结构，再看训练与生成设置）
    - `GPT-3` → `2. Training Dataset and Model`、`3. Methodology`（理解数据规模、训练范式和 few-shot 评估）
