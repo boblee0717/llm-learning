@@ -1,7 +1,7 @@
 # GPT-2 论文 §2.2 Input Representation 逐段精读
 
 > 论文：Radford et al., 2019, *Language Models are Unsupervised Multitask Learners*  
-> PDF：`papers/core-transformers/GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf`  
+> PDF：[GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf](../core-transformers/GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf)  
 > 目标章节：Section **2.2 Input Representation**（原文约 p.3–p.4）
 
 本节配合第二阶段第 1 课《词嵌入与位置编码》一起学习。

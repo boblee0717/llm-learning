@@ -15,6 +15,7 @@
 ### 1. Attention Is All You Need (2017)
 - **文件**: [Attention_Is_All_You_Need_2017.pdf](core-transformers/Attention_Is_All_You_Need_2017.pdf)
 - **配套笔记**: [attention_is_all_you_need_reading_3.4_3.5.md](notes/attention_is_all_you_need_reading_3.4_3.5.md)
+- **配套精读**: [notes_attention_qkv.md](notes/notes_attention_qkv.md)
 - **作者**: Vaswani et al. (Google)
 - **重点章节**: Section 3 (Model Architecture), Figure 1, Figure 2
 - **配合课程**: 第 2-4 课
@@ -92,6 +93,7 @@
 
 ### 4. GPT-2 (2019)
 - **文件**: [GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf](core-transformers/GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf)
+- **配套笔记**: [notes_gpt2_input_and_model.md](notes/notes_gpt2_input_and_model.md)
 - **作者**: Radford et al. (OpenAI)
 - **重点章节**: Section 2 (Approach), Table 1
 - **配合课程**: 第 5 课

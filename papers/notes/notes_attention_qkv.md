@@ -7,9 +7,9 @@
 
 | 论文 | 章节 | PDF 路径 |
 |------|------|----------|
-| Attention Is All You Need (Vaswani et al., 2017) | §3.2 Attention、§3.2.1 Scaled Dot-Product Attention | `papers/core-transformers/Attention_Is_All_You_Need_2017.pdf` |
-| GPT-2 (Radford et al., 2019) | §2.3 Model（聚焦 masked self-attention / 自回归约束） | `papers/core-transformers/GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf` |
-| GPT-3 (Brown et al., 2020) | §2.1 Model and Architectures（看 decoder 堆叠中 attention 的使用） | `papers/core-transformers/GPT3_Language_Models_are_Few_Shot_Learners_2020.pdf` |
+| Attention Is All You Need (Vaswani et al., 2017) | §3.2 Attention、§3.2.1 Scaled Dot-Product Attention | [PDF](../core-transformers/Attention_Is_All_You_Need_2017.pdf) |
+| GPT-2 (Radford et al., 2019) | §2.3 Model（聚焦 masked self-attention / 自回归约束） | [PDF](../core-transformers/GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf) |
+| GPT-3 (Brown et al., 2020) | §2.1 Model and Architectures（看 decoder 堆叠中 attention 的使用） | [PDF](../core-transformers/GPT3_Language_Models_are_Few_Shot_Learners_2020.pdf) |
 
 阅读顺序建议：**先 Vaswani §3.2 打地基 → 再 GPT-2 §2.3 看自回归约束如何落到 attention 上 → 最后 GPT-3 §2.1 看同一架构如何被堆到极致**。
 
@@ -516,7 +516,7 @@ $$
 
 # Part 2：GPT-2 §2.3 中聚焦 masked self-attention / 自回归约束
 
-> §2.3 全文已经在 `notes_gpt2_input_and_model.md` 第二部分逐句精读过。这里**只重新聚焦"masked self-attention 和自回归约束"在这一节里的体现**，不重复讲 4 个改动。
+> §2.3 全文已经在 [notes_gpt2_input_and_model.md](notes_gpt2_input_and_model.md) 第二部分逐句精读过。这里**只重新聚焦"masked self-attention 和自回归约束"在这一节里的体现**，不重复讲 4 个改动。
 
 ## 1. 第一句就锁死了"causal"基调
 
@@ -549,7 +549,7 @@ Vaswani 2017 同时提供了 encoder（双向）和 decoder（带 causal mask）
 >
 > **读到这里你只要做到一件事**：先记住下面表格里"是什么 + 在 sub-block 哪个位置"，**不必纠结细节**——等第 3、4 课正式学到时，回来回扣这一节，会有"啊原来这个就是当时那个"的感觉。
 
-回顾 §2.3 的 4 个改动（详见 `notes_gpt2_input_and_model.md`）：
+回顾 §2.3 的 4 个改动（详见 [notes_gpt2_input_and_model.md](notes_gpt2_input_and_model.md)）：
 
 | 改动 | 是否与 attention 直接相关 | 概念正式登场 |
 |------|--------------------------|--------------|
