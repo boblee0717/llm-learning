@@ -218,9 +218,10 @@ $$
 
 **按顺序做**
 
-1. **① 看视频**（20-40 min）：[李宏毅 - Self-attention 下集（Multi-Head Attention）](https://www.bilibili.com/video/BV1Wv411h7kN?p=24)
+1. **① 看视频**（45 min）：[李宏毅【機器學習2021】自注意力機制 Self-attention（下）](https://www.youtube.com/watch?v=gmsMY5kc-zw)
    - 关键词：multi-head、residual、LayerNorm
    - 把"分头 → 各自注意力 → 拼接 → 投影"讲得最透
+   - 配合阅读：[1010Code 课程笔记（基于本集整理）](https://andy6804tw.github.io/2021/05/03/ntu-multi-head-self-attention/)，把 multi-head 的图示按文字版重写了一遍，复习时用
    - **强力补充**（如果只看一个英文视频，就看这个）：[3Blue1Brown - Attention in transformers, step-by-step (Chapter 6)](https://www.youtube.com/watch?v=eMlx5fFNoYc)（26 min，4M 播放）
      - 视频 19:19-23:19 用 4 分钟可视化 96 个头如何并行产生 96 个 ΔE 加回 embedding，是目前我看过对 multi-head **几何直觉**最好的解释
      - 配套图文版（更适合复习）：[Visualizing Attention - Grant Sanderson](https://3blue1brown.substack.com/p/visualizing-attention)，举了"glass ball 砸碎 steel table"为什么需要堆多层 attention block 的反直觉例子
