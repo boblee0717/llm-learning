@@ -39,6 +39,24 @@
   - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）线性注意力延伸阅读
   - **一句话**: 将自注意力写成 kernel feature map 的线性点积形式，用矩阵乘法结合律把复杂度从 O(N^2) 降到 O(N)，并展示自回归 Transformer 与 RNN 的联系。
 
+#### Efficient Transformer / Long Context 延伸阅读（未读）
+
+- **Long Range Arena: A Benchmark for Efficient Transformers** (2020)
+  - **状态**: 未读
+  - **文件**: `Long_Range_Arena_A_Benchmark_for_Efficient_Transformers_2020.pdf`
+  - **链接**: [arxiv.org/abs/2011.04006](https://arxiv.org/abs/2011.04006)
+  - **作者**: Yi Tay, Mostafa Dehghani, Samira Abnar, Yikang Shen, Dara Bahri, Philip Pham, Jinfeng Rao, Liu Yang, Sebastian Ruder, Donald Metzler
+  - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）高效长序列 Transformer 延伸阅读
+  - **一句话**: 提出 Long Range Arena (LRA) benchmark，用 1K-16K token 的多模态长序列任务系统比较 Reformer、Linformer、Performer、Longformer 等高效 Transformer。
+
+- **Efficient Transformers: A Survey** (2022 edition)
+  - **状态**: 未读
+  - **文件**: `Efficient_Transformers_A_Survey_2022.pdf`
+  - **链接**: [arxiv.org/abs/2009.06732](https://arxiv.org/abs/2009.06732)
+  - **作者**: Yi Tay, Mostafa Dehghani, Dara Bahri, Donald Metzler
+  - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）高效 Transformer 综述
+  - **一句话**: 系统梳理 Reformer、Linformer、Performer、Longformer 等 X-former 家族，按计算和内存效率改进路线组织高效 Transformer 的整体地图。
+
 #### Vision Transformer 延伸阅读（未读）
 
 - **An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale** (2020)
