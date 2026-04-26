@@ -11,6 +11,26 @@
 - **配合课程**: 第 2-4 课
 - **一句话**: 提出 Transformer 架构，用纯注意力机制取代 RNN
 
+#### 位置编码延伸阅读（未读）
+
+- **Learning to Encode Position for Transformer with Continuous Dynamical Model** (2020)
+  - **状态**: 未读
+  - **文件**: `Learning_to_Encode_Position_for_Transformer_with_Continuous_Dynamical_Model_2020.pdf`
+  - **链接**: [arxiv.org/abs/2003.09229](https://arxiv.org/abs/2003.09229)
+  - **作者**: Xuanqing Liu, Hsiang-Fu Yu, Inderjit Dhillon, Cho-Jui Hsieh
+  - **配合课程**: 第 1 课（位置编码）延伸阅读
+  - **一句话**: 用连续动力系统 / Neural ODE 的视角学习可外推的位置编码，对比正弦位置编码、可学习位置 embedding 与 RoPE 等方法的取舍。
+
+#### Self-Attention 延伸阅读（未读）
+
+- **On the Relationship between Self-Attention and Convolutional Layers** (2020)
+  - **状态**: 未读
+  - **文件**: `On_the_Relationship_between_Self_Attention_and_Convolutional_Layers_2020.pdf`
+  - **链接**: [arxiv.org/abs/1911.03584](https://arxiv.org/abs/1911.03584)
+  - **作者**: Jean-Baptiste Cordonnier, Andreas Loukas, Martin Jaggi
+  - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）延伸阅读
+  - **一句话**: 从表达能力和视觉实验角度解释多头自注意力与卷积层的关系，说明 self-attention 在足够 head 下可以模拟卷积，并常会学到类似像素网格的注意力模式。
+
 ### 2. GPT-1 (2018)
 - **文件**: `GPT1_2018_improving_language_understanding.pdf`
 - **官方 PDF**: [https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf](https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf)
