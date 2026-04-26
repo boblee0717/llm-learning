@@ -2,10 +2,19 @@
 
 按阅读顺序排列，建议配合第二阶段的代码课程一起学习。
 
+## 目录分类
+
+- `core-transformers/`: Transformer、GPT、BERT、InstructGPT 等主线论文
+- `attention-extensions/`: 位置编码、Self-Attention 表达能力、线性注意力等延伸论文
+- `efficient-transformers/`: 高效 Transformer 与长上下文 benchmark / survey
+- `vision-transformers/`: Vision Transformer 方向论文
+- `notes/`: 论文精读笔记
+
 ## 阅读顺序
 
 ### 1. Attention Is All You Need (2017)
-- **文件**: [Attention_Is_All_You_Need_2017.pdf](Attention_Is_All_You_Need_2017.pdf)
+- **文件**: [Attention_Is_All_You_Need_2017.pdf](core-transformers/Attention_Is_All_You_Need_2017.pdf)
+- **配套笔记**: [attention_is_all_you_need_reading_3.4_3.5.md](notes/attention_is_all_you_need_reading_3.4_3.5.md)
 - **作者**: Vaswani et al. (Google)
 - **重点章节**: Section 3 (Model Architecture), Figure 1, Figure 2
 - **配合课程**: 第 2-4 课
@@ -15,7 +24,7 @@
 
 - **Learning to Encode Position for Transformer with Continuous Dynamical Model** (2020)
   - **状态**: 未读
-  - **文件**: [Learning_to_Encode_Position_for_Transformer_with_Continuous_Dynamical_Model_2020.pdf](Learning_to_Encode_Position_for_Transformer_with_Continuous_Dynamical_Model_2020.pdf)
+  - **文件**: [Learning_to_Encode_Position_for_Transformer_with_Continuous_Dynamical_Model_2020.pdf](attention-extensions/Learning_to_Encode_Position_for_Transformer_with_Continuous_Dynamical_Model_2020.pdf)
   - **来源**: [arxiv.org/abs/2003.09229](https://arxiv.org/abs/2003.09229)
   - **作者**: Xuanqing Liu, Hsiang-Fu Yu, Inderjit Dhillon, Cho-Jui Hsieh
   - **配合课程**: 第 1 课（位置编码）延伸阅读
@@ -25,7 +34,7 @@
 
 - **On the Relationship between Self-Attention and Convolutional Layers** (2020)
   - **状态**: 未读
-  - **文件**: [On_the_Relationship_between_Self_Attention_and_Convolutional_Layers_2020.pdf](On_the_Relationship_between_Self_Attention_and_Convolutional_Layers_2020.pdf)
+  - **文件**: [On_the_Relationship_between_Self_Attention_and_Convolutional_Layers_2020.pdf](attention-extensions/On_the_Relationship_between_Self_Attention_and_Convolutional_Layers_2020.pdf)
   - **来源**: [arxiv.org/abs/1911.03584](https://arxiv.org/abs/1911.03584)
   - **作者**: Jean-Baptiste Cordonnier, Andreas Loukas, Martin Jaggi
   - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）延伸阅读
@@ -33,7 +42,7 @@
 
 - **Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention** (2020)
   - **状态**: 未读
-  - **文件**: [Transformers_are_RNNs_Fast_Autoregressive_Transformers_with_Linear_Attention_2020.pdf](Transformers_are_RNNs_Fast_Autoregressive_Transformers_with_Linear_Attention_2020.pdf)
+  - **文件**: [Transformers_are_RNNs_Fast_Autoregressive_Transformers_with_Linear_Attention_2020.pdf](attention-extensions/Transformers_are_RNNs_Fast_Autoregressive_Transformers_with_Linear_Attention_2020.pdf)
   - **来源**: [arxiv.org/abs/2006.16236](https://arxiv.org/abs/2006.16236)
   - **作者**: Angelos Katharopoulos, Apoorv Vyas, Nikolaos Pappas, Francois Fleuret
   - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）线性注意力延伸阅读
@@ -43,7 +52,7 @@
 
 - **Long Range Arena: A Benchmark for Efficient Transformers** (2020)
   - **状态**: 未读
-  - **文件**: [Long_Range_Arena_A_Benchmark_for_Efficient_Transformers_2020.pdf](Long_Range_Arena_A_Benchmark_for_Efficient_Transformers_2020.pdf)
+  - **文件**: [Long_Range_Arena_A_Benchmark_for_Efficient_Transformers_2020.pdf](efficient-transformers/Long_Range_Arena_A_Benchmark_for_Efficient_Transformers_2020.pdf)
   - **来源**: [arxiv.org/abs/2011.04006](https://arxiv.org/abs/2011.04006)
   - **作者**: Yi Tay, Mostafa Dehghani, Samira Abnar, Yikang Shen, Dara Bahri, Philip Pham, Jinfeng Rao, Liu Yang, Sebastian Ruder, Donald Metzler
   - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）高效长序列 Transformer 延伸阅读
@@ -51,7 +60,7 @@
 
 - **Efficient Transformers: A Survey** (2022 edition)
   - **状态**: 未读
-  - **文件**: [Efficient_Transformers_A_Survey_2022.pdf](Efficient_Transformers_A_Survey_2022.pdf)
+  - **文件**: [Efficient_Transformers_A_Survey_2022.pdf](efficient-transformers/Efficient_Transformers_A_Survey_2022.pdf)
   - **来源**: [arxiv.org/abs/2009.06732](https://arxiv.org/abs/2009.06732)
   - **作者**: Yi Tay, Mostafa Dehghani, Dara Bahri, Donald Metzler
   - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）高效 Transformer 综述
@@ -61,14 +70,14 @@
 
 - **An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale** (2020)
   - **状态**: 未读
-  - **文件**: [An_Image_is_Worth_16x16_Words_Transformers_for_Image_Recognition_at_Scale_2020.pdf](An_Image_is_Worth_16x16_Words_Transformers_for_Image_Recognition_at_Scale_2020.pdf)
+  - **文件**: [An_Image_is_Worth_16x16_Words_Transformers_for_Image_Recognition_at_Scale_2020.pdf](vision-transformers/An_Image_is_Worth_16x16_Words_Transformers_for_Image_Recognition_at_Scale_2020.pdf)
   - **来源**: [arxiv.org/abs/2010.11929](https://arxiv.org/abs/2010.11929)
   - **作者**: Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, Neil Houlsby
   - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）视觉方向延伸阅读
   - **一句话**: Vision Transformer (ViT) 把图像切成 patch 序列，直接用纯 Transformer 做图像分类，展示大规模预训练后可与卷积网络竞争。
 
 ### 2. GPT-1 (2018)
-- **文件**: [GPT1_2018_improving_language_understanding.pdf](GPT1_2018_improving_language_understanding.pdf)
+- **文件**: [GPT1_2018_improving_language_understanding.pdf](core-transformers/GPT1_2018_improving_language_understanding.pdf)
 - **来源**: [OpenAI 官方 PDF](https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf)
 - **作者**: Radford et al. (OpenAI)
 - **重点章节**: Section 3 (Framework), Section 4 (Experiments)
@@ -76,26 +85,26 @@
 - **一句话**: 生成式预训练 + 判别式微调，用 Transformer Decoder 学通用表示并迁移到下游任务
 
 ### 3. BERT (2018)
-- **文件**: [BERT_2018.pdf](BERT_2018.pdf)
+- **文件**: [BERT_2018.pdf](core-transformers/BERT_2018.pdf)
 - **作者**: Devlin et al. (Google)
 - **重点章节**: Section 3 (Pre-training BERT), Figure 1
 - **一句话**: 双向 Transformer Encoder，开创预训练+微调范式
 
 ### 4. GPT-2 (2019)
-- **文件**: [GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf](GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf)
+- **文件**: [GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf](core-transformers/GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf)
 - **作者**: Radford et al. (OpenAI)
 - **重点章节**: Section 2 (Approach), Table 1
 - **配合课程**: 第 5 课
 - **一句话**: 纯 Decoder 的语言模型，证明无监督预训练的强大
 
 ### 5. GPT-3 (2020)
-- **文件**: [GPT3_Language_Models_are_Few_Shot_Learners_2020.pdf](GPT3_Language_Models_are_Few_Shot_Learners_2020.pdf)
+- **文件**: [GPT3_Language_Models_are_Few_Shot_Learners_2020.pdf](core-transformers/GPT3_Language_Models_are_Few_Shot_Learners_2020.pdf)
 - **作者**: Brown et al. (OpenAI)
 - **重点章节**: Section 1 (Introduction), Figure 1.1, Section 3
 - **一句话**: 175B 参数，展示 In-context Learning 和 Scaling Law
 
 ### 6. InstructGPT (2022)
-- **文件**: [InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf](InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf)
+- **文件**: [InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf](core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf)
 - **作者**: Ouyang et al. (OpenAI)
 - **重点章节**: Section 3 (Methods), Figure 2
 - **一句话**: RLHF 的落地实践，让模型学会遵循人类指令

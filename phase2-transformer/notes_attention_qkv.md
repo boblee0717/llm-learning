@@ -7,9 +7,9 @@
 
 | 论文 | 章节 | PDF 路径 |
 |------|------|----------|
-| Attention Is All You Need (Vaswani et al., 2017) | §3.2 Attention、§3.2.1 Scaled Dot-Product Attention | `papers/Attention_Is_All_You_Need_2017.pdf` |
-| GPT-2 (Radford et al., 2019) | §2.3 Model（聚焦 masked self-attention / 自回归约束） | `papers/GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf` |
-| GPT-3 (Brown et al., 2020) | §2.1 Model and Architectures（看 decoder 堆叠中 attention 的使用） | `papers/GPT3_Language_Models_are_Few-Shot_Learners_2020.pdf` |
+| Attention Is All You Need (Vaswani et al., 2017) | §3.2 Attention、§3.2.1 Scaled Dot-Product Attention | `papers/core-transformers/Attention_Is_All_You_Need_2017.pdf` |
+| GPT-2 (Radford et al., 2019) | §2.3 Model（聚焦 masked self-attention / 自回归约束） | `papers/core-transformers/GPT2_Language_Models_are_Unsupervised_Multitask_Learners_2019.pdf` |
+| GPT-3 (Brown et al., 2020) | §2.1 Model and Architectures（看 decoder 堆叠中 attention 的使用） | `papers/core-transformers/GPT3_Language_Models_are_Few_Shot_Learners_2020.pdf` |
 
 阅读顺序建议：**先 Vaswani §3.2 打地基 → 再 GPT-2 §2.3 看自回归约束如何落到 attention 上 → 最后 GPT-3 §2.1 看同一架构如何被堆到极致**。
 
