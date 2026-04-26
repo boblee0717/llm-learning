@@ -16,6 +16,7 @@
 - [三、大模型（LLM）基础面（架构与体系）](#三大模型llm基础面架构与体系)
 - [四、大模型（LLM）进阶面（生成策略与长文本）](#四大模型llm进阶面生成策略与长文本)
 - [五、大模型（LLM）微调与领域训练面](#五大模型llm微调与领域训练面)
+- [六、Agent 专题面试（架构、协议与工程落地）](#六agent-专题面试架构协议与工程落地)
 - [附录 A：显存估算速查表](#附录-a显存估算速查表)
 - [附录 B：解码策略速查表](#附录-b解码策略速查表)
 - [附录 C：一页纸「背不下来就背这个」](#附录-c一页纸背不下来就背这个)
@@ -918,6 +919,250 @@ score = (1-α) · p_model(x) - α · max_sim(x, history)
 
 ---
 
+## 六、Agent 专题面试（架构、协议与工程落地）
+
+> 整理自新增 Agent 面试题图片，并结合前文 LLM / RAG / 工具调用 / 工程可靠性内容补全。面试时重点不是背名词，而是能说清：**为什么需要 Agent、怎么接工具、怎么控风险、怎么评估可靠性**。
+
+### 1. ⭐ LLM 和 Agent 有什么区别？
+
+**一句话答案**：LLM 是「会生成和推理的模型」，Agent 是「以 LLM 为大脑，能感知上下文、规划步骤、调用工具、执行动作并根据反馈迭代的系统」。
+
+**展开**：
+- **LLM**：输入 prompt，输出文本 / JSON / tool call；本身不直接访问外部世界，也不天然拥有长期记忆或执行能力。
+- **Agent**：在 LLM 外面加上工具、记忆、检索、执行器、状态机、权限控制和反馈循环，让模型能完成多步任务。
+- 典型链路：`用户目标 → 任务理解 → 计划 → 选择工具 → 执行 → 观察结果 → 继续推理/修正 → 产出答案`。
+- 所以面试里不要说「Agent 比 LLM 更聪明」，更准确是：**Agent 是围绕 LLM 搭出来的工程系统**。
+
+**追问怎么答**：
+- 如果只是问答、分类、改写：直接调 LLM 足够。
+- 如果任务需要查库、调 API、写文件、跑代码、多轮纠错：需要 Agent。
+- Agent 的代价是延迟、成本、不可控性和安全面扩大，所以不是越 Agent 越好。
+
+### 2. ⭐ Agent 和 Workflow 有什么区别？
+
+**一句话答案**：Workflow 是人预先写死路径的流程编排；Agent 是模型根据当前状态动态决定下一步做什么。
+
+**展开**：
+- **Workflow**：步骤固定，例如「抽取字段 → 查库 → 生成报告 → 审核格式」，每一步由代码决定。
+- **Agent**：目标固定但路径不固定，例如「帮我修复这个 bug」，模型会自己判断要读哪些文件、跑哪些测试、改哪些代码。
+- Anthropic 的定义很适合面试：workflow 是 LLM 和工具走预定义代码路径；agent 是 LLM 动态主导自己的流程和工具使用。
+- 二者可以混用：外层用 workflow 控制边界，内部某一步交给 agent 自主探索。
+
+**选型口诀**：
+- 路径稳定、合规要求高、结果可模板化：Workflow。
+- 路径开放、需要探索、多步决策、工具选择不确定：Agent。
+- 生产里常见做法：**先 workflow，只有复杂度真的需要时再引入 agent**。
+
+### 3. Agent 有哪些工作模式？
+
+**一句话答案**：常见模式包括单次工具增强 LLM、Prompt Chaining、Routing、Parallelization、Orchestrator-Workers、Evaluator-Optimizer、自主循环 Agent、多 Agent 协作。
+
+**展开**：
+- **增强型 LLM**：LLM + RAG + tools + memory，是最小 Agent building block。
+- **Prompt Chaining**：把任务拆成固定链路，每一步处理上一步结果。
+- **Routing**：先分类，再路由到不同 prompt / model / tool。
+- **Parallelization**：多个子任务并行，最后合并或投票。
+- **Orchestrator-Workers**：一个调度器动态拆任务，多个 worker 执行。
+- **Evaluator-Optimizer**：一个生成，一个评审，循环改进。
+- **Autonomous Agent Loop**：`plan → act → observe → reflect` 多轮执行。
+- **Multi-Agent**：多个角色/服务协作，如规划 Agent、检索 Agent、代码 Agent、审核 Agent。
+
+**面试加分**：说清楚每种模式的「收益和风险」。比如自主循环灵活，但最容易成本失控；Evaluator-Optimizer 准确率高，但延迟翻倍。
+
+### 4. ⭐ Function Call 是什么？底层怎么实现？
+
+**一句话答案**：Function Call / Tool Call 是让模型按预定义 JSON Schema 生成「要调用哪个函数、参数是什么」，真正的函数执行由业务后端完成，模型不直接执行代码。
+
+**底层流程**：
+1. 开发者把工具定义发给模型：`name`、`description`、`parameters(JSON Schema)`。
+2. 模型判断需要工具时，输出结构化 tool call，例如 `get_weather({"city":"Shanghai"})`。
+3. 应用层校验函数名、参数类型、权限和额度。
+4. 后端执行真实函数 / API / DB 查询。
+5. 把 tool result 作为新消息喂回模型。
+6. 模型基于结果继续推理或生成最终答案。
+
+**工程要点**：
+- 工具描述要清楚边界：什么时候用、什么时候不能用、参数含义、单位、异常。
+- 参数必须做 schema 校验，最好使用 strict / structured output。
+- 工具执行要有 timeout、retry、幂等、审计日志、错误码。
+- 高危工具要 human-in-the-loop，例如转账、删库、发邮件、下单。
+
+**一句话追问**：Function Call 不是 RPC 本身，而是「模型到业务函数的一层结构化意图表达」。
+
+### 5. ⭐ MCP 是什么协议？解决什么问题？
+
+**一句话答案**：MCP（Model Context Protocol）是连接 AI 应用和外部工具 / 数据 / prompt 的开放协议，解决「每个 Agent 都要为每个工具单独适配」的 M×N 集成问题。
+
+**展开**：
+- MCP 类似「AI 应用的 USB-C」：客户端一次实现协议，就能连接多个 MCP server。
+- 架构上分三类角色：
+  - **MCP Host**：AI 应用，如 IDE、Agent 客户端。
+  - **MCP Client**：Host 内部维护到某个 server 的连接。
+  - **MCP Server**：暴露工具、资源、prompt 的服务。
+- 协议层基于 JSON-RPC，常见传输是 stdio（本地）和 Streamable HTTP（远程）。
+- MCP server 主要暴露三类能力：
+  - **Tools**：可执行动作，如查库、调用 API、读写文件。
+  - **Resources**：上下文数据，如文件内容、数据库 schema、业务文档。
+  - **Prompts**：可复用提示模板或 few-shot 模板。
+
+**解决的问题**：
+- 标准化工具发现：`tools/list`。
+- 标准化工具执行：`tools/call`。
+- 标准化上下文读取：resources。
+- 降低集成复杂度：工具方实现一次 MCP server，多种 Agent 客户端可接入。
+
+### 6. Skills 是什么？和 Prompt 有什么区别？
+
+**一句话答案**：Prompt 是一次性的自然语言指令；Skill 是可复用、可版本化的能力包，通常包含 `SKILL.md` 指令、脚本、参考资料和模板，让 Agent 在特定任务上稳定执行工作流。
+
+**展开**：
+- **Prompt**：轻量、即时、上下文内生效，适合一次性约束。
+- **Skill**：沉淀成目录或 bundle，包含触发说明、步骤、脚本、资产、参考文档，适合反复使用。
+- Skill 的核心价值是「把隐性经验产品化」：比如写周报、处理 Excel、生成 PPT、做代码审查、读 Figma。
+- Codex / OpenAI Skills 里常见结构：`SKILL.md` + `scripts/` + `references/` + `assets/`。
+
+**对比表**：
+
+| 维度 | Prompt | Skill |
+|---|---|---|
+| 生命周期 | 单次对话 | 可复用、可版本化 |
+| 内容 | 指令文本 | 指令 + 脚本 + 资料 + 模板 |
+| 触发 | 用户直接输入 | 显式调用或按描述匹配 |
+| 适合 | 临时任务 | 稳定流程 / 团队规范 |
+
+### 7. Function Call、MCP、Skills 三者区别与协作？
+
+**一句话答案**：Function Call 是模型调用工具的机制，MCP 是工具和上下文接入的协议，Skills 是教 Agent 如何完成任务的能力包；三者分别解决「怎么调用」「接到哪里」「如何做得好」。
+
+**区别**：
+- **Function Call**：模型输出结构化调用意图，应用层执行函数。
+- **MCP**：标准化暴露工具 / 资源 / prompt，让不同客户端和工具互通。
+- **Skills**：封装任务方法论和配套资源，告诉 Agent 什么时候做、按什么步骤做。
+
+**协作例子**：
+1. 用户说「根据数据库生成经营日报」。
+2. Skill 提供日报生成流程、口径说明、模板。
+3. MCP server 暴露数据库 schema、查询工具、BI 工具。
+4. LLM 通过 function/tool call 触发查询。
+5. Agent 根据结果生成报告，并按 Skill 的检查清单自检。
+
+**面试一句话**：Function Call 偏模型接口，MCP 偏生态协议，Skills 偏任务知识与工作流沉淀。
+
+### 8. A2A 协议是什么？和 MCP 的关系？
+
+**一句话答案**：A2A（Agent2Agent）是 Agent 之间通信和协作的开放协议；MCP 主要连接 Agent 与工具 / 数据，A2A 主要连接 Agent 与 Agent，二者互补。
+
+**展开**：
+- **MCP**：一个 Agent 想访问文件、数据库、搜索、Figma、Notion，用 MCP。
+- **A2A**：一个 Agent 想调用另一个独立部署的专业 Agent，用 A2A。
+- A2A 适合：
+  - 不同团队维护的 Agent；
+  - 不同语言 / 框架实现的 Agent；
+  - 跨网络边界的独立服务；
+  - 需要正式契约、鉴权、任务状态和产物交换的场景。
+- 如果只是同一进程里的子模块，优先用本地 sub-agent / 函数调用，不要为了概念上 A2A。
+
+**关系图**：
+
+```text
+用户
+  ↓
+主 Agent
+  ├─ MCP → 工具 / 数据源 / prompt 模板
+  └─ A2A → 远程专业 Agent → 其内部也可能用 MCP 调工具
+```
+
+### 9. ⭐ Agent 的记忆系统怎么设计？
+
+**一句话答案**：Agent 记忆要分层设计：短期上下文放当前窗口，长期事实进结构化存储或向量库，任务状态进 session/store，写入和读取都要有策略、权限和遗忘机制。
+
+**常见分层**：
+- **Working Memory**：当前任务上下文，放 prompt / conversation state。
+- **Session Memory**：一次会话内的状态，如计划、已调用工具、临时变量。
+- **Episodic Memory**：历史事件，如用户过去做过哪些任务、失败案例。
+- **Semantic Memory**：长期知识，如用户偏好、业务规则、项目背景。
+- **Procedural Memory**：做事方法，常以 Skills / SOP / prompt 模板形式存在。
+
+**设计要点**：
+- 写入前先判断：这条信息未来是否会复用？是否敏感？是否需要过期？
+- 读取时要检索 + rerank，避免把无关记忆塞满上下文。
+- 记忆要带来源、时间、置信度、作用域和权限标签。
+- 支持删除、过期、用户可见和审计，避免「偷偷记住」造成隐私风险。
+
+**面试加分**：记忆不是越多越好，错误记忆会污染推理；生产系统要有 memory eval 和人工纠错入口。
+
+### 10. ⭐ Agent 的安全与可靠性如何保障？
+
+**一句话答案**：Agent 安全靠权限最小化、工具隔离、输入输出校验、人工确认、可观测性和评测闭环；可靠性靠状态管理、重试幂等、回滚和持续 eval。
+
+**安全 checklist**：
+- **权限最小化**：工具按用户、环境、任务授权，不给万能 token。
+- **高危动作确认**：转账、删除、发消息、改生产配置必须人工确认。
+- **沙箱隔离**：代码执行、浏览器、文件系统限制目录和网络。
+- **Prompt Injection 防护**：把用户内容、检索内容、工具结果分层标注，禁止外部文本修改系统指令。
+- **参数校验**：函数名白名单、JSON Schema、枚举值、范围校验。
+- **数据边界**：租户隔离、PII 脱敏、日志脱敏。
+
+**可靠性 checklist**：
+- 工具调用 timeout / retry / circuit breaker。
+- 幂等 key，避免重试导致重复下单 / 重复发邮件。
+- 任务状态机：pending / running / blocked / failed / succeeded。
+- 完整 tracing：每步 prompt、tool call、tool result、耗时、错误码。
+- 离线 eval + 在线灰度 + 人工抽检。
+- 失败可恢复：checkpoint、回滚、resume。
+
+### 11. RAG 和 Agent 是什么关系？
+
+**一句话答案**：RAG 是给模型补充外部知识的检索增强模块；Agent 可以把 RAG 当成一个工具，并在多步任务中主动决定何时检索、检索什么、如何验证。
+
+**展开**：
+- 普通 RAG：用户问题 → 检索 → 拼上下文 → LLM 回答。
+- Agentic RAG：Agent 会先判断要不要检索，生成查询，必要时多轮检索、改写 query、交叉验证来源，再回答。
+- RAG 解决「不知道 / 知识过期」问题；Agent 解决「任务多步 / 需要行动」问题。
+- 很多生产 Agent 的基础能力就是：RAG + 工具调用 + 记忆 + workflow。
+
+**常见追问**：
+- RAG 能不能替代微调？多数知识问答场景可以优先 RAG；风格、格式、领域行为稳定性再考虑 SFT。
+- RAG 怎么防幻觉？引用来源、检索置信度、拒答阈值、答案必须由证据支持。
+- Agent 用 RAG 的风险？检索结果可能带 prompt injection，要做内容隔离和引用校验。
+
+### 12. 大厂真实面试追问汇总
+
+**架构追问**：
+- 什么时候不用 Agent？答：路径固定、单次调用足够、强合规、低延迟场景。
+- 多 Agent 一定更好吗？答：不一定，会带来通信成本、角色漂移、责任不清。
+- Agent 失败通常失败在哪里？答：目标理解错、工具选错、参数错、外部环境错、观察结果解释错、循环失控。
+
+**工具调用追问**：
+- Function Call 参数错怎么办？答：schema 校验 + 自动修复 + 重试上限 + 用户澄清。
+- 工具返回冲突怎么办？答：来源优先级、时间戳、置信度、二次验证。
+- 怎么防止模型乱调工具？答：工具白名单、描述边界、调用预算、审批策略。
+
+**MCP / A2A 追问**：
+- MCP 和 OpenAPI 区别？答：OpenAPI 描述 HTTP API；MCP 面向 AI 应用上下文交换，除了 tools 还有 resources、prompts、capability negotiation。
+- A2A 和 MCP 怎么选？答：调工具/数据用 MCP，调远程独立 Agent 用 A2A。
+- MCP server 挂了怎么办？答：健康检查、降级、缓存、错误回传给模型、必要时切备用 server。
+
+**记忆与 RAG 追问**：
+- 记忆写错了怎么办？答：来源记录、置信度、用户可编辑、过期机制、纠错事件覆盖旧记忆。
+- RAG 召回不到怎么办？答：query rewrite、多路召回、扩展同义词、fallback 到澄清问题。
+- 长上下文能否替代 RAG？答：不能完全替代；长上下文解决容量，RAG 解决筛选、更新、成本和证据定位。
+
+**工程落地追问**：
+- 如何评估 Agent？答：任务成功率、步骤成功率、工具调用准确率、人工接管率、成本、延迟、安全违规率。
+- 如何上线？答：离线回放 → shadow mode → 小流量灰度 → 人工审核 → 自动化监控。
+- 如何降低成本？答：小模型路由、缓存、限制循环步数、工具结果复用、只在必要时启用 Agent。
+
+**Agent 专题参考资料**：
+- OpenAI Function Calling / Tools 文档：<https://developers.openai.com/api/docs/guides/function-calling>
+- MCP 官方文档：<https://modelcontextprotocol.io/docs/getting-started/intro>
+- MCP Architecture：<https://modelcontextprotocol.io/docs/learn/architecture>
+- Anthropic《Building Effective Agents》：<https://www.anthropic.com/engineering/building-effective-agents>
+- Google ADK A2A Intro：<https://adk.dev/a2a/intro/>
+- OpenAI / Codex Skills 文档：<https://developers.openai.com/api/docs/guides/tools-skills>
+
+---
+
 ## 附录 A：显存估算速查表
 
 **推理（纯权重）**：
@@ -964,4 +1209,4 @@ score = (1-α) · p_model(x) - α · max_sim(x, history)
 
 ---
 
-> 原始题目来自面试题图片整理文档；答案经二次 refine，可能与具体公司/版本实现有出入，以官方论文/代码为准。
+> 原始题目来自面试题图片整理文档；Agent 专题补充自新增截图目录并结合官方文档整理。答案经二次 refine，可能与具体公司/版本实现有出入，以官方论文/代码/协议文档为准。
