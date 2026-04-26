@@ -31,6 +31,14 @@
   - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）延伸阅读
   - **一句话**: 从表达能力和视觉实验角度解释多头自注意力与卷积层的关系，说明 self-attention 在足够 head 下可以模拟卷积，并常会学到类似像素网格的注意力模式。
 
+- **Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention** (2020)
+  - **状态**: 未读
+  - **文件**: `Transformers_are_RNNs_Fast_Autoregressive_Transformers_with_Linear_Attention_2020.pdf`
+  - **链接**: [arxiv.org/abs/2006.16236](https://arxiv.org/abs/2006.16236)
+  - **作者**: Angelos Katharopoulos, Apoorv Vyas, Nikolaos Pappas, Francois Fleuret
+  - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）线性注意力延伸阅读
+  - **一句话**: 将自注意力写成 kernel feature map 的线性点积形式，用矩阵乘法结合律把复杂度从 O(N^2) 降到 O(N)，并展示自回归 Transformer 与 RNN 的联系。
+
 #### Vision Transformer 延伸阅读（未读）
 
 - **An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale** (2020)
