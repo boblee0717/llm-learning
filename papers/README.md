@@ -31,6 +31,16 @@
   - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）延伸阅读
   - **一句话**: 从表达能力和视觉实验角度解释多头自注意力与卷积层的关系，说明 self-attention 在足够 head 下可以模拟卷积，并常会学到类似像素网格的注意力模式。
 
+#### Vision Transformer 延伸阅读（未读）
+
+- **An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale** (2020)
+  - **状态**: 未读
+  - **文件**: `An_Image_is_Worth_16x16_Words_Transformers_for_Image_Recognition_at_Scale_2020.pdf`
+  - **链接**: [arxiv.org/abs/2010.11929](https://arxiv.org/abs/2010.11929)
+  - **作者**: Alexey Dosovitskiy, Lucas Beyer, Alexander Kolesnikov, Dirk Weissenborn, Xiaohua Zhai, Thomas Unterthiner, Mostafa Dehghani, Matthias Minderer, Georg Heigold, Sylvain Gelly, Jakob Uszkoreit, Neil Houlsby
+  - **配合课程**: 第 2-3 课（Self-Attention / Multi-Head Attention）视觉方向延伸阅读
+  - **一句话**: Vision Transformer (ViT) 把图像切成 patch 序列，直接用纯 Transformer 做图像分类，展示大规模预训练后可与卷积网络竞争。
+
 ### 2. GPT-1 (2018)
 - **文件**: `GPT1_2018_improving_language_understanding.pdf`
 - **官方 PDF**: [https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf](https://cdn.openai.com/research-covers/language-unsupervised/language_understanding_paper.pdf)
