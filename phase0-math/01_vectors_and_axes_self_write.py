@@ -51,12 +51,54 @@ def require_close(name, actual, expected, atol=1e-6):
 
 
 # ============================================================
+section("TODO-0：搞清楚 (3,) / (1,3) / (3,1) 到底有什么不一样")
+# ============================================================
+# 背景：np.array([1,2,3]).shape 是 (3,) 而不是 (1,3)。
+# 这是因为 numpy 严格区分 "ndim（几维）"：
+#   - (3,)   是 1 维向量，没有行/列概念
+#   - (1, 3) 是 2 维矩阵，恰好只有一行
+#   - (3, 1) 是 2 维矩阵，恰好只有一列
+# numpy 不会自动把 1 维补成 2 维，否则你就丢失了"我就是个一维向量"的表达能力，
+# 而且后面 axis、keepdims、广播的语义都会乱。
+#
+# 本题：从一个 1 维向量 u 出发，用 4 种不同方式构造出对应的 2 维形状，
+# 然后亲眼看看它们的转置（.T）行为差在哪里。
+
+u = np.array([1, 2, 3])
+
+# 提示：
+#   - u_row_a：用 reshape 得到 (1, 3)
+#   - u_row_b：用 None / np.newaxis 索引得到 (1, 3)，写法 u[None, :]
+#   - u_col_a：用 reshape 得到 (3, 1)
+#   - u_col_b：用 None / np.newaxis 索引得到 (3, 1)，写法 u[:, None]
+u_row_a = u.reshape(1, 3)   # TODO-0-row-a
+u_row_b = u[None, :]  # TODO-0-row-b
+u_col_a = u.reshape(3, 1)  # TODO-0-col-a
+u_col_b = u[:, None]  # TODO-0-col-b
+
+require_shape("TODO-0 u_row_a", u_row_a, (1, 3))
+require_shape("TODO-0 u_row_b", u_row_b, (1, 3))
+require_shape("TODO-0 u_col_a", u_col_a, (3, 1))
+require_shape("TODO-0 u_col_b", u_col_b, (3, 1))
+
+print("u.shape       =", u.shape, "  ndim =", u.ndim)
+print("u.T.shape     =", u.T.shape, "  <- 1 维数组转置还是它自己！")
+print("u_row_a.shape =", u_row_a.shape, "  u_row_a.T.shape =", u_row_a.T.shape)
+print("u_col_a.shape =", u_col_a.shape, "  u_col_a.T.shape =", u_col_a.T.shape)
+
+if u.T.shape != (3,):
+    raise ValidationError("u 是 1 维，转置后形状仍应为 (3,)")
+if u_row_a.T.shape != (3, 1):
+    raise ValidationError("(1,3) 行向量转置后应为 (3,1) 列向量")
+
+
+# ============================================================
 section("TODO-1：把一维向量 v 变成行向量和列向量")
 # ============================================================
 v = np.array([1, 2, 3, 4])
 # 提示：用 reshape，分别得到 (1,4) 和 (4,1)。
-row = None  # TODO-1-row
-col = None  # TODO-1-col
+row = v.reshape(1, 4) # TODO-1-row
+col = v.reshape(4, 1) # TODO-1-col
 
 require_shape("TODO-1 row", row, (1, 4))
 require_shape("TODO-1 col", col, (4, 1))
@@ -69,7 +111,7 @@ section("TODO-2：用 @ 计算两个向量的点积")
 a = np.array([1.0, 2.0, 3.0])
 b = np.array([4.0, 5.0, 6.0])
 # 提示：np.dot(a, b) 或 a @ b 都行，结果应是 32.0
-dot = None  # TODO-2
+dot = np.dot(a, b) # TODO-2
 
 require_close("TODO-2 dot", dot, 32.0)
 print("dot(a, b) =", dot)
@@ -81,7 +123,7 @@ section("TODO-3：计算余弦相似度 cos(a, b) = (a·b) / (|a||b|)")
 # 提示：
 #   - 范数用 np.linalg.norm
 #   - 结果应在 0.97 左右
-cos_ab = None  # TODO-3
+cos_ab = np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)) # TODO-3
 
 require_close("TODO-3 cos_ab", cos_ab, 0.9746318461970762, atol=1e-6)
 print("cos(a, b) =", cos_ab)
