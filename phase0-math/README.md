@@ -26,6 +26,29 @@
 | 第 3 课 | `03_reshape_transpose_split.py` | `03_reshape_transpose_split_self_write.py` | 转置 / reshape / permute / split / concat / outer / Hadamard / **`np.triu`·`np.tril` 三角矩阵构造** | 多头切分、`W_qkv` 拆分、残差拼接、**causal mask** |
 | 第 4 课 | `04_matrix_calculus.py` | `04_matrix_calculus_self_write.py` | 线性层求导、链式法则、softmax 雅可比、数值梯度校验 | 反向传播、训练每一步都在做 |
 
+## 高维 `@` 怎么看（第 2 课关键直觉，建议背下来）
+
+`X @ W` 在高维下经常让人懵，记住下面四种视角随便挑一种顺脑子的就行。以 `X.shape=(B,T,d_in)`、`W.shape=(d_in,d_out)`、`Y.shape=(B,T,d_out)` 为例：
+
+| 视角 | 怎么读这个运算 | 适用场景 |
+|------|---------------|----------|
+| **for 循环** | `for b: Y[b] = X[b] @ W`，W 在循环中复用 | 想确认 batch 之间是否独立 |
+| **机器 + 数据流** | W 是一台不变的机器，B×T 个 token 排队进去，每个 d_in → d_out | 想理解 `nn.Linear` 为何无视 batch/seq |
+| **前缀 + 矩阵** | `@` 取**最右两维**当矩阵，左边都是 batch 前缀，前缀按广播对齐 | 推任意维度 `@` 的 shape（如 4D 的 `Q @ K.T`） |
+| **盒子比喻** | X 是若干块 `(T, d_in)` 木板，W 是一块 `(d_in, d_out)` 滤镜，每块板单独过滤镜 | 直觉派的可视化 |
+
+### "前缀 + 矩阵"规则在 attention 里的样子
+
+```
+Q.shape = (B, H, T, d_h)        前缀 (B, H)，矩阵 (T,   d_h)
+K.T     = (B, H, d_h, T)        前缀 (B, H)，矩阵 (d_h, T  )
+─────────────────────────────────────────────────────────────
+前缀完全相等 → 共用                矩阵 (T,d_h) @ (d_h,T) = (T,T)
+结果 = (B, H) + (T, T) = (B, H, T, T)   ← attention scores 的标准形状
+```
+
+记住"`@` 只看最右两维做矩阵乘，前缀按广播配"，以后 4D / 5D 的 `@` 都能秒推 shape。
+
 ## 快速开始
 
 ```bash
