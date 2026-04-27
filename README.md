@@ -9,6 +9,8 @@
 - 2026-04-18：补充 GPT-1 论文 PDF（`papers/core-transformers/GPT1_2018_improving_language_understanding.pdf`），并整理 [papers/notes/notes_gpt2_input_and_model.md](papers/notes/notes_gpt2_input_and_model.md) 笔记，配合第 1 课对照理解 decoder-only 的输入表示。
 - 2026-04-25：完成第二阶段第 2 课（自注意力机制）。跑通 `02_self_attention.py` 并按 8 个 TODO 手写 `02_self_attention_self_write.py`：数值稳定 softmax → Q/K/V 投影 → scores → scale → softmax → 加权 → `self_attention` 函数封装 → 因果掩码 `np.triu` → `causal_self_attention`（GPT 用），全部校验通过。
 - 2026-04-25：开始第二阶段第 3 课（多头注意力 / 残差连接 / LayerNorm）。在 [phase2-transformer/README.md](phase2-transformer/README.md) 补充了李宏毅 Multi-Head Attention 中文视频，按"看视频 → 读论文 → 跑 `03_multi_head_attention.py` → 改 `n_heads`/去残差实验"的节奏推进。
+- 2026-04-26：开始第 0 阶段第 1 课（向量、形状、axis、广播）。把 `01_vectors_and_axes.py` 的 axis 注释改成"聚合方向法"，给广播规则补了 5 条 Q&A（为什么从右对齐 / 为什么补 1 / 为什么不静默通过 / 不真复制内存 / 任意维度都成立），修正错误示范并加 `(3,4)` 与 `reshape(2,1,4)` 两个正确示范，给 `X+bias` 例子加 seed 和 diff 验证证明 bias 在 batch/seq 上共享。
+- 2026-04-27：第 0 阶段第 1 课自写练习推进。在 `01_vectors_and_axes_self_write.py` 新增 TODO-0（动手验证 `(3,)` / `(1,3)` / `(3,1)` 的差异，练习 reshape 与 `None`/`np.newaxis` 两种写法）；在 TODO-4 后加 4a/4b/4c（3D 张量上的 axis、`keepdims` 与多轴聚合 `axis=(0,1)`、`mean`/`max`/`argmax` 共用 axis 规则）；在 TODO-7 `can_broadcast` 用例里补 6 个 5 维 case（含 attention scores + mask 的真实形状）。
 
 ## 项目结构
 
@@ -78,7 +80,7 @@ llm-learning/
 第 0 阶段 (4课, 按需)        第一阶段 (3课)            第二阶段 (5课)             第三阶段 (5课)
 矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT  →  LoRA/量化/RLHF/推理优化
    形状与反向                  基础数学                   核心架构                     工业实践
-   📐 复习用工具书              ✅ 已完成三课               🚧 第 3 课进行中             待学习
+   🚧 第 1 课进行中            ✅ 已完成三课               🚧 第 3 课进行中             待学习
 ```
 
 > **phase0-math 不是必经环节**：当你在 phase1/phase2 遇到形状或求导卡壳时回来跑对应那节即可。
