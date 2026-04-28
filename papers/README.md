@@ -15,6 +15,7 @@
 ### 1. Attention Is All You Need (2017)
 - **文件**: [Attention_Is_All_You_Need_2017.pdf](core-transformers/Attention_Is_All_You_Need_2017.pdf)
 - **配套笔记**: [attention_is_all_you_need_reading_3.4_3.5.md](notes/attention_is_all_you_need_reading_3.4_3.5.md)
+- **配套笔记**: [attention_is_all_you_need_reading_3.1_3.2.2.md](notes/attention_is_all_you_need_reading_3.1_3.2.2.md)
 - **配套精读**: [notes_attention_qkv.md](notes/notes_attention_qkv.md)
 - **作者**: Vaswani et al. (Google)
 - **重点章节**: Section 3 (Model Architecture), Figure 1, Figure 2
