@@ -4,13 +4,9 @@
 
 ## 我的学习进度
 
-- 2026-04-14：完成第一阶段第 3 课（神经网络前向/反向传播与 XOR 分类）自写练习，并已重置练习文件准备二刷。
-- 2026-04-18：完成第二阶段第 1 课（词嵌入与位置编码）。跑通 `01_word_embeddings.py`、吃透正弦位置编码公式与 `div_term` 的 `exp(log)` 写法，看懂位置编码热力图/曲线图，完成自写练习 `01_word_embeddings_self_write.py`，并在 [phase2-transformer/README.md](phase2-transformer/README.md) 沉淀了"放大镜 + 望远镜（小维度高频看近处、大维度低频看远处）"等 5 点关键领悟。可用 `reset_exercises_01.py` 重置练习准备二刷。
-- 2026-04-18：补充 GPT-1 论文 PDF（`papers/core-transformers/GPT1_2018_improving_language_understanding.pdf`），并整理 [papers/notes/notes_gpt2_input_and_model.md](papers/notes/notes_gpt2_input_and_model.md) 笔记，配合第 1 课对照理解 decoder-only 的输入表示。
-- 2026-04-25：完成第二阶段第 2 课（自注意力机制）。跑通 `02_self_attention.py` 并按 8 个 TODO 手写 `02_self_attention_self_write.py`：数值稳定 softmax → Q/K/V 投影 → scores → scale → softmax → 加权 → `self_attention` 函数封装 → 因果掩码 `np.triu` → `causal_self_attention`（GPT 用），全部校验通过。
-- 2026-04-25：开始第二阶段第 3 课（多头注意力 / 残差连接 / LayerNorm）。在 [phase2-transformer/README.md](phase2-transformer/README.md) 补充了李宏毅 Multi-Head Attention 中文视频，按"看视频 → 读论文 → 跑 `03_multi_head_attention.py` → 改 `n_heads`/去残差实验"的节奏推进。
-- 2026-04-26：开始第 0 阶段第 1 课（向量、形状、axis、广播）。把 `01_vectors_and_axes.py` 的 axis 注释改成"聚合方向法"，给广播规则补了 5 条 Q&A（为什么从右对齐 / 为什么补 1 / 为什么不静默通过 / 不真复制内存 / 任意维度都成立），修正错误示范并加 `(3,4)` 与 `reshape(2,1,4)` 两个正确示范，给 `X+bias` 例子加 seed 和 diff 验证证明 bias 在 batch/seq 上共享。
-- 2026-04-27：第 0 阶段第 1 课自写练习推进。在 `01_vectors_and_axes_self_write.py` 新增 TODO-0（动手验证 `(3,)` / `(1,3)` / `(3,1)` 的差异，练习 reshape 与 `None`/`np.newaxis` 两种写法）；在 TODO-4 后加 4a/4b/4c（3D 张量上的 axis、`keepdims` 与多轴聚合 `axis=(0,1)`、`mean`/`max`/`argmax` 共用 axis 规则）；在 TODO-7 `can_broadcast` 用例里补 6 个 5 维 case（含 attention scores + mask 的真实形状）。
+当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 3 课进行中。
+
+详细推进记录见 [learning-progress.md](learning-progress.md)。
 
 ## 项目结构
 
@@ -68,6 +64,7 @@ llm-learning/
 ├── github-copilot-claude-code.md    # GitHub Copilot + Claude Code 配置指南
 ├── llm-interview-questions.md       # 大模型面试题整理（含精修参考答案）
 ├── harness-engineering-li-hongyi.md # 李宏毅《Harness Engineering》视频总结
+├── learning-progress.md             # 个人学习进度记录
 │
 ├── attention_paper_prerequisites.md # 读论文的前置知识清单
 ├── requirements.txt
