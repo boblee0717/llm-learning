@@ -12,7 +12,7 @@
 ## 进展记录
 
 - 2026-04-14：完成第一阶段第 3 课（神经网络前向/反向传播与 XOR 分类）自写练习，并已重置练习文件准备二刷。
-- 2026-04-18：完成第二阶段第 1 课（词嵌入与位置编码）。跑通 `01_word_embeddings.py`、吃透正弦位置编码公式与 `div_term` 的 `exp(log)` 写法，看懂位置编码热力图/曲线图，完成自写练习 `01_word_embeddings_self_write.py`，并在 [phase2-transformer/README.md](phase2-transformer/README.md) 沉淀了"放大镜 + 望远镜（小维度高频看近处、大维度低频看远处）"等 5 点关键领悟。可用 `reset_exercises_01.py` 重置练习准备二刷。
+- 2026-04-18：完成第二阶段第 1 课（词嵌入与位置编码）。跑通 `01_word_embeddings.py`、吃透正弦位置编码公式与 `div_term` 的 `exp(log)` 写法，看懂位置编码热力图/曲线图，完成自写练习 `01_word_embeddings_self_write.py`，并在 [phase2-transformer/README.md](phase2-transformer/README.md) 沉淀了"相加不是无损拼接，而是低成本注入顺序信息"和"放大镜 + 望远镜（小维度高频看近处、大维度低频看远处）"等 6 点关键领悟。可用 `reset_exercises_01.py` 重置练习准备二刷。
 - 2026-04-18：补充 GPT-1 论文 PDF（`papers/core-transformers/GPT1_2018_improving_language_understanding.pdf`），并整理 [papers/notes/notes_gpt2_input_and_model.md](papers/notes/notes_gpt2_input_and_model.md) 笔记，配合第 1 课对照理解 decoder-only 的输入表示。
 - 2026-04-25：完成第二阶段第 2 课（自注意力机制）。跑通 `02_self_attention.py` 并按 8 个 TODO 手写 `02_self_attention_self_write.py`：数值稳定 softmax -> Q/K/V 投影 -> scores -> scale -> softmax -> 加权 -> `self_attention` 函数封装 -> 因果掩码 `np.triu` -> `causal_self_attention`（GPT 用），全部校验通过。
 - 2026-04-25：开始第二阶段第 3 课（多头注意力 / 残差连接 / LayerNorm）。在 [phase2-transformer/README.md](phase2-transformer/README.md) 补充了李宏毅 Multi-Head Attention 中文视频，按"看视频 -> 读论文 -> 跑 `03_multi_head_attention.py` -> 改 `n_heads`/去残差实验"的节奏推进。
