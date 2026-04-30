@@ -1,176 +1,172 @@
-# Attention Is All You Need 逐句精读：§3.1 与 §3.2.2
+# Attention Is All You Need 精读
 
-> 配合第二阶段第 3 课 `phase2-transformer/03_multi_head_attention.py` 一起读。
->
-> 论文：Vaswani et al., 2017, *Attention Is All You Need*  
-> 章节：`3.1 Encoder and Decoder Stacks`、`3.2.2 Multi-Head Attention`  
-> 本地 PDF：[`../core-transformers/Attention_Is_All_You_Need_2017.pdf`](../core-transformers/Attention_Is_All_You_Need_2017.pdf)  
-> arXiv：<https://arxiv.org/abs/1706.03762>
+本文聚焦论文三段内容：
 
-这篇只做一件事：**按论文原句顺序逐句理解**。
+- `§3 Model Architecture` 开头对 encoder-decoder 的铺垫
+- `3.1 Encoder and Decoder Stacks`
+- `3.2.2 Multi-Head Attention`
 
-为了避免变成机械全文翻译，下面每一句都用这个格式：
-
-```text
-论文句意
-解读
-代码 / 维度回扣
-```
-
-其中“论文句意”是对原句的中文转述，不是逐字翻译。必要时只摘很短的英文关键词，比如 `stack of identical layers`、`Add & Norm`、`heads`。
+目标不是逐字翻译，而是把每一句背后的设计动机讲清楚，方便后续对照 Transformer 代码来理解。
 
 ---
 
-## 先抓主线
+## 阅读导航
 
-这两节只要读懂 4 件事：
+如果你只想先抓主线，可以先看这 5 个结论：
 
-1. Encoder / Decoder 都是很多层堆起来的，不是一层 attention。
-2. 每个 sub-layer 外面都有残差连接和 LayerNorm。
-3. 原始 Transformer 用的是 Post-Norm：`LayerNorm(x + Sublayer(x))`。
-4. Multi-Head Attention 是多个 attention head 并行，concat 后再乘 `W^O`。
+- Encoder / Decoder 都是 `N = 6` 个相同结构的层堆叠，不是单层 attention。
+- 每个 sub-layer 外面都包着残差连接和 LayerNorm，原始 Transformer 用的是 Post-Norm：`LayerNorm(x + Sublayer(x))`。
+- 残差要做加法，所以**所有 sub-layer 与 embedding 的输出维度都是 `d_model`**。
+- Decoder 比 Encoder 多一个 sub-layer：cross-attention，用来回头看 encoder 的输出。
+- Multi-Head Attention 是把 Q/K/V 投影到多个较小子空间并行做 attention，再 concat 后用 `W^O` 投回 `d_model`。
 
 ---
 
-## 0. 前置：§3 Model Architecture 的两句铺垫
+## §3 开头铺垫
 
-论文在进入 §3.1 前，先用两句话定义了 encoder-decoder 的整体任务。读 §3.1 之前最好先理解它。
+论文在进入 §3.1 前，先用几句话把 encoder-decoder 这个大框架和 auto-regressive 的性质铺好。先读懂它，后面 §3.1 才不会突兀。
 
-### 句 0.1：大多数 sequence transduction 模型都有 encoder-decoder 结构
+### 核心结论
 
-**论文句意**
+- 大多数 sequence transduction 模型都是 encoder-decoder 结构。
+- Encoder 把输入符号序列变成连续向量表示。
+- Decoder 一次生成一个符号，每一步都把之前生成的符号作为输入（auto-regressive）。
+- Transformer 沿用这套框架，但内部换成了 self-attention + 全连接前馈层。
 
-很多序列转换模型都会用 encoder-decoder：encoder 把输入符号序列变成连续表示，decoder 再基于这些表示生成输出符号序列。
+### 句 1
+
+> Most competitive neural sequence transduction models have an encoder-decoder structure.
 
 **解读**
 
-这里的 `sequence transduction` 可以先理解成“把一个序列变成另一个序列”。
+大多数有竞争力的「序列到序列」模型，都采用 encoder-decoder 这种两段式结构：先理解，再生成。
 
-典型例子是机器翻译：
+**补充理解**
 
-```text
-英文句子 -> 中文句子
-```
+`sequence transduction` 可以先粗略理解成「把一个序列转换成另一个序列」，最经典的例子是机器翻译（英文句子 → 中文句子）。
 
-Encoder 做的是“读入并理解源句子”：
+这一句先把读者拉回 2017 年的时代背景：encoder-decoder 不是 Transformer 发明的，而是当时的「主流共识」。Transformer 的创新不是抛弃这个框架，而是替换里面的核心计算单元。
 
-```text
-input tokens -> continuous representations
-```
+### 句 2
 
-Decoder 做的是“根据理解结果生成目标句子”：
-
-```text
-encoder representations -> output tokens
-```
-
-这里的 `continuous representations` 就是连续向量，不再是离散 token id。
-
-**代码 / 维度回扣**
-
-进入 Transformer 前，token 已经先变成 embedding：
-
-```text
-token ids:  (seq_len,)
-embedding:  (seq_len, d_model)
-```
-
-Encoder 接收的是 embedding 后的向量序列。
-
----
-
-### 句 0.2：Decoder 是 auto-regressive 的
-
-**论文句意**
-
-Decoder 每一步生成一个符号，并且生成当前位置时，会把之前已经生成的符号作为额外输入。
+> Here, the encoder maps an input sequence of symbol representations (x_1, ..., x_n) to a sequence of continuous representations z = (z_1, ..., z_n).
 
 **解读**
 
-`auto-regressive` 的意思是：一个一个往后生成。
+Encoder 的任务是：把输入的「符号序列」（每个 `x_i` 是一个 token）映射成一串「连续向量表示」`z_i`。注意输入长度 `n` 和输出长度一致。
 
-比如生成：
+**补充理解**
+
+这里有两个细节值得留意：
+
+- **「符号 → 连续向量」**：`x_i` 是离散 token id，`z_i` 是稠密向量。只有变成连续向量，后面的矩阵乘、注意力、归一化才有意义。
+- **长度不变**：encoder 是 `n → n` 的映射，每个输入位置都对应一个输出向量，并不像有些 RNN 模型那样压成一个固定长度的 context vector。这一点是后续 attention 能成立的前提：decoder 之后会逐位置查询 `z_1 ... z_n`。
+
+维度变化可以记成：
 
 ```text
-我 喜欢 猫
+token ids:   (seq_len,)
+embedding:   (seq_len, d_model)
+encoder out: (seq_len, d_model)   ← 这就是 z
 ```
 
-过程是：
+### 句 3
 
-```text
-看到 <BOS>        -> 预测 我
-看到 <BOS> 我     -> 预测 喜欢
-看到 <BOS> 我 喜欢 -> 预测 猫
-```
-
-所以 decoder 不能提前看到未来词。否则它不是在“预测”，而是在“抄答案”。
-
-**代码 / 维度回扣**
-
-这就是后面 causal mask 的动机：
-
-```python
-mask = np.triu(np.ones((seq_len, seq_len)), k=1)
-```
-
-上三角代表未来位置，要屏蔽。
-
----
-
-### 句 0.3：Transformer 沿用 encoder-decoder 结构，但内部换成 self-attention 和 FFN
-
-**论文句意**
-
-Transformer 仍然采用 encoder-decoder 大框架，只是 encoder 和 decoder 里面使用堆叠的 self-attention 和逐位置全连接层。
+> Given z, the decoder then generates an output sequence (y_1, ..., y_m) of symbols one element at a time.
 
 **解读**
 
-这句话是整篇论文的架构宣言：
+Decoder 拿到 encoder 输出的 `z` 之后，开始生成目标序列 `y_1, ..., y_m`，**一次生成一个符号**。
 
-```text
-外壳：还是 encoder-decoder
-内部：不用 RNN / CNN，改成 attention + FFN
-```
+**补充理解**
 
-所以 Transformer 不是把所有旧概念全推翻。它保留了“encoder 读输入、decoder 生成输出”的经典框架，但把每层的核心计算换成了 attention。
+注意这里输入长度是 `n`，输出长度是 `m`，两者**不要求相等**。例如英文 5 个词翻译到中文可能是 4 个或 6 个字。
 
-**代码 / 维度回扣**
+「一次一个」是这一段的关键词。它意味着 decoder 不是一口气把整句话生成出来，而是一个 token 一个 token 往后蹦。这也是后面 causal mask 出现的根本原因。
 
-第 3 课写的是 attention 部分：
+### 句 4
 
-```python
-output, head_weights = multi_head_attention(X, W_Q, W_K, W_V, W_O, n_heads)
-```
-
-第 4 课会把 attention 和 FFN 拼成完整 block。
-
----
-
-## 1. §3.1 Encoder and Decoder Stacks 逐句精读
-
-这一节分成两段：先讲 encoder，再讲 decoder。
-
----
-
-## 1.1 Encoder 段
-
-### 句 1：Encoder 由一叠相同结构的层组成
-
-**论文句意**
-
-Encoder 是由 `N = 6` 个相同结构的 layer 堆叠起来的。
+> At each step the model is auto-regressive, consuming the previously generated symbols as additional input when generating the next.
 
 **解读**
 
-这里的关键词是：
+每一步生成时，模型都是自回归的（auto-regressive）：把已经生成的 token 拼回输入，再去预测下一个。
+
+**补充理解**
+
+举个例子，生成「我 喜欢 猫」的过程是：
 
 ```text
-stack of identical layers
+看到 <BOS>           -> 预测 我
+看到 <BOS> 我        -> 预测 喜欢
+看到 <BOS> 我 喜欢   -> 预测 猫
+看到 <BOS> 我 喜欢 猫 -> 预测 <EOS>
 ```
 
-`stack` 表示“堆叠”。Transformer 不是只做一次 attention，而是把类似结构重复很多次。
+`auto-regressive` 拆开看：`auto` = 自己，`regressive` = 回归到前面。也就是「拿自己之前的输出，回头当作输入」。
 
-`identical layers` 表示“结构相同”，不是“参数共享”。第 1 层和第 2 层都有 attention + FFN，但它们的权重参数各自独立。
+这条规则有一个硬性约束：**预测第 i 个位置时不能看到第 i 个之后的内容**，否则就是抄答案。这正是后面 §3.1 decoder 段里 causal mask 的动机。
+
+### 句 5
+
+> The Transformer follows this overall architecture using stacked self-attention and point-wise, fully connected layers for both the encoder and decoder, shown in the left and right halves of Figure 1, respectively.
+
+**解读**
+
+Transformer 沿用上述「encoder-decoder + 自回归生成」的整体框架，但把内部计算换成了：**堆叠的 self-attention** + **逐位置（point-wise）的全连接层**。Figure 1 的左半边是 encoder，右半边是 decoder。
+
+**补充理解**
+
+这一句是整篇论文的架构宣言。可以记成一张对照表：
+
+| 维度 | RNN/CNN seq2seq | Transformer |
+|------|-----------------|-------------|
+| 外壳 | encoder-decoder | encoder-decoder |
+| 序列建模方式 | 循环 / 卷积 | self-attention |
+| 位置上的非线性 | RNN cell / 卷积 | point-wise FFN |
+| 顺序信息来源 | 天然按时间步 | 位置编码（§3.5） |
+
+`point-wise` 的意思是：FFN 对每个 token 位置独立施加同一套 MLP，**不在位置之间混合信息**。位置之间的混合完全交给 self-attention 完成。这是 Transformer 「分工清晰」的关键：
+
+- self-attention 负责「token 之间」的信息流动
+- FFN 负责「单个 token 内部」的非线性加工
+
+---
+
+## 3.1 Encoder and Decoder Stacks
+
+这一节回答的是两个问题：
+
+- Encoder 和 Decoder 各自长什么样？内部有几个子层？
+- 用了哪些技巧来保证深层网络的训练稳定性？
+
+### 核心结论
+
+- Encoder 和 Decoder 都是 `N = 6` 个相同结构的 layer 堆叠（结构相同，参数不共享）。
+- Encoder 每层有 2 个 sub-layer：multi-head self-attention + position-wise FFN。
+- Decoder 每层多一个 sub-layer：cross-attention，对 encoder 输出做 attention。
+- 每个 sub-layer 外面都是 `LayerNorm(x + Sublayer(x))`，即残差 + LayerNorm（Post-Norm）。
+- 为了让残差加法成立，所有 sub-layer 和 embedding 都输出 `d_model = 512` 维。
+- Decoder 的 self-attention 加上 causal mask，再配合输出右移一位，保证自回归性质。
+
+---
+
+#### Encoder 段
+
+### 句 6
+
+> The encoder is composed of a stack of N = 6 identical layers.
+
+**解读**
+
+Encoder 由 `N = 6` 个**结构相同**的 layer 堆叠组成。
+
+**补充理解**
+
+这里有两个词需要拆开理解：
+
+- `stack`：堆叠。Transformer 不是只做一次 attention 然后就完事，而是把同样的结构反复套很多遍。
+- `identical layers`：**结构相同**，不是「参数共享」。第 1 层和第 2 层都长成「attention + FFN + 两次 Add & Norm」的样子，但里面的权重矩阵 `W_Q, W_K, W_V, W_O, W_1, W_2` 各自独立学习。
 
 可以画成：
 
@@ -178,10 +174,10 @@ stack of identical layers
 X0
  │
  ▼
-EncoderLayer 1
+EncoderLayer 1   (一套独立参数)
  │
  ▼
-EncoderLayer 2
+EncoderLayer 2   (另一套独立参数)
  │
  ▼
 ...
@@ -193,466 +189,212 @@ EncoderLayer 6
 encoder output / memory
 ```
 
-**代码 / 维度回扣**
+为什么要堆 6 层？直觉上，每一层负责把表示「再精炼一次」：浅层可能学到局部特征（搭配、词性），深层可能学到更抽象的关系（指代、语法结构）。论文 §6.2 的消融实验里也试过 `N = 2, 4, 8`，6 是 base model 的折中选择。
 
-第 3 课目前只是在实现单个 attention 子层。真正堆叠 block 的形态会更像：
+### 句 7
 
-```python
-for layer in layers:
-    x = layer(x)
-```
-
-每层输入输出都保持：
-
-```text
-(seq_len, d_model)
-```
-
----
-
-### 句 2：每个 encoder layer 有两个 sub-layer
-
-**论文句意**
-
-Encoder 的每一层里面有两个子层。
+> Each layer has two sub-layers.
 
 **解读**
 
-这里的 `sub-layer` 可以理解成“Transformer layer 内部的一个功能模块”。
+每一个 encoder layer 内部由两个子层（sub-layer）组成。
 
-Encoder layer 不是一个整体黑盒，它里面有两个模块：
+**补充理解**
+
+这里要把「层（layer）」和「子层（sub-layer）」分清楚：
+
+- **layer**：一个完整的 encoder block，外部看是一个黑盒。
+- **sub-layer**：layer 内部的功能模块，是 attention 或 FFN。
 
 ```text
 EncoderLayer
 ├── sub-layer 1: Multi-Head Self-Attention
-└── sub-layer 2: Feed-Forward Network
+└── sub-layer 2: Position-wise FFN
 ```
 
-这一点很重要，因为后面论文说“每个 sub-layer 外面都有 residual + LayerNorm”，不是只在整个 EncoderLayer 外面包一次。
+为什么要强调这个区分？因为下一句开始，论文会说「每个 sub-layer 外面都包 residual + LayerNorm」——是包在每个 sub-layer 外面，**不是只在整个 EncoderLayer 外面包一次**。一个 encoder layer 有两次 Add & Norm，不是一次。
 
-**代码 / 维度回扣**
+### 句 8
 
-一个 encoder layer 的抽象结构是：
-
-```text
-x -> attention sub-layer -> FFN sub-layer -> output
-```
-
-其中每个 sub-layer 都要保证输入输出形状一致：
-
-```text
-(seq_len, d_model) -> (seq_len, d_model)
-```
-
----
-
-### 句 3：第一个 sub-layer 是 multi-head self-attention
-
-**论文句意**
-
-第一个子层是多头自注意力机制。
+> The first is a multi-head self-attention mechanism, and the second is a simple, position-wise fully connected feed-forward network.
 
 **解读**
 
-这句话里有两个概念：
+第一个 sub-layer 是多头自注意力（multi-head self-attention），第二个 sub-layer 是「逐位置（position-wise）」的全连接前馈网络（FFN）。
+
+**补充理解**
+
+这句话里藏了三个关键词：
+
+- **self-attention**：Q、K、V 都来自**同一个序列**。在 encoder 里就是上一层 encoder 的输出，每个 token 都能看见同一句话里的所有 token（包括未来的，因为 encoder 不需要 mask）。
+- **multi-head**：不是只做一组 Q/K/V attention，而是切成多个 head 并行做。详细机制在 §3.2.2 讲。
+- **position-wise**：FFN 在每个 token 位置上**独立**做同一个 MLP：
 
 ```text
-multi-head
-self-attention
+位置 0:  x_0 ──FFN──> y_0
+位置 1:  x_1 ──FFN──> y_1
+位置 2:  x_2 ──FFN──> y_2
+...
 ```
 
-`self-attention` 表示 Q、K、V 都来自同一个序列。
+所有位置共用**同一套** FFN 参数，但每个位置的计算彼此独立。位置之间的信息已经由 self-attention 混合过了，FFN 不再做位置间交互，它只负责给每个位置的表示做一次非线性变换。
 
-如果当前 encoder 输入是：
+论文 §3.3 给出的 FFN 公式是：`FFN(x) = max(0, xW1 + b1)W2 + b2`，是一个两层 MLP 加 ReLU，内部先升维再降维：`d_model -> d_ff -> d_model`，即 `512 -> 2048 -> 512`。最后必须回到 `d_model`，因为后面要和残差相加。
 
-```text
-X: (seq_len, d_model)
-```
+### 句 9
 
-那么：
-
-```text
-Q = X W_Q
-K = X W_K
-V = X W_V
-```
-
-每个 token 都可以看同一句子里的所有 token。
-
-`multi-head` 表示不是只做一组 Q/K/V attention，而是分成多个 head 并行做。这个在 §3.2.2 详细讲。
-
-**代码 / 维度回扣**
-
-第 3 课代码：
-
-```python
-Q = X @ W_Q
-K = X @ W_K
-V = X @ W_V
-```
-
-因为 Q/K/V 都来自 `X`，所以这是 self-attention。
-
----
-
-### 句 4：第二个 sub-layer 是逐位置的全连接前馈网络
-
-**论文句意**
-
-第二个子层是一个简单的、逐位置应用的全连接前馈网络。
+> We employ a residual connection around each of the two sub-layers, followed by layer normalization.
 
 **解读**
 
-`position-wise` 的意思是：对每个 token 位置单独做同一个 MLP。
+论文在两个 sub-layer 外面都加上残差连接（residual connection），然后再做 LayerNorm。
 
-假设序列长度是 4：
+**补充理解**
 
-```text
-x0 -> FFN -> y0
-x1 -> FFN -> y1
-x2 -> FFN -> y2
-x3 -> FFN -> y3
-```
-
-它不在不同位置之间混合信息。位置之间的信息交流已经由 self-attention 完成；FFN 负责对每个位置的表示做非线性加工。
-
-论文 §3.3 里的 FFN 公式是：
+这句对应 Figure 1 里的 `Add & Norm` 方框。顺序很重要：
 
 ```text
-FFN(x) = max(0, xW1 + b1)W2 + b2
+1. 先算 Sublayer(x)
+2. 再做 Add：x + Sublayer(x)
+3. 最后做 LayerNorm
 ```
 
-**代码 / 维度回扣**
-
-FFN 内部会升维再降维：
+**为什么要残差？** 残差给原始输入开了一条「直通车」：
 
 ```text
-d_model -> d_ff -> d_model
-512     -> 2048 -> 512
+x ──┬──────────────► +
+    │                ▲
+    └─► Sublayer ────┘
 ```
 
-最后仍要回到 `d_model`，因为后面要接残差。
+即使 `Sublayer(x)` 学得很糟糕（甚至完全输出 0），最终结果至少还是 `x` 本身，不会比原来更差。这让深层网络更容易优化，梯度也能直接回传到浅层。这是 ResNet 思想的延伸，2015 年就被证明对深网很关键。
 
----
+**为什么紧跟 LayerNorm？** 残差相加之后数值范围可能变大，LayerNorm 把每个位置的向量沿特征维做归一化，让训练稳定。注意：LayerNorm 是**对每个 token 单独做归一化**（沿 `d_model` 维），不是对整个 batch 做，这点和 BatchNorm 不同。
 
-### 句 5：每个 sub-layer 外面都有残差连接，后面接 LayerNorm
+### 句 10
 
-**论文句意**
-
-论文在两个子层外面都使用 residual connection，然后再做 layer normalization。
+> That is, the output of each sub-layer is LayerNorm(x + Sublayer(x)), where Sublayer(x) is the function implemented by the sub-layer itself.
 
 **解读**
 
-这句就是 Figure 1 里的 `Add & Norm`。
+论文给出统一公式：每个 sub-layer 的最终输出是 `LayerNorm(x + Sublayer(x))`。这里的 `Sublayer` 是一个**占位符**，代表当前 sub-layer 自己实现的那个函数。
 
-它的顺序是：
+**补充理解**
 
-```text
-先 Sublayer
-再 Add residual
-再 LayerNorm
-```
+`Sublayer` 在不同位置代表不同的具体函数：
 
-公式：
+| 位置 | `Sublayer(x)` 是什么 |
+|------|----------------------|
+| Encoder 第 1 个子层 | `MultiHeadSelfAttention(x)` |
+| Encoder 第 2 个子层 | `FFN(x)` |
+| Decoder 第 1 个子层 | `MaskedMultiHeadSelfAttention(x)` |
+| Decoder 第 2 个子层 | `CrossAttention(x, encoder_output)` |
+| Decoder 第 3 个子层 | `FFN(x)` |
 
-```text
-output = LayerNorm(x + Sublayer(x))
-```
+论文用一个简短的公式涵盖了 5 种不同的 Add & Norm 用法。这种「外壳一致、内部可替换」的设计让代码也很优雅。
 
-所以 encoder layer 更完整地写成：
-
-```text
-x1 = LayerNorm(x0 + MultiHeadSelfAttention(x0))
-x2 = LayerNorm(x1 + FFN(x1))
-```
-
-这里的 `x + ...` 是残差连接。它让原始输入有一条直接通路，不必所有信息都穿过 attention 或 FFN。
-
-**这里可以理解为“后 Norm”吗？**
-
-可以。原始 Transformer 是 **Post-Norm / 后 Norm**：
+**这里可以理解为「后 Norm（Post-Norm）」吗？** 可以。原始 Transformer 是典型的 Post-Norm：
 
 ```text
-Norm 放在 Sublayer 和 Add 后面
+Post-Norm: y = LayerNorm(x + Sublayer(x))   ← 论文写法
+Pre-Norm:  y = x + Sublayer(LayerNorm(x))   ← 现代 GPT 常用
 ```
 
-对比现代 GPT 常用的 **Pre-Norm / 前 Norm**：
+两者训练稳定性差异很大：Post-Norm 在深网下需要更小心的学习率调度（warmup），Pre-Norm 通常更稳定。这也是后续 GPT/LLaMA 系列改用 Pre-Norm 的原因之一。
 
-```text
-Post-Norm: y = LayerNorm(x + Sublayer(x))
-Pre-Norm:  y = x + Sublayer(LayerNorm(x))
-```
+### 句 11
 
-**代码 / 维度回扣**
-
-第 3 课里的 Post-Norm：
-
-```python
-def post_norm_block(x, W_Q, W_K, W_V, W_O, n_heads):
-    attn_out, _ = multi_head_attention(x, W_Q, W_K, W_V, W_O, n_heads)
-    return layer_norm(x + attn_out)
-```
-
-这就是论文这句话的代码形态。
-
----
-
-### 句 6：论文把 sub-layer 输出写成统一公式
-
-**论文句意**
-
-每个子层的输出都可以写成 `LayerNorm(x + Sublayer(x))`，其中 `Sublayer` 是当前子层自己实现的函数。
+> To facilitate these residual connections, all sub-layers in the model, as well as the embedding layers, produce outputs of dimension d_model = 512.
 
 **解读**
 
-`Sublayer` 不是一个具体模块名，而是一个占位符。
+为了让残差连接成立，模型里所有 sub-layer 以及 embedding 层的输出维度都是 `d_model = 512`。
 
-在不同位置，它代表不同函数：
+**补充理解**
 
-| 位置 | `Sublayer(x)` 代表什么 |
-|------|------------------------|
-| Encoder 第一个子层 | `MultiHeadSelfAttention(x)` |
-| Encoder 第二个子层 | `FFN(x)` |
-| Decoder 第一个子层 | `MaskedMultiHeadSelfAttention(x)` |
-| Decoder 第二个子层 | `CrossAttention(x, encoder_output)` |
-| Decoder 第三个子层 | `FFN(x)` |
+这是 Transformer 里非常重要的一条「形状纪律」。
 
-所以论文用一个公式统一描述所有 Add & Norm：
-
-```text
-LayerNorm(x + Sublayer(x))
-```
-
-**代码 / 维度回扣**
-
-如果当前 sub-layer 是 attention：
-
-```python
-out = layer_norm(x + attention(x))
-```
-
-如果当前 sub-layer 是 FFN：
-
-```python
-out = layer_norm(x + ffn(x))
-```
-
-外壳一样，里面的函数不同。
-
----
-
-### 句 7：为了能做残差连接，所有 sub-layer 和 embedding 都输出 `d_model` 维
-
-**论文句意**
-
-为了让这些残差连接成立，模型里的所有子层以及 embedding 层都输出 `d_model` 维。
-
-**解读**
-
-残差连接要做加法：
-
-```text
-x + Sublayer(x)
-```
-
-加法要求两边形状相同。
-
-如果：
+残差要做加法 `x + Sublayer(x)`，加法要求两边形状一致：
 
 ```text
 x:           (seq_len, d_model)
-Sublayer(x): (seq_len, ???)
+Sublayer(x): (seq_len, ???)   ← ??? 必须等于 d_model
 ```
 
-那么 `???` 必须等于 `d_model`。
+所以无论 sub-layer 内部怎么折腾——multi-head 拆成多个小头、FFN 升到 2048 维再降回来——**输出端必须回到 `d_model`**。
 
-这就是 Transformer 里很重要的形状纪律：
+可以记成这样的口诀：
 
 ```text
 模块内部可以分头、升维、降维；
 模块输出必须回到 d_model。
 ```
 
-**代码 / 维度回扣**
-
-第 3 课里：
-
-```python
-seq_len = 6
-d_model = 16
-n_heads = 4
-d_head = d_model // n_heads
-```
-
-多头内部拆成：
-
-```text
-4 个 head，每个 4 维
-```
-
-concat 后回到：
-
-```text
-4 * 4 = 16 = d_model
-```
-
-最后才能：
-
-```python
-residual_output = X + attn_output
-```
+为什么连 embedding 也要 `d_model`？因为 embedding 是 Transformer 的入口，紧接着就要和 positional encoding 相加（§3.5），然后送入第一个 encoder layer 做残差，这些步骤都要求维度对齐。
 
 ---
 
-## 1.2 Decoder 段
+#### Decoder 段
 
-### 句 8：Decoder 也由一叠相同结构的层组成
+### 句 12
 
-**论文句意**
-
-Decoder 和 encoder 一样，也是由 `N = 6` 个相同结构的 layer 堆叠起来。
+> The decoder is also composed of a stack of N = 6 identical layers.
 
 **解读**
 
-Decoder 也不是一层，而是一串层：
+Decoder 也是由 `N = 6` 个结构相同的 layer 堆叠组成。
 
-```text
-Y0
- │
- ▼
-DecoderLayer 1
- │
- ▼
-DecoderLayer 2
- │
- ▼
-...
- │
- ▼
-DecoderLayer 6
-```
+**补充理解**
 
-每一层结构相同，但参数不共享。
+和 encoder 完全对称：6 层、结构相同、参数不共享。
 
-**代码 / 维度回扣**
+也要注意：encoder 和 decoder 的 6 层是**两套独立**的层，不是同一份参数。整个 base model 加起来其实是 12 个 block（encoder 6 + decoder 6）。
 
-Decoder 每层输入输出也保持：
+### 句 13
 
-```text
-(target_seq_len, d_model)
-```
-
-这样才能连续堆叠多层。
-
----
-
-### 句 9：Decoder 在 encoder 的两个 sub-layer 基础上，插入第三个 sub-layer
-
-**论文句意**
-
-除了 encoder layer 里的两个子层，decoder 还额外插入第三个子层。
+> In addition to the two sub-layers in each encoder layer, the decoder inserts a third sub-layer, which performs multi-head attention over the output of the encoder stack.
 
 **解读**
 
+在 encoder layer 已有的两个子层之上，decoder 还插入了**第三个子层**，它对 encoder stack 的输出做 multi-head attention。
+
+**补充理解**
+
+把两边对照一下：
+
+```text
 Encoder layer：
-
-```text
 1. Self-Attention
 2. FFN
-```
 
 Decoder layer：
-
-```text
 1. Masked Self-Attention
-2. Encoder-Decoder Attention
+2. Encoder-Decoder Attention   ← 新增的第三个 sub-layer
 3. FFN
 ```
 
-多出来的是 `Encoder-Decoder Attention`，也常叫 `Cross-Attention`。
+这个新增的子层通常叫 **cross-attention** 或 **encoder-decoder attention**。它是机器翻译能跑通的关键：decoder 在生成目标语言时，需要不断回头看 encoder 对源语言的理解。
 
-为什么需要它？
-
-因为 decoder 生成目标句子时，需要回头查看 encoder 对源句子的表示。
-
-**代码 / 维度回扣**
-
-如果是翻译：
+它和 self-attention 的区别在于 Q/K/V 来源：
 
 ```text
-encoder_output: 英文句子的表示
-decoder_state:  当前已生成中文前缀的表示
+self-attention:  Q, K, V 都来自当前 decoder 的隐藏状态
+cross-attention: Q 来自 decoder，K 和 V 来自 encoder 的输出
 ```
 
-Cross-attention 让 decoder_state 去查询 encoder_output。
+形象地说：decoder 拿着一个「问题」（Q）去 encoder 那一摞向量里「检索」（K 算相关度），然后取出相关的「内容」（V）。
 
----
+### 句 14
 
-### 句 10：第三个 sub-layer 对 encoder stack 的输出做 multi-head attention
-
-**论文句意**
-
-Decoder 新增的这个子层，会对 encoder stack 的输出执行 multi-head attention。
+> Similar to the encoder, we employ residual connections around each of the sub-layers, followed by layer normalization.
 
 **解读**
 
-这是 cross-attention 的关键：
+和 encoder 一样，decoder 的每个 sub-layer 外面也是残差连接 + LayerNorm。
 
-```text
-Q 来自 decoder
-K 来自 encoder
-V 来自 encoder
-```
+**补充理解**
 
-也就是：
-
-```text
-Q = decoder_hidden W_Q
-K = encoder_output W_K
-V = encoder_output W_V
-```
-
-Self-attention 是“自己看自己”：
-
-```text
-Q/K/V 都来自同一个 X
-```
-
-Cross-attention 是“decoder 看 encoder”：
-
-```text
-Q 来自 decoder，K/V 来自 encoder
-```
-
-**代码 / 维度回扣**
-
-第 3 课代码只实现了 self-attention 风格：
-
-```python
-Q = X @ W_Q
-K = X @ W_K
-V = X @ W_V
-```
-
-如果改成 cross-attention，会变成类似：
-
-```python
-Q = decoder_x @ W_Q
-K = encoder_out @ W_K
-V = encoder_out @ W_V
-```
-
----
-
-### 句 11：Decoder 每个 sub-layer 也使用 residual connection 和 LayerNorm
-
-**论文句意**
-
-和 encoder 一样，decoder 的每个子层外面也有残差连接，然后接 LayerNorm。
-
-**解读**
-
-Decoder layer 可以写成：
+Decoder 每层有 3 个 sub-layer，所以有 3 次 Add & Norm。完整写出来是：
 
 ```text
 x1 = LayerNorm(x0 + MaskedSelfAttention(x0))
@@ -660,59 +402,33 @@ x2 = LayerNorm(x1 + CrossAttention(x1, encoder_output))
 x3 = LayerNorm(x2 + FFN(x2))
 ```
 
-Encoder 每层有 2 次 Add & Norm；Decoder 每层有 3 次 Add & Norm。
+注意 cross-attention 那一行：残差用的是 `x1`（decoder 自己的当前状态），不是 encoder 的输出。也就是说，残差始终走「decoder 这一侧的主干道」，encoder 输出只在 K/V 这两条支路出现。
 
-**代码 / 维度回扣**
-
-残差要求每个子层输出都和输入同形：
+cross-attention 的输出长度必须和 `x1` 一致，才能做加法：
 
 ```text
-(target_seq_len, d_model)
+Q length      = target_seq_len  ← 决定输出长度
+K/V length    = source_seq_len  ← 决定能检索的范围
+output length = target_seq_len  ← 与残差对齐
 ```
 
-Cross-attention 虽然看的是 encoder output，但输出长度要跟 decoder query 长度一致：
+### 句 15
 
-```text
-Q length = target_seq_len
-K/V length = source_seq_len
-output length = target_seq_len
-```
-
----
-
-### 句 12：Decoder 的 self-attention 被修改，防止当前位置关注后续位置
-
-**论文句意**
-
-论文修改了 decoder stack 里的 self-attention，让某个位置不能关注它后面的 token。
+> We also modify the self-attention sub-layer in the decoder stack to prevent positions from attending to subsequent positions.
 
 **解读**
 
-这就是 causal mask。
+论文修改了 decoder 里的 self-attention：让某个位置**不能**关注它后面的位置。这就是 causal mask（因果掩码）。
 
-如果目标序列是：
+**补充理解**
 
-```text
-<BOS> 我 喜欢 猫
-```
+为什么需要这个 mask？回到 §3 的铺垫——decoder 是 auto-regressive 的，生成第 `i` 个 token 时只能看 `i` 之前的 token。
 
-那么位置 2 预测时只能看：
+如果训练时不加 mask，self-attention 会让所有位置互相看见，模型相当于在「抄答案」：训练 loss 会很低，但推理时根本用不了，因为推理时第 `i` 步根本没有 `i+1, i+2, ...` 的输入。
 
-```text
-<BOS>, 我, 喜欢
-```
+形象地说：**训练时的能见范围必须和推理时一致**，否则模型学到的能力在部署时根本派不上用场。
 
-不能看后面的：
-
-```text
-猫
-```
-
-否则训练时就泄露答案。
-
-**代码 / 维度回扣**
-
-mask 矩阵：
+具体实现方式（§3.2.3 里讲）：在 softmax 之前，把「不允许看」的位置的 score 设成 `-inf`，softmax 后那些位置的权重就是 0。mask 矩阵长这样（`1` 表示要屏蔽）：
 
 ```text
 0 1 1 1
@@ -721,410 +437,256 @@ mask 矩阵：
 0 0 0 0
 ```
 
-在第 3 课代码里，`1` 表示屏蔽：
+第 `i` 行表示「位置 `i` 能看见谁」：上三角全是 1，意味着位置 `i` 看不见 `i+1, i+2, ...`。
 
-```python
-mask = np.triu(np.ones((seq_len, seq_len)), k=1)
-```
+### 句 16
 
----
-
-### 句 13：mask 加上输出 embedding 右移，保证预测只能依赖已知输出
-
-**论文句意**
-
-这种 mask，再加上输出 embedding 偏移一位，可以保证预测位置 `i` 时，只依赖 `i` 之前的已知输出。
+> This masking, combined with fact that the output embeddings are offset by one position, ensures that the predictions for position i can depend only on the known outputs at positions less than i.
 
 **解读**
 
-训练 decoder 时，输入和目标通常这样错开：
+这个 mask，再加上「输出 embedding 偏移一位」（output shift right），就保证了：预测位置 `i` 时，模型只能依赖 `i` 之前已知的输出。
+
+**补充理解**
+
+「mask」和「右移一位」是**两件不同的事**，缺一不可。
+
+**右移一位（shift right）** 解决的是「decoder 的输入到底是什么」：
 
 ```text
-目标句子: 我    喜欢   猫    <EOS>
-输入序列: <BOS> 我     喜欢  猫
-预测目标: 我    喜欢   猫    <EOS>
+真实目标:     我    喜欢   猫    <EOS>
+decoder 输入: <BOS> 我     喜欢  猫
+预测目标:     我    喜欢   猫    <EOS>
 ```
 
-这叫右移，也就是 `shift right`。
+可以看到，decoder 的输入是「目标序列右移一位、开头补 `<BOS>`」。这样位置 `i` 的输入就是「真实第 `i-1` 个 token」，预测目标是「真实第 `i` 个 token」——也就是「拿前一个词预测下一个词」。
 
-右移解决“输入是什么”的问题：
+**mask** 解决的是「能看见谁」：在 self-attention 里，位置 `i` 不能往后看到 `i+1, i+2, ...`。
+
+两者一起，保证了一条非常硬的规则：
 
 ```text
-用前一个 token 预测下一个 token
+预测位置 i 时，模型能用的信息 = 真实输出在位置 < i 的内容
 ```
 
-mask 解决“能看见谁”的问题：
+这就是 GPT 等 decoder-only 模型训练的基本玩法：一次 forward 算所有位置的预测，每个位置都满足「只用前面信息」。这种「教师强制（teacher forcing）+ 因果 mask」的组合让 decoder 训练能完全并行化，是 Transformer 比 RNN 训练快的关键之一。
 
-```text
-不能看到当前位置之后的 token
-```
+### 小结
 
-两者结合，保证自回归生成规则成立。
+这一节的主线可以压缩成这样：
 
-**代码 / 维度回扣**
+**Encoder**：6 层堆叠，每层有两个 sub-layer（self-attention + FFN），每个 sub-layer 外面包 `Add & Norm`。
 
-第 3 课只练 mask，没有实现完整 decoder 输入右移。但理解 GPT 时会反复遇到这个逻辑：
+**Decoder**：也是 6 层，但每层比 encoder 多一个 cross-attention sub-layer，用来回头看 encoder 的输出。decoder 的 self-attention 还加了 causal mask，确保自回归生成时不会偷看未来 token。
 
-```text
-input_ids[:, :-1] -> logits
-labels[:, 1:]     -> loss target
-```
+而整个结构有一条贯穿始终的形状纪律：**所有模块输出都是 `d_model` 维，这是残差连接成立的前提**。
 
 ---
 
-## 2. §3.2.2 Multi-Head Attention 逐句精读
+## 3.2.2 Multi-Head Attention
 
-这一节开始解释 Multi-Head Attention 的公式和动机。
+这一节回答的是一个关键设计问题：
 
----
+> 为什么不做一次大的 attention，而要切成多个小的并行做？
 
-### 句 14：Figure 2 左边是 scaled dot-product attention，右边是 multi-head attention
+### 核心结论
 
-**论文句意**
+- 不做一次 `d_model` 维 attention，而是把 Q/K/V 投影 `h` 次，每次到更低维度（`d_k`、`d_v`）。
+- 每组投影后的 Q/K/V 各自并行做 attention，得到 `h` 个 `d_v` 维输出。
+- 把 `h` 个输出 concat 起来，再乘 `W^O` 投回 `d_model`。
+- 多头让模型同时关注「不同表示子空间」和「不同位置」的信息。
+- 单头 attention 只做一次加权平均，会把这些信息混成一份，丢失多视角能力。
+- 由于每个 head 的维度被降低（`d_k = d_v = d_model / h`），多头总计算量与单头 full-dim 接近。
+- 论文 base model：`h = 8`，`d_k = d_v = 64`。
 
-论文用 Figure 2 展示：左边是单个 scaled dot-product attention，右边是多个 attention layer 并行组成的 multi-head attention。
+### 句 17：不要只做一次 attention，而是投影 h 次
+
+> Instead of performing a single attention function with d_model-dimensional keys, values and queries, we found it beneficial to linearly project the queries, keys and values h times with different, learned linear projections to d_k, d_k and d_v dimensions, respectively.
 
 **解读**
 
-Multi-head 不是串行：
+不是只做一次「Q/K/V 都是 `d_model` 维」的 attention，而是用不同的可学习线性投影，把 Q、K、V **各投影 `h` 次**，分别投到 `d_k`、`d_k`、`d_v` 维度。
+
+**补充理解**
+
+把这句拆成两层意思：
+
+**第一层：从单头到多头。** 单头做法是：
 
 ```text
-head1 -> head2 -> head3
+Q (d_model), K (d_model), V (d_model) ─► Attention ─► output
 ```
 
-而是并行：
+多头做法是：
 
 ```text
-head1 ┐
-head2 ├── concat -> W^O
-head3 ┘
-```
-
-每个 head 都独立算 attention，最后把结果合并。
-
-**代码 / 维度回扣**
-
-第 3 课用循环写并行逻辑：
-
-```python
-for h in range(n_heads):
-    head_output, head_weights = single_head_attention(Q[h], K[h], V[h], mask)
-```
-
-真实深度学习框架里通常会把所有 head 放进一个张量批量计算。
-
----
-
-### 句 15：不要只用一次 `d_model` 维 attention，而是把 Q/K/V 线性投影 `h` 次
-
-**论文句意**
-
-相比只做一次完整维度的 attention，论文发现更好的做法是：用不同的可学习线性投影，把 queries、keys、values 分别投影 `h` 次。
-
-**解读**
-
-单头做法：
-
-```text
-Q, K, V -> Attention -> output
-```
-
-多头做法：
-
-```text
-QW_1^Q, KW_1^K, VW_1^V -> head_1
-QW_2^Q, KW_2^K, VW_2^V -> head_2
+QW_1^Q, KW_1^K, VW_1^V ─► head_1
+QW_2^Q, KW_2^K, VW_2^V ─► head_2
 ...
-QW_h^Q, KW_h^K, VW_h^V -> head_h
+QW_h^Q, KW_h^K, VW_h^V ─► head_h
 ```
 
 每个 head 的投影矩阵不同，所以同一个 token 在不同 head 里会被看成不同的特征切面。
 
-**代码 / 维度回扣**
+**第二层：为什么 Q 和 K 都是 `d_k`，V 是 `d_v`？** 这是 attention 公式的内在约束：
 
-代码里一次性算出所有 head 的投影：
+- Q 和 K 要做点积 `QK^T`，**点积要求两边维度相同**，所以 Q 和 K 都是 `d_k`。
+- V 不参与 QK 点积，它只是被加权求和，所以可以是另一个维度 `d_v`。
 
-```python
-Q = X @ W_Q
-K = X @ W_K
-V = X @ W_V
-```
+实践中论文为了简化，让 `d_k = d_v = d_model / h = 64`，但理论上它们可以不同。
 
-然后再 reshape 切成多个 head：
+### 句 18：对每组投影后的 Q/K/V 并行做 attention
 
-```python
-Q = Q.reshape(seq_len, n_heads, d_head).transpose(1, 0, 2)
-```
-
----
-
-### 句 16：Q/K 被投影到 `d_k` 维，V 被投影到 `d_v` 维
-
-**论文句意**
-
-每个 head 里，query 和 key 的投影维度是 `d_k`，value 的投影维度是 `d_v`。
+> On each of these projected versions of queries, keys and values we then perform the attention function in parallel, yielding d_v-dimensional output values.
 
 **解读**
 
-Q 和 K 必须同维，因为要做点积：
+在每一组投影后的 Q/K/V 上，模型**并行**地执行 attention 函数，每个 head 输出 `d_v` 维结果。
+
+**补充理解**
+
+「并行」是关键词：`h` 个 head **互不依赖**，可以同时计算。在 GPU 上这意味着可以打包成一个大矩阵乘法，效率几乎没有惩罚。
+
+每个 head 都完整执行 §3.2.1 的 scaled dot-product attention：
 
 ```text
-QK^T
+head_i = softmax( (QW_i^Q)(KW_i^K)^T / sqrt(d_k) ) (VW_i^V)
 ```
 
-如果 Q 是 64 维，K 也必须是 64 维。
-
-V 可以是另一个维度 `d_v`，因为 V 不参与 QK 点积。它只在最后被 attention weights 加权求和：
+每个 head 都有自己一套独立的 scores / weights / output：
 
 ```text
-weights: (seq_len, seq_len)
-V:       (seq_len, d_v)
-output:  (seq_len, d_v)
+head_i 的 scores:  (seq_len, seq_len)
+head_i 的 weights: (seq_len, seq_len)
+head_i 的 output:  (seq_len, d_v)
 ```
 
-**代码 / 维度回扣**
+不同 head 的注意力分布通常不一样——这正是后面会强调的「不同位置、不同表示子空间」的来源。
 
-第 3 课代码为了简化，令：
+### 句 19：把所有 head concat，再投影，得到最终输出
 
-```text
-d_k = d_v = d_head
-```
-
-代码变量：
-
-```python
-d_head = d_model // n_heads
-```
-
----
-
-### 句 17：对每一组投影后的 Q/K/V 并行执行 attention
-
-**论文句意**
-
-在每个投影版本的 Q/K/V 上，模型并行执行 attention 函数。
+> These are concatenated and once again projected, resulting in the final values, as depicted in Figure 2.
 
 **解读**
 
-每个 head 都完整执行第 2 课公式：
+把 `h` 个 head 的输出 **concat** 起来，再做**一次线性投影**（乘 `W^O`），就得到 multi-head attention 的最终输出。
 
-```text
-head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)
-```
+**补充理解**
 
-展开就是：
-
-```text
-head_i = softmax((QW_i^Q)(KW_i^K)^T / sqrt(d_k)) (VW_i^V)
-```
-
-所以每个 head 都有自己的：
-
-```text
-scores
-weights
-output
-```
-
-**代码 / 维度回扣**
-
-```python
-head_output, head_weights = single_head_attention(Q[h], K[h], V[h], mask)
-```
-
-`Q[h]`、`K[h]`、`V[h]` 是第 `h` 个 head 的 Q/K/V。
-
----
-
-### 句 18：每个 head 产生 `d_v` 维输出
-
-**论文句意**
-
-每个 attention head 会输出 `d_v` 维的结果。
-
-**解读**
-
-单个 head：
-
-```text
-head_i: (seq_len, d_v)
-```
-
-如果有 `h` 个 head：
+`concat` 是沿特征维拼接：
 
 ```text
 head_1: (seq_len, d_v)
 head_2: (seq_len, d_v)
 ...
 head_h: (seq_len, d_v)
+
+concat 后: (seq_len, h * d_v)
 ```
 
-这些 head 还不是最终输出，后面要 concat。
-
-**代码 / 维度回扣**
-
-第 3 课：
+接下来乘 `W^O`：
 
 ```text
-seq_len = 6
-d_model = 16
-n_heads = 4
-d_head = 4
+W^O: (h * d_v, d_model)
+output = concat @ W^O   ─►   (seq_len, d_model)
 ```
 
-所以每个 head 输出：
+`W^O` 有两个作用：
 
-```text
-(6, 4)
-```
+1. **混合 head 间信息**：每个 head 只在自己的子空间里看世界，`W^O` 让它们可以互相借用对方的发现。
+2. **维度对齐**：把 `h * d_v` 投回 `d_model`，这样输出才能和残差相加。
 
----
+注意：base model 里 `h * d_v = 8 * 64 = 512 = d_model`，所以 `W^O` 是 `(512, 512)` 的方阵——concat 后维度刚好对得上，但仍然需要这次投影来「拌匀」。
 
-### 句 19：把所有 head concat，然后再次投影，得到最终输出
+### 句 20：multi-head 让模型同时关注不同子空间、不同位置
 
-**论文句意**
-
-这些 head 的输出会被拼接起来，然后再做一次线性投影，得到最终的 multi-head attention 输出。
+> Multi-head attention allows the model to jointly attend to information from different representation subspaces at different positions.
 
 **解读**
 
-`concat` 是 `concatenate` 的缩写，意思是拼接。
+Multi-head attention 让模型可以**同时**从「不同表示子空间」、「不同位置」上汇集信息。
 
-如果有 4 个 head，每个 head 输出 4 维：
+**补充理解**
 
-```text
-head_1 = [a1, a2, a3, a4]
-head_2 = [b1, b2, b3, b4]
-head_3 = [c1, c2, c3, c4]
-head_4 = [d1, d2, d3, d4]
-```
+这句话是 multi-head 的核心动机，可以拆成两部分：
 
-concat 后：
+| 关键词 | 含义 | 来源 |
+|--------|------|------|
+| different representation subspaces | 不同 head 的 `W_i^Q, W_i^K, W_i^V` 不同，把同一个 token 投影到不同的特征切面 | 投影矩阵不同 |
+| different positions | 不同 head 的 attention 权重分布不同，可以关注序列里不同的 token | 权重学到的注意力模式不同 |
 
-```text
-[a1, a2, a3, a4, b1, b2, b3, b4, c1, c2, c3, c4, d1, d2, d3, d4]
-```
-
-形状变化：
+举个直觉例子（注意：是直觉，不一定真这么分工）：处理代词 `it` 时，
 
 ```text
-4 个 (seq_len, 4)
--> 1 个 (seq_len, 16)
+某个 head 可能更关注前文的 the animal      ← 找指代对象
+某个 head 可能更关注后面的 was tired       ← 找谓语
+某个 head 可能更关注上一个修饰它的形容词    ← 找局部搭配
 ```
 
-然后再乘输出矩阵 `W^O`：
-
-```text
-Concat(head_1, ..., head_h) W^O
-```
-
-`W^O` 的作用是混合不同 head 的信息，并把输出保持在 `d_model` 维。
-
-**代码 / 维度回扣**
-
-```python
-concat = np.concatenate(all_head_outputs, axis=-1)
-output = concat @ W_O
-```
-
-`axis=-1` 表示沿最后一维拼接，也就是沿特征维拼接。
-
----
-
-### 句 20：Multi-head 让模型同时关注不同表示子空间、不同位置的信息
-
-**论文句意**
-
-Multi-head attention 让模型可以同时从不同表示子空间、不同位置上关注信息。
-
-**解读**
-
-这句话是 multi-head 的核心动机。
-
-拆成两部分：
-
-| 说法 | 意思 |
-|------|------|
-| different representation subspaces | 不同 head 的投影矩阵不同，看到的是不同特征切面 |
-| different positions | 不同 head 的 attention weights 可以关注不同 token |
-
-比如处理 `it` 时：
-
-```text
-某个 head 可能更关注 animal
-某个 head 可能更关注 because
-某个 head 可能更关注 was / tired
-```
-
-注意：这只是帮助理解的例子，不代表训练后一定按人类命名的语法功能分工。
-
-**代码 / 维度回扣**
-
-第 3 课会打印每个 head 的注意力模式：
-
-```python
-for h, weights in enumerate(head_weights):
-    print(f"Head {h}: ...")
-```
-
-如果不同 head 的权重分布不同，就说明它们在关注不同位置。
-
----
+如果只有一个 head，它就只能学到一种关注模式，要么找指代要么找谓语，难以同时兼顾。多个 head 让模型有「分工」的可能。
 
 ### 句 21：单头 attention 的平均会抑制这种能力
 
-**论文句意**
-
-如果只有一个 attention head，所有信息会被一次加权平均混在一起，这会限制模型同时捕捉多种关系的能力。
+> With a single attention head, averaging inhibits this.
 
 **解读**
 
-单头 attention 对每个 token 只有一个注意力分布：
+如果只有一个 attention head，「加权平均」会**抑制**上面那种多视角能力。
+
+**补充理解**
+
+为什么单头会有问题？因为 attention 本质上是一次加权求和：
 
 ```text
-[0.1, 0.2, 0.6, 0.1]
+output = w_1 V_1 + w_2 V_2 + ... + w_n V_n
 ```
 
-最后只能得到一个混合结果：
+权重 `w_i` 只有一组分布。如果一个位置同时需要「指代信息 + 句法结构 + 局部搭配」，单头只能学一种妥协后的混合权重——**任何想关注多种关系的需求，都会被压成一个平均**。
 
-```text
-0.1V1 + 0.2V2 + 0.6V3 + 0.1V4
-```
+多头的关键是：每个 head **独立**做一次加权平均，得到 `h` 份「不同视角的混合结果」，最后由 `W^O` 学习如何组合这些视角，而不是在 attention 阶段就把它们搅在一起。
 
-如果一个 token 同时需要语义指代、局部搭配、句法结构等信息，一次平均可能会把这些关系搅在一起。
+可以类比拍照：
 
-多头则是多次独立平均：
+- 单头 = 用一个镜头拍一张照片，所有信息融合到一张画面
+- 多头 = 用 `h` 个不同焦段的镜头各拍一张，最后在后期合成
 
-```text
-head_1: 一套注意力分布
-head_2: 另一套注意力分布
-head_3: 另一套注意力分布
-...
-```
+后期合成显然比一次曝光保留的信息更丰富。
 
-最后再由 `W^O` 学习如何融合。
+### 句 22：论文给出正式公式
 
-**代码 / 维度回扣**
-
-这就是为什么 `all_head_outputs` 是一个列表：
-
-```python
-all_head_outputs.append(head_output)
-```
-
-每个 head 保留自己的输出，先不混在一起。
-
----
-
-### 句 22：论文给出投影矩阵的形状
-
-**论文句意**
-
-论文说明，每个 head 的投影矩阵是 `W_i^Q`、`W_i^K`、`W_i^V`，最后还有一个输出投影矩阵 `W^O`。
+> MultiHead(Q, K, V) = Concat(head_1, ..., head_h) W^O, where head_i = Attention(Q W_i^Q, K W_i^K, V W_i^V)
 
 **解读**
 
-形状是：
+论文给出 multi-head attention 的正式公式：每个 head 是 Q/K/V 各自被 `W_i` 投影后做一次 attention；`h` 个 head concat 后再乘 `W^O` 得到最终输出。
+
+**补充理解**
+
+把这条公式和前面四句对照，正好是一一对应：
+
+- 句 17 → `Q W_i^Q`、`K W_i^K`、`V W_i^V`（投影 `h` 次）
+- 句 18 → `head_i = Attention(...)`（并行做 attention）
+- 句 19 → `Concat(...) W^O`（拼接 + 投影）
+- 句 20 / 21 → 公式背后的动机
+
+整个流程其实就是「split → attend → concat → mix」四步：
+
+```text
+split:   X ─► Q_i, K_i, V_i  (h 份)
+attend:  对每份独立做 attention  ─► head_i
+concat:  把 h 个 head 拼起来
+mix:     乘 W^O，让不同 head 的发现互相交融
+```
+
+理解了这四步，就抓住了 multi-head 的全部。
+
+### 句 23：投影矩阵的形状
+
+> Where the projections are parameter matrices W_i^Q ∈ R^{d_model × d_k}, W_i^K ∈ R^{d_model × d_k}, W_i^V ∈ R^{d_model × d_v} and W^O ∈ R^{h·d_v × d_model}.
+
+**解读**
+
+论文明确每个投影矩阵的形状：
 
 ```text
 W_i^Q: (d_model, d_k)
@@ -1133,244 +695,115 @@ W_i^V: (d_model, d_v)
 W^O:   (h * d_v, d_model)
 ```
 
-这些矩阵都是模型参数，随机初始化，然后通过训练学出来。
+**补充理解**
 
-**代码 / 维度回扣**
-
-代码里没有显式写 `W_1^Q`、`W_2^Q`，而是把所有 head 的投影矩阵合成一个大矩阵：
+这些都是模型参数，随机初始化、由训练学习。形状决定了维度怎么变：
 
 ```text
-W_Q = [W_1^Q | W_2^Q | ... | W_h^Q]
+X        : (seq_len, d_model)
+X W_i^Q  : (seq_len, d_model) @ (d_model, d_k) = (seq_len, d_k)   ✓
 ```
 
-所以：
+`W^O` 的形状特别值得注意：输入维度是 `h * d_v`（concat 后的维度），输出是 `d_model`。base model 里两者都是 512，刚好是方阵，但意义上仍然是「从 `h` 个 head 的拼接空间投回主表示空间」。
 
-```python
-W_Q = np.random.randn(d_model, d_model) * 0.1
-```
+**为什么不直接让每个 head 输出就是 `d_model`？** 因为那样会让总参数量和计算量乘以 `h` 倍。论文的设计是：每个 head 的维度降为 `d_model / h`，`h` 个加起来还是 `d_model`，**总宽度不变**。
 
-因为：
+在代码里通常把 `h` 个 head 的投影矩阵合成一个大矩阵：`W_Q = [W_1^Q | W_2^Q | ... | W_h^Q]`，形状 `(d_model, d_model)`，因为 `d_model = h * d_k`，两种写法完全等价。
 
-```text
-d_model = h * d_head
-```
+### 句 24：使用 8 个 head
 
----
-
-### 句 23：原始 Transformer 使用 8 个 head
-
-**论文句意**
-
-在这项工作中，论文使用 `h = 8` 个并行 attention layer，也就是 8 个 head。
+> In this work we employ h = 8 parallel attention layers, or heads.
 
 **解读**
 
-这是原始 Transformer base model 的配置：
+论文 base model 用了 `h = 8` 个并行 attention layer，也就是 8 个 head。
 
-```text
-h = 8
-```
+**补充理解**
 
-不是说 8 是永远最优，而是论文 base model 采用这个设置。
+这里 `parallel attention layers` 和 `heads` 是同义词——「层」在这里指「一个独立的 attention 计算」，而不是「encoder layer」。术语容易混，注意区分。
 
-论文后面的消融实验也比较过不同 head 数，结果不是简单“越多越好”。
+`8` 不是什么神圣数字。论文 §6.2 Table 3 row (A) 的消融实验里试过 `h = 1, 4, 8, 16, 32`，发现：
 
-**代码 / 维度回扣**
+- `h = 1`（单头）效果明显差（BLEU −0.9）
+- 中间几档差异不大
+- `h = 32` 反而轻微下降
 
-第 3 课默认：
+也就是说「太少不行，太多也不一定好」。背后的直觉是：`h` 增大时每个 head 的 `d_k` 必须减小，太小的 `d_k` 会让单个 head 的表达能力下降，最终得不偿失。
 
-```python
-n_heads = 4
-```
+### 句 25：每个 head 使用 d_k = d_v = 64
 
-你可以改成：
-
-```python
-n_heads = 1
-n_heads = 2
-n_heads = 8
-```
-
-但要保证：
-
-```text
-d_model % n_heads == 0
-```
-
----
-
-### 句 24：每个 head 使用 `d_k = d_v = d_model / h = 64`
-
-**论文句意**
-
-每个 head 的 key/query 维度和值维度都设为 64，也就是 `d_model / h`。
+> For each of these we use d_k = d_v = d_model / h = 64.
 
 **解读**
 
-原始论文 base model：
+每个 head 的 `d_k` 和 `d_v` 都设成 `d_model / h`，base model 里就是 `512 / 8 = 64`。
+
+**补充理解**
+
+这一句把 `d_model`、`h`、`d_k`、`d_v` 四个超参绑定到一起：
 
 ```text
 d_model = 512
 h = 8
-d_k = d_v = 64
+d_k = d_v = d_model / h = 64
 ```
 
-因为：
+满足 `h * d_v = d_model`，所以 concat 后维度刚好回到 `d_model = 512`。
 
-```text
-512 / 8 = 64
-```
+为什么这么绑？两个原因：
 
-这样 concat 后刚好回到：
+1. **形状对齐**：concat 后正好是 `d_model`，`W^O` 也成方阵，工程上最干净。
+2. **参数和计算量守恒**：相比单头 full-dim attention，多头总参数量和 FLOPs 几乎不变（下一句正式说）。
 
-```text
-8 * 64 = 512
-```
+理论上 `d_k` 和 `d_v` 可以解耦、可以不等于 `d_model / h`，但那样要么参数变多，要么形状对不齐，需要额外补一次投影。论文选了最经济的方案。
 
-**代码 / 维度回扣**
+### 句 26：多头总计算量和单头 full-dim 接近
 
-第 3 课是缩小版：
-
-```text
-d_model = 16
-n_heads = 4
-d_head = 16 / 4 = 4
-```
-
-逻辑完全一样。
-
----
-
-### 句 25：由于每个 head 维度降低，总计算成本接近单头 full-dimensional attention
-
-**论文句意**
-
-因为每个 head 的维度被降低了，所以多头 attention 的总计算成本，和一个完整维度的单头 attention 差不多。
+> Due to the reduced dimension of each head, the total computational cost is similar to that of single-head attention with full dimensionality.
 
 **解读**
 
-一个常见误解是：
+因为每个 head 的维度被降低了，多头 attention 的**总计算量**和「单头 full-dim attention」差不多。
+
+**补充理解**
+
+这句话经常被误读成「多头免费」，其实它说的是：**和「单头但用 `d_model` 维度做 attention」相比，多头并没有显著变贵**。直觉验算：
+
+- 单头 full-dim：1 个 attention，`d_model = 512`
+- 多头：`h = 8` 个 attention，每个 `d_k = 64`
+
+对比 attention 主要成本（点积部分）：
 
 ```text
-8 个 head = 计算量变 8 倍
+单头：seq_len × seq_len × d_model = n² × 512
+多头：8 × (n² × 64) = n² × 512   ← 总和相同
 ```
 
-论文这里说的正好相反：每个 head 变窄，所以总成本不会简单乘 8。
+也就是说，把「一个胖 attention」切成「`h` 个瘦 attention 并行」，总宽度仍是 `d_model`。多头**不是免费**，但**没有比单头 full-dim 贵**。
 
-对 base model：
+需要警惕的常见误解：
 
-```text
-单头：1 个 512 维 attention
-多头：8 个 64 维 attention
-```
+- ❌ 「8 个 head 比 1 个 head 慢 8 倍」——错，每个 head 维度也降到 `1/h`
+- ❌ 「多头是免费提升」——错，它和「单头 full-dim」总量相当
+- ✅ 「在不显著增加成本的前提下，多头换来了多视角能力」
 
-总宽度仍然是 512。
+### 小结
 
-**代码 / 维度回扣**
+这一节最重要的理解不是记住公式，而是记住这条逻辑链：
 
-第 3 课：
-
-```text
-单头 full dim: 1 * 16
-多头:          4 * 4 = 16
-```
-
-宽度总量没变，只是切成 4 份并行处理。
+1. 不做一次大的 attention，而是切成 `h` 个小的并行做。
+2. 每个 head 用自己的投影矩阵，看到不同的特征切面。
+3. concat 后再用 `W^O` 把信息混合回来，投回 `d_model`。
+4. 这么做的收益是多视角能力，而代价几乎没有增加（总宽度不变）。
 
 ---
 
-## 3. 把两节连成一条数据流
+## 最后用一句话串起来
 
-### Encoder layer
+`§3.1` 解决的是「Transformer 的 encoder / decoder 分别长什么样，用了哪些训练稳定技巧（残差 + LayerNorm），以及怎么保证自回归（causal mask + 右移）」。
 
-```text
-x
-│
-├─ MultiHeadSelfAttention(x)
-│
-├─ Add: x + attention_output
-│
-├─ LayerNorm
-│
-├─ FFN
-│
-├─ Add
-│
-└─ LayerNorm
-```
+`§3.2.2` 解决的是「为什么不做一次大 attention，而要拆成多个小 attention 并行做再合并」。
 
-公式：
+两节合起来，你就能画出 Transformer 的完整 block 结构：
 
-```text
-x1 = LayerNorm(x0 + MultiHeadSelfAttention(x0))
-x2 = LayerNorm(x1 + FFN(x1))
-```
-
-### Decoder layer
-
-```text
-x
-│
-├─ MaskedSelfAttention
-├─ Add & Norm
-├─ CrossAttention over encoder output
-├─ Add & Norm
-├─ FFN
-└─ Add & Norm
-```
-
-公式：
-
-```text
-x1 = LayerNorm(x0 + MaskedSelfAttention(x0))
-x2 = LayerNorm(x1 + CrossAttention(x1, encoder_output))
-x3 = LayerNorm(x2 + FFN(x2))
-```
-
-### Multi-Head Attention
-
-```text
-head_i = Attention(QW_i^Q, KW_i^K, VW_i^V)
-
-MultiHead(Q, K, V) = Concat(head_1, ..., head_h) W^O
-```
-
-代码对应：
-
-```python
-Q = X @ W_Q
-K = X @ W_K
-V = X @ W_V
-
-Q = Q.reshape(seq_len, n_heads, d_head).transpose(1, 0, 2)
-K = K.reshape(seq_len, n_heads, d_head).transpose(1, 0, 2)
-V = V.reshape(seq_len, n_heads, d_head).transpose(1, 0, 2)
-
-for h in range(n_heads):
-    head_output, head_weights = single_head_attention(Q[h], K[h], V[h], mask)
-    all_head_outputs.append(head_output)
-
-concat = np.concatenate(all_head_outputs, axis=-1)
-output = concat @ W_O
-```
-
----
-
-## 4. 读完必须能回答
-
-1. `stack of identical layers` 里的 identical 是结构相同还是参数共享？
-2. Encoder 每层两个 sub-layer 分别是什么？
-3. Decoder 为什么比 encoder 多一个 sub-layer？
-4. `LayerNorm(x + Sublayer(x))` 为什么叫 Post-Norm？
-5. 为什么残差连接要求 sub-layer 输出 `d_model`？
-6. Self-attention 和 cross-attention 的 Q/K/V 来源有什么区别？
-7. Multi-head 里的 `concat` 是沿哪个维度拼接？
-8. 为什么多头不是让计算量简单乘以 head 数？
-
----
-
-## 5. 一句话总结
-
-§3.1 告诉你：Transformer 的 encoder / decoder 是多层堆叠结构，每个子层都包着 residual + LayerNorm，原始论文采用 Post-Norm。
-
-§3.2.2 告诉你：Multi-Head Attention 把 Q/K/V 投影到多个较小子空间并行做 attention，再 concat 并用 `W^O` 投回 `d_model`，这样既能看不同位置和不同表示子空间，又能保持残差连接需要的形状。
+`Multi-Head Attention → Add & Norm → FFN → Add & Norm`（encoder 每层重复这个；decoder 每层在中间再插一个 cross-attention + Add & Norm）。
