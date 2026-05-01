@@ -7,6 +7,7 @@
 - `core-transformers/`: Transformer、GPT、BERT、InstructGPT 等主线论文
 - `attention-extensions/`: 位置编码、Self-Attention 表达能力、线性注意力等延伸论文
 - `efficient-transformers/`: 高效 Transformer 与长上下文 benchmark / survey
+- `scaling-laws/`: 规模定律与 compute-optimal 训练论文
 - `vision-transformers/`: Vision Transformer 方向论文
 - `notes/`: 论文精读笔记
 
@@ -51,6 +52,14 @@
   - **一句话**: 将自注意力写成 kernel feature map 的线性点积形式，用矩阵乘法结合律把复杂度从 O(N^2) 降到 O(N)，并展示自回归 Transformer 与 RNN 的联系。
 
 #### Efficient Transformer / Long Context 延伸阅读（未读）
+
+- **Generating Long Sequences with Sparse Transformers** (2019)
+  - **状态**: 未读
+  - **文件**: [Generating_Long_Sequences_with_Sparse_Transformers_2019.pdf](efficient-transformers/Generating_Long_Sequences_with_Sparse_Transformers_2019.pdf)
+  - **来源**: [arxiv.org/abs/1904.10509](https://arxiv.org/abs/1904.10509)、[OpenAI blog](https://openai.com/index/sparse-transformer)
+  - **作者**: Rewon Child, Scott Gray, Alec Radford, Ilya Sutskever
+  - **配合课程**: 第 2-3 课（Sparse Attention / Long Context）延伸阅读；也可配合 GPT-3 `2.1 Model and Architectures` 理解 `locally banded sparse attention`
+  - **一句话**: GPT-3 §2.1 引用的 Sparse Transformer 原始论文，用稀疏注意力模式把标准 attention 的二次复杂度降下来，使模型能处理更长序列。
 
 - **Long Range Arena: A Benchmark for Efficient Transformers** (2020)
   - **状态**: 未读
@@ -103,8 +112,26 @@
 ### 5. GPT-3 (2020)
 - **文件**: [GPT3_Language_Models_are_Few_Shot_Learners_2020.pdf](core-transformers/GPT3_Language_Models_are_Few_Shot_Learners_2020.pdf)
 - **作者**: Brown et al. (OpenAI)
-- **重点章节**: Section 1 (Introduction), Figure 1.1, Section 3
+- **重点章节**: Section 1 (Introduction), Figure 1.1, Section 2.1 (Model and Architectures), Section 3
 - **一句话**: 175B 参数，展示 In-context Learning 和 Scaling Law
+
+#### Scaling Law 延伸阅读（未读）
+
+- **Scaling Laws for Neural Language Models** (2020)
+  - **状态**: 未读
+  - **文件**: [Scaling_Laws_for_Neural_Language_Models_2020.pdf](scaling-laws/Scaling_Laws_for_Neural_Language_Models_2020.pdf)
+  - **来源**: [OpenAI 论文页](https://openai.com/research/scaling-laws-for-neural-language-models)、[arxiv.org/abs/2001.08361](https://arxiv.org/abs/2001.08361)
+  - **作者**: Jared Kaplan, Sam McCandlish, Tom Henighan, Tom Brown, Benjamin Chess, Rewon Child, Scott Gray, Alec Radford, Jeffrey Wu, Dario Amodei
+  - **建议读法**: 先读 Abstract / Introduction，再看关于 model size、dataset size、compute 的 loss 曲线。
+  - **一句话**: GPT-3 背后的直接理论背景，说明语言模型 loss 会随参数量、数据量和训练 compute 呈近似幂律下降。
+
+- **Training Compute-Optimal Large Language Models** (Chinchilla, 2022)
+  - **状态**: 未读
+  - **文件**: [Training_Compute_Optimal_Large_Language_Models_Chinchilla_2022.pdf](scaling-laws/Training_Compute_Optimal_Large_Language_Models_Chinchilla_2022.pdf)
+  - **来源**: [arxiv.org/abs/2203.15556](https://arxiv.org/abs/2203.15556)、[DeepMind 官方解读](https://deepmind.google/discover/blog/an-empirical-analysis-of-compute-optimal-large-language-model-training/)
+  - **作者**: Jordan Hoffmann et al. (DeepMind)
+  - **建议读法**: 重点看 Abstract、Introduction、Figure 1/2，以及 compute-optimal 训练数据量的结论。
+  - **一句话**: 对 GPT-3 式 scaling 路线的重要修正：固定训练 compute 时，不应只增大参数量，也要按比例增加训练 token。
 
 ### 6. InstructGPT (2022)
 - **文件**: [InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf](core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf)
