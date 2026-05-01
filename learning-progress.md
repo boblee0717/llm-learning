@@ -6,7 +6,7 @@
 
 - 第 0 阶段：第 1 课进行中
 - 第一阶段：三课已完成
-- 第二阶段：第 3 课进行中
+- 第二阶段：第 3 课进行中（论文精读 §3.1 / §3.2.2 已推进完成，代码实验继续）
 - 第三阶段：待学习
 
 ## 进展记录
@@ -18,3 +18,4 @@
 - 2026-04-25：开始第二阶段第 3 课（多头注意力 / 残差连接 / LayerNorm）。在 [phase2-transformer/README.md](phase2-transformer/README.md) 补充了李宏毅 Multi-Head Attention 中文视频，按"看视频 -> 读论文 -> 跑 `03_multi_head_attention.py` -> 改 `n_heads`/去残差实验"的节奏推进。
 - 2026-04-26：开始第 0 阶段第 1 课（向量、形状、axis、广播）。把 `01_vectors_and_axes.py` 的 axis 注释改成"聚合方向法"，给广播规则补了 5 条 Q&A（为什么从右对齐 / 为什么补 1 / 为什么不静默通过 / 不真复制内存 / 任意维度都成立），修正错误示范并加 `(3,4)` 与 `reshape(2,1,4)` 两个正确示范，给 `X+bias` 例子加 seed 和 diff 验证证明 bias 在 batch/seq 上共享。
 - 2026-04-27：第 0 阶段第 1 课自写练习推进。在 `01_vectors_and_axes_self_write.py` 新增 TODO-0（动手验证 `(3,)` / `(1,3)` / `(3,1)` 的差异，练习 reshape 与 `None`/`np.newaxis` 两种写法）；在 TODO-4 后加 4a/4b/4c（3D 张量上的 axis、`keepdims` 与多轴聚合 `axis=(0,1)`、`mean`/`max`/`argmax` 共用 axis 规则）；在 TODO-7 `can_broadcast` 用例里补 6 个 5 维 case（含 attention scores + mask 的真实形状）。
+- 2026-05-01：推进第二阶段第 3 课论文精读，完善 [papers/notes/attention_is_all_you_need_reading_3.1_3.2.2.md](papers/notes/attention_is_all_you_need_reading_3.1_3.2.2.md)：补清 FFN/MLP/position-wise 的术语关系、两层 FFN 中 `W_1/b_1` + ReLU + `W_2/b_2` 的结构、残差连接与残差相加的区别、encoder/decoder `N=6` 是实验超参数和对称设计而非硬约束、cross-attention 的 Q/K/V 来源与 mask 差异、causal mask 中 `✓/✗` 与 `0/1` 约定的区别、multi-head 中 concat/拼接、head 随机初始化打破对称性，以及 `W^O` 是可学习输出投影并负责混合多个 head。
