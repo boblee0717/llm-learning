@@ -97,8 +97,10 @@
 
 ### 3. BERT (2018)
 - **文件**: [BERT_2018.pdf](core-transformers/BERT_2018.pdf)
+- **配套笔记**: [bert_reading_model_architecture.md](notes/bert_reading_model_architecture.md)
 - **作者**: Devlin et al. (Google)
 - **重点章节**: Section 3 (Pre-training BERT), Figure 1
+- **配合课程**: 第 3 课（对照 encoder 结构、多头注意力、残差与 LayerNorm）
 - **一句话**: 双向 Transformer Encoder，开创预训练+微调范式
 
 ### 4. GPT-2 (2019)

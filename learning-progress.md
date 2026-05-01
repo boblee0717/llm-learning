@@ -6,7 +6,7 @@
 
 - 第 0 阶段：第 1 课进行中
 - 第一阶段：三课已完成
-- 第二阶段：第 3 课进行中（Attention 论文精读 §3.1 / §3.2.2 已推进完成，GPT-3 §2.1 精读笔记已新增，代码实验继续）
+- 第二阶段：第 3 课进行中（Attention 论文精读 §3.1 / §3.2.2 已推进完成，GPT-3 §2.1 与 BERT Model Architecture 精读笔记已新增，代码实验继续）
 - 第三阶段：待学习
 
 ## 进展记录
@@ -21,3 +21,4 @@
 - 2026-05-01：推进第二阶段第 3 课论文精读，完善 [papers/notes/attention_is_all_you_need_reading_3.1_3.2.2.md](papers/notes/attention_is_all_you_need_reading_3.1_3.2.2.md)：补清 FFN/MLP/position-wise 的术语关系、两层 FFN 中 `W_1/b_1` + ReLU + `W_2/b_2` 的结构、残差连接与残差相加的区别、encoder/decoder `N=6` 是实验超参数和对称设计而非硬约束、cross-attention 的 Q/K/V 来源与 mask 差异、causal mask 中 `✓/✗` 与 `0/1` 约定的区别、multi-head 中 concat/拼接、head 随机初始化打破对称性，以及 `W^O` 是可学习输出投影并负责混合多个 head。
 - 2026-05-01：新增 [papers/notes/gpt3_reading_2.1_model_and_architectures.md](papers/notes/gpt3_reading_2.1_model_and_architectures.md)，精读 GPT-3 `2.1 Model and Architectures`：梳理 GPT-3 与 GPT-2 架构关系、dense / locally banded sparse attention 交替、8 个模型尺寸与 Table 2.1 读表注意、`d_model / d_ff / d_head` 的含义、Scaling Law 中验证 loss 与"暴力出奇迹"的关系，以及学习率、batch size、300B tokens 和 Chinchilla 修正口径。
 - 2026-05-01：补充 Scaling Law 与 Sparse Transformer 延伸阅读资料。在 `papers/scaling-laws/` 下载 Kaplan et al. *Scaling Laws for Neural Language Models* 与 Chinchilla *Training Compute-Optimal Large Language Models*；在 `papers/efficient-transformers/` 下载 Child et al. *Generating Long Sequences with Sparse Transformers*；同步更新 [papers/README.md](papers/README.md) 和 [phase2-transformer/README.md](phase2-transformer/README.md)，把这些资料加入后续学习计划。
+- 2026-05-01：新增 [papers/notes/bert_reading_model_architecture.md](papers/notes/bert_reading_model_architecture.md)，精读 BERT `§3` 开篇、`Model Architecture` 与 `Input/Output Representations` 架构衔接段：补清预训练/微调范式、MLM 与 GPT left-to-right LM 的差异、`L/H/A/4H` 记号、`BERT_BASE / BERT_LARGE` 尺寸、双向 self-attention 与 causal mask 的区别、WordPiece / `[CLS]` / `[SEP]` / segment embedding，以及与 `03_multi_head_attention.py` 五个 Part 的对照。
