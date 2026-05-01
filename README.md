@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 3 课进行中（Attention 论文精读 §3.1 / §3.2.2 已推进完成，GPT-3 §2.1 与 BERT Model Architecture 精读笔记已新增，代码实验继续）。
+当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 3 课进行中（Attention 论文精读 §3.1 / §3.2.2 已推进完成，GPT-3 §2.1 与 BERT Model Architecture 精读笔记已新增，第 3 课自写练习已补齐）。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -39,6 +39,7 @@ llm-learning/
 │   ├── 02_self_attention.py              # Q/K/V、注意力分数、掩码
 │   ├── 02_self_attention_self_write.py   # ↳ 自写练习（第 2 课，8 个 TODO）
 │   ├── 03_multi_head_attention.py        # 多头注意力、残差连接、LayerNorm
+│   ├── 03_multi_head_attention_self_write.py # ↳ 自写练习（第 3 课，9 个 TODO）
 │   ├── 04_transformer_block.py           # 完整 Transformer Block
 │   ├── 05_gpt_from_scratch.py            # 从零搭建 GPT，文本生成
 │   ├── reset_exercises_01.py             # 重置第 1 课练习
@@ -79,7 +80,7 @@ llm-learning/
 矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT  →  LoRA/量化/RLHF/推理优化
    形状与反向                  基础数学                   核心架构                     工业实践
    🚧 第 1 课进行中            ✅ 已完成三课               🚧 第 3 课进行中             待学习
-                                                        GPT-3 §2.1 / BERT 架构精读已新增
+                                                        第 3 课自写练习已补齐
 ```
 
 > **phase0-math 不是必经环节**：当你在 phase1/phase2 遇到形状或求导卡壳时回来跑对应那节即可。
@@ -148,13 +149,13 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 > 详见 [phase1-foundations/README.md](phase1-foundations/README.md)
 
-### 第二阶段：Transformer 架构（第 1-2 课已配自写练习，第 3 课进行中）
+### 第二阶段：Transformer 架构（第 1-3 课已配自写练习，第 3 课进行中）
 
 | 课程 | 主课文件 | 自写练习 | 核心内容 |
 |------|----------|----------|----------|
 | 第 1 课 | `01_word_embeddings.py` | `01_word_embeddings_self_write.py` | 词嵌入、位置编码 |
 | 第 2 课 | `02_self_attention.py` | `02_self_attention_self_write.py` | Q/K/V、注意力分数、因果掩码 |
-| 第 3 课 | `03_multi_head_attention.py` | — | 多头注意力、残差连接、LayerNorm |
+| 第 3 课 | `03_multi_head_attention.py` | `03_multi_head_attention_self_write.py` | 多头注意力、残差连接、LayerNorm |
 | 第 4 课 | `04_transformer_block.py` | — | 完整 Transformer Block、FFN |
 | 第 5 课 | `05_gpt_from_scratch.py` | — | 完整 GPT 模型、文本生成 |
 

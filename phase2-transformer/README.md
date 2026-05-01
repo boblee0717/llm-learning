@@ -42,7 +42,7 @@ pip install -r requirements.txt
 |------|----------|----------|----------|----------|
 | 第 1 课 | `01_word_embeddings.py` | `01_word_embeddings_self_write.py` | 词嵌入、位置编码 | 文本如何变成数字向量 |
 | 第 2 课 | `02_self_attention.py` | `02_self_attention_self_write.py` | Q/K/V、注意力分数、掩码 | Transformer 的核心机制 |
-| 第 3 课 | `03_multi_head_attention.py` | — | 多头注意力、残差连接、LayerNorm | 为什么多头比单头好 |
+| 第 3 课 | `03_multi_head_attention.py` | `03_multi_head_attention_self_write.py` | 多头注意力、残差连接、LayerNorm | 为什么多头比单头好 |
 | 第 4 课 | `04_transformer_block.py` | — | 完整 Transformer Block、FFN | 把所有组件拼起来 |
 | 第 5 课 | `05_gpt_from_scratch.py` | — | 完整 GPT 模型、文本生成 | 从零搭建一个能生成文本的模型 |
 
@@ -52,13 +52,14 @@ pip install -r requirements.txt
 
 - ✅ 第 1 课：`01_word_embeddings_self_write.py`（重置脚本：`reset_exercises_01.py`）
 - ✅ 第 2 课：`02_self_attention_self_write.py`（8 个 TODO，覆盖 softmax / Q/K/V / scaled dot-product / 因果掩码；含内置 `require_*` 校验）
-- 🚧 第 3 课：进行中 —— 已补充中文学习资料（B 站 / 知乎），按"看视频 → 读论文 → 跑 `03_multi_head_attention.py`"的节奏推进
+- 🚧 第 3 课：进行中 —— 已补充中文学习资料（B 站 / 知乎），并新增 `03_multi_head_attention_self_write.py`（9 个 TODO，覆盖 split/merge heads、multi-head、causal mask、residual、LayerNorm、Pre/Post-Norm）
 - ⏳ 第 4-5 课：自写练习与重置脚本待补
 
 ```bash
 # 在项目根目录执行
 python3 phase2-transformer/reset_exercises_01.py   # 重置第二阶段第 1 课练习
 python3 phase2-transformer/02_self_attention_self_write.py   # 跑第 2 课练习并自动校验
+python3 phase2-transformer/03_multi_head_attention_self_write.py   # 跑第 3 课练习并自动校验
 ```
 
 ## 必读论文
@@ -290,9 +291,9 @@ x_i W = token_embedding_i W + position_encoding_i W
    - mask 约定与第 2 课完全一致（1=屏蔽，0=可见），可以直接复用 `np.triu(...)` 那套
 4. **④ 对照理解**：把 MultiHead(Q,K,V) = Concat(head_1,...,head_h) W^O 与代码实现对齐
    - 关键维度变换：`(seq_len, d_model)` → reshape → `(n_heads, seq_len, d_head)` → concat 回 `(seq_len, d_model)`
-5. **⑤ 动手写**（至少做 2 个）：
+5. **⑤ 动手写**：完成 `03_multi_head_attention_self_write.py`（9 个 TODO，每填一个就跑一次依靠 `require_*` 校验即时纠错）；做完后再做下面 3 个扩展实验：
    - 修改 `n_heads`（1/2/8/16），对比输出差异（注意 d_model 必须能被整除）
-   - 完成代码末尾"练习 4"——给 multi_head_attention 加因果掩码（提示已写在代码里）
+   - 给 `multi_head_attention` 传入因果掩码，确认每个 head 的未来位置权重都为 0
    - 把 `pre_norm_block` 堆叠 10 层，对比加不加 final LayerNorm 时输出方差的变化
 6. **⑥ 复盘**：能说清以下 4 点
    - **单头 vs 多头**：为什么"分头"在参数量不变的情况下能学到更丰富的模式
