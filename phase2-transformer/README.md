@@ -4,7 +4,7 @@
 
 ## 快速索引
 
-按当前进度，继续学习可直接跳到 [第 3 课：多头注意力与残差](#lesson-3)。
+按当前进度，继续学习可直接跳到 [第 4 课：Transformer Block](#lesson-4)。
 
 | 入口 | 跳转 | 用途 |
 |------|------|------|
@@ -52,8 +52,9 @@ pip install -r requirements.txt
 
 - ✅ 第 1 课：`01_word_embeddings_self_write.py`（重置脚本：`reset_exercises_01.py`）
 - ✅ 第 2 课：`02_self_attention_self_write.py`（8 个 TODO，覆盖 softmax / Q/K/V / scaled dot-product / 因果掩码；含内置 `require_*` 校验）
-- 🚧 第 3 课：进行中 —— 已补充中文学习资料（B 站 / 知乎），并新增 `03_multi_head_attention_self_write.py`（9 个 TODO，覆盖 split/merge heads、multi-head、causal mask、residual、LayerNorm、Pre/Post-Norm）
-- ⏳ 第 4-5 课：自写练习与重置脚本待补
+- ✅ 第 3 课：`03_multi_head_attention.py` + `03_multi_head_attention_self_write.py`（9 个 TODO，覆盖 split/merge heads、multi-head、causal mask、residual、LayerNorm、Pre/Post-Norm）
+- 🚧 第 4 课：下一步从 `04_transformer_block.py` 开始，把 Attention、残差、LayerNorm 和 FFN 组合成完整 Transformer Block
+- ⏳ 第 5 课：待学习
 
 ```bash
 # 在项目根目录执行
@@ -297,7 +298,7 @@ x_i W = token_embedding_i W + position_encoding_i W
    - 把 `pre_norm_block` 堆叠 10 层，对比加不加 final LayerNorm 时输出方差的变化
 6. **⑥ 复盘**：能说清以下 4 点
    - **单头 vs 多头**：为什么"分头"在参数量不变的情况下能学到更丰富的模式
-   - **残差连接的本质**：那个 +1 不是"保证梯度 ≥ 1"（这个说法不准确），而是提供一条**不被 sublayer 雅可比衰减的恒等高速公路**——即使 sublayer 还没学会（dF/dX ≈ 0），梯度仍能传到前面去
+   - **残差连接的本质**：那个 +1 不是"保证梯度 ≥ 1"（这个说法不准确），而是给梯度留了一条不必完全经过子层的直路；即使子层还没学会（dF/dX ≈ 0），梯度仍能传到前面去
    - **LayerNorm vs BatchNorm**：归一化维度不同 → 在变长序列上谁更友好
    - **Pre-Norm 的代价**：残差通路绕过 LN 让训练稳定，但输出方差会随层数累积，所以工业实现末尾必须再加一个 final LayerNorm（nanoGPT 的 `ln_f`，第 5 课会再遇到）
    - 卡住时看这篇：[Pre-Norm vs Post-Norm（含交互动图）](https://mbrenndoerfer.com/writing/pre-norm-vs-post-norm) —— 把"+1 梯度高速公路"和 LayerNorm Jacobian 画成图，是我找到的解释 Pre-Norm 最清楚的一篇

@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 3 课进行中（Attention 论文精读 §3.1 / §3.2.2 已推进完成，GPT-3 §2.1 与 BERT Model Architecture 精读笔记已新增，第 3 课自写练习已补齐）。
+当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 3 课已完成，下一步进入第 4 课（Transformer Block / FFN / Block 堆叠）。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -79,8 +79,8 @@ llm-learning/
 第 0 阶段 (4课, 按需)        第一阶段 (3课)            第二阶段 (5课)             第三阶段 (5课)
 矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT  →  LoRA/量化/RLHF/推理优化
    形状与反向                  基础数学                   核心架构                     工业实践
-   🚧 第 1 课进行中            ✅ 已完成三课               🚧 第 3 课进行中             待学习
-                                                        第 3 课自写练习已补齐
+   🚧 第 1 课进行中            ✅ 已完成三课               ✅ 第 1-3 课完成             待学习
+                                                        下一步第 4 课
 ```
 
 > **phase0-math 不是必经环节**：当你在 phase1/phase2 遇到形状或求导卡壳时回来跑对应那节即可。
@@ -149,7 +149,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 > 详见 [phase1-foundations/README.md](phase1-foundations/README.md)
 
-### 第二阶段：Transformer 架构（第 1-3 课已配自写练习，第 3 课进行中）
+### 第二阶段：Transformer 架构（第 1-3 课已完成，下一步第 4 课）
 
 | 课程 | 主课文件 | 自写练习 | 核心内容 |
 |------|----------|----------|----------|

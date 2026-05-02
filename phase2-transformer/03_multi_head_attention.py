@@ -114,6 +114,39 @@ def multi_head_attention(X, W_Q, W_K, W_V, W_O, n_heads, mask=None):
     V = X @ W_V
 
     # 分成多个头: (seq_len, d_model) → (n_heads, seq_len, d_head)
+    #
+    # 可视化理解（以本例 d_model=16, n_heads=4, d_head=4 为例）:
+    #
+    #   原来每个 token 是一整条 16 维向量:
+    #     token_0: [ q0 q1 q2 q3 | q4 q5 q6 q7 | q8 q9 q10 q11 | q12 q13 q14 q15 ]
+    #
+    #   reshape(seq_len, n_heads, d_head) 后:
+    #     token_0:
+    #       head_0: [ q0  q1  q2  q3  ]
+    #       head_1: [ q4  q5  q6  q7  ]
+    #       head_2: [ q8  q9  q10 q11 ]
+    #       head_3: [ q12 q13 q14 q15 ]
+    #
+    #   transpose(1, 0, 2) 后把 head 维挪到最前面:
+    #     head_0: [ token_0 的前 4 维, token_1 的前 4 维, ... ]
+    #     head_1: [ token_0 的第 2 段, token_1 的第 2 段, ... ]
+    #
+    #   transpose 参数的含义:
+    #     reshape 后的维度编号是 (0, 1, 2):
+    #       0 = seq_len   表示第几个 token
+    #       1 = n_heads   表示第几个 head
+    #       2 = d_head    表示 head 内部的特征维度
+    #
+    #     transpose(1, 0, 2) 就是把维度顺序从:
+    #       (seq_len, n_heads, d_head)
+    #     改成:
+    #       (n_heads, seq_len, d_head)
+    #
+    #     用索引看就是:
+    #       before[token_i, head_j, dim_k] -> after[head_j, token_i, dim_k]
+    #
+    #   所以后面 Q[h], K[h], V[h] 就表示:
+    #     第 h 个 head 看到的完整序列，形状是 (seq_len, d_head)
     Q = Q.reshape(seq_len, n_heads, d_head).transpose(1, 0, 2)
     K = K.reshape(seq_len, n_heads, d_head).transpose(1, 0, 2)
     V = V.reshape(seq_len, n_heads, d_head).transpose(1, 0, 2)
@@ -197,8 +230,8 @@ print("""
                                 这个 +1 提供一条"恒等高速公路"
 
   精确说法（避免常见误解）：
-    "+1" 不是保证梯度 ≥ 1，而是保证梯度有一条**不被 sublayer 雅可比衰减**
-    的传播路径。即使 dF/dX 接近 0（sublayer 没学会），梯度仍能传到前面去；
+    "+1" 不是保证梯度 ≥ 1，而是给梯度留了一条不必完全经过子层的直路。
+    即使子层本身把梯度变得很小（比如子层还没学会），梯度仍能传到前面去；
     这正是 ResNet 让 100+ 层、Transformer 让 96 层成为可能的根本原因。
 """)
 
@@ -226,8 +259,15 @@ def layer_norm(x, gamma=None, beta=None, eps=1e-5):
       gamma: (d_model,)  —— 缩放，初始化为 1
       beta:  (d_model,)  —— 偏移，初始化为 0
     """
+    # mean/var 都是沿最后一维 d_model 计算的。
+    # 如果 x 的形状是 (seq_len, d_model)，就是对每个 token 自己的特征向量
+    # 分别计算均值和方差，而不是跨 token 计算。
     mean = np.mean(x, axis=-1, keepdims=True)
     var = np.var(x, axis=-1, keepdims=True)
+
+    # eps 是一个很小的数，用来防止 var=0 时除以 0。
+    # 即使 var 非常接近 0，sqrt(var) 也会让分母过小，导致归一化结果爆大；
+    # 加上 eps 后分母至少有一个稳定的下限。
     x_norm = (x - mean) / np.sqrt(var + eps)
 
     if gamma is not None and beta is not None:

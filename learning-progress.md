@@ -6,7 +6,7 @@
 
 - 第 0 阶段：第 1 课进行中
 - 第一阶段：三课已完成
-- 第二阶段：第 3 课进行中（Attention 论文精读 §3.1 / §3.2.2 已推进完成，GPT-3 §2.1 与 BERT Model Architecture 精读笔记已新增，第 3 课自写练习已补齐）
+- 第二阶段：第 3 课已完成，下一步进入第 4 课（Transformer Block / FFN / Block 堆叠）
 - 第三阶段：待学习
 
 ## 进展记录
@@ -23,3 +23,4 @@
 - 2026-05-01：补充 Scaling Law 与 Sparse Transformer 延伸阅读资料。在 `papers/scaling-laws/` 下载 Kaplan et al. *Scaling Laws for Neural Language Models* 与 Chinchilla *Training Compute-Optimal Large Language Models*；在 `papers/efficient-transformers/` 下载 Child et al. *Generating Long Sequences with Sparse Transformers*；同步更新 [papers/README.md](papers/README.md) 和 [phase2-transformer/README.md](phase2-transformer/README.md)，把这些资料加入后续学习计划。
 - 2026-05-01：新增 [papers/notes/bert_reading_model_architecture.md](papers/notes/bert_reading_model_architecture.md)，精读 BERT `§3` 开篇、`Model Architecture` 与 `Input/Output Representations` 架构衔接段：补清预训练/微调范式、MLM 与 GPT left-to-right LM 的差异、`L/H/A/4H` 记号、`BERT_BASE / BERT_LARGE` 尺寸、双向 self-attention 与 causal mask 的区别、WordPiece / `[CLS]` / `[SEP]` / segment embedding，以及与 `03_multi_head_attention.py` 五个 Part 的对照。
 - 2026-05-01：补齐第二阶段第 3 课自写练习 [phase2-transformer/03_multi_head_attention_self_write.py](phase2-transformer/03_multi_head_attention_self_write.py)：按 9 个 TODO 手写数值稳定 softmax、单头 attention、`split_heads` / `merge_heads`、完整 `multi_head_attention`、所有 head 共享 causal mask、残差连接、LayerNorm、Post-Norm / Pre-Norm，并通过内置校验。
+- 2026-05-02：完成第二阶段第 3 课（多头注意力 / 残差连接 / LayerNorm / Pre-Norm vs Post-Norm）。跑通并复盘 [phase2-transformer/03_multi_head_attention.py](phase2-transformer/03_multi_head_attention.py)：补清 `reshape` + `transpose(1, 0, 2)` 的维度重排、每个 head 独立 attention 后先 `append` 收集再 `concatenate(axis=-1)` 拼回 `d_model`、LayerNorm 中 `var` 按每个 token 的特征维计算，以及 `eps` 防止分母为 0 或过小。下一步从第 4 课 [phase2-transformer/04_transformer_block.py](phase2-transformer/04_transformer_block.py) 开始，把 Attention、残差、LayerNorm 和 FFN 组合成完整 Transformer Block。
