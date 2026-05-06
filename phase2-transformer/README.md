@@ -316,7 +316,7 @@ x_i W = token_embedding_i W + position_encoding_i W
 
 **按顺序做**
 
-1. **① 看视频**（20-40 min）：[Andrej Karpathy - Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY)（**前半段**，到 Block 搭建完为止）
+1. **① 看视频**（20-40 min）：[Andrej Karpathy - Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY&t=4751s)（约 `01:19:11` 到 `01:37:49`：从插入单个 self-attention block 开始，到 FFN、残差连接、LayerNorm 都放进 Block；`01:37:49` 后进入 scaling up）
    - 关键词：FFN、Pre-Norm、Block 堆叠
 2. **② 读论文**（15-20 min）：
    - `Attention Is All You Need` → `3.1 Encoder and Decoder Stacks`、`3.3 Position-wise Feed-Forward Networks`
