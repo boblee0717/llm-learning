@@ -318,10 +318,11 @@ x_i W = token_embedding_i W + position_encoding_i W
 
 1. **① 看视频**（20-40 min）：[Andrej Karpathy - Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY&t=4751s)（约 `01:19:11` 到 `01:37:49`：从插入单个 self-attention block 开始，到 FFN、残差连接、LayerNorm 都放进 Block；`01:37:49` 后进入 scaling up）
    - 关键词：FFN、Pre-Norm、Block 堆叠
+   - 学习方式：不用先补完整 PyTorch，也不用看完视频前半段；这节课只把 PyTorch 代码当作结构图，重点看 `forward()` 里 Attention、残差、LayerNorm、FFN 是怎么串起来的
 2. **② 读论文**（15-20 min）：
-   - `Attention Is All You Need` → `3.1 Encoder and Decoder Stacks`、`3.3 Position-wise Feed-Forward Networks`
-   - `GPT-2` → `2.3 Model`（把论文中的 block 结构与你代码逐项对齐）
-   - `GPT-3` → `2.1 Model and Architectures`（理解"同构 block 堆叠 + 扩大规模"的主线）
+   - `Attention Is All You Need` → `3.1 Encoder and Decoder Stacks`、`3.3 Position-wise Feed-Forward Networks`（对应精读：[`papers/notes/attention_is_all_you_need_reading_3.1_3.2.2.md`](../papers/notes/attention_is_all_you_need_reading_3.1_3.2.2.md)、[`papers/notes/attention_is_all_you_need_reading_3.3.md`](../papers/notes/attention_is_all_you_need_reading_3.3.md)）
+   - `GPT-2` → `2.3 Model`（把论文中的 block 结构与你代码逐项对齐；对应精读：[`papers/notes/notes_gpt2_input_and_model.md`](../papers/notes/notes_gpt2_input_and_model.md) 中「§2.3 Model」）
+   - `GPT-3` → `2.1 Model and Architectures`（理解"同构 block 堆叠 + 扩大规模"的主线；对应精读：[`papers/notes/gpt3_reading_2.1_model_and_architectures.md`](../papers/notes/gpt3_reading_2.1_model_and_architectures.md)）
 3. **③ 跑代码**：运行 `04_transformer_block.py`，跑通前向传播，观察中间张量维度
 4. **④ 对照理解**：画一张 Block 内部流程图（Attention → Add & Norm → FFN → Add & Norm），对齐代码
 5. **⑤ 动手写**：修改 FFN 隐藏层维度、堆叠层数，观察参数量和输出变化；尝试切换 Pre-Norm / Post-Norm
