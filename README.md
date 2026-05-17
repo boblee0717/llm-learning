@@ -53,6 +53,11 @@ llm-learning/
 │   ├── 05_inference_optimization.py      # KV Cache、采样策略、投机解码
 │   └── README.md
 │
+├── phase4-deepseek-reasoning/        # 第四阶段：DeepSeek 与推理优化
+│   ├── README.md                         # DeepSeek、MLA/MoE、推理服务、GRPO/R1、测试时计算
+│   ├── benchmark_questions.md            # 本地推理优化与 reasoning budget 固定题库
+│   └── video_courses.md                  # 第四阶段视频课程材料清单
+│
 ├── papers/                          # 论文库
 │   ├── core-transformers/                # Transformer / GPT / BERT / InstructGPT 主线论文
 │   ├── attention-extensions/             # 位置编码、Self-Attention、线性注意力延伸论文
@@ -80,10 +85,10 @@ llm-learning/
 ## 学习路线
 
 ```
-第 0 阶段 (4课, 按需)        第一阶段 (3课)            第二阶段 (5课)             第三阶段 (5课)
-矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT  →  LoRA/量化/RLHF/推理优化
+第 0 阶段 (4课, 按需)        第一阶段 (3课)            第二阶段 (5课)             第三阶段 (5课)             第四阶段 (8课)
+矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT  →  LoRA/量化/RLHF/推理优化  →  DeepSeek/推理优化
    形状与反向                  基础数学                   核心架构                     工业实践
-   🚧 第 1 课进行中            ✅ 已完成三课               ✅ 第 1-3 课完成             待学习
+   🚧 第 1 课进行中            ✅ 已完成三课               ✅ 第 1-3 课完成             待学习                    后续进阶
                                                         下一步第 4 课
 ```
 
@@ -177,6 +182,21 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 > 详见 [phase3-training/README.md](phase3-training/README.md)
 
+### 第四阶段：DeepSeek 与推理优化
+
+| 课程 | 主题 | 核心内容 |
+|------|------|----------|
+| 第 1 课 | DeepSeek 总览 | MoE、MLA、GRPO、MTP、蒸馏的整体地图 |
+| 第 2 课 | MoE 与激活参数 | routed experts、shared experts、负载均衡、active params |
+| 第 3 课 | MLA 与 KV Cache 压缩 | MHA/GQA/MLA 对比、长上下文 KV Cache 估算 |
+| 第 4 课 | Attention Kernel 与长上下文 | FlashAttention、稀疏注意力、DeepSeek-V4 DSA |
+| 第 5 课 | Serving Runtime | vLLM、SGLang、TensorRT-LLM、PagedAttention、continuous batching |
+| 第 6 课 | 解码加速 | Speculative Decoding、draft model、DeepSeek-V3 MTP |
+| 第 7 课 | 推理能力后训练 | DeepSeekMath、GRPO、R1-Zero、cold start、RL reasoning |
+| 第 8 课 | 蒸馏与测试时计算 | reasoning distillation、self-consistency、budgeted thinking、评测 |
+
+> 详见 [phase4-deepseek-reasoning/README.md](phase4-deepseek-reasoning/README.md)
+
 ### 核心论文
 
 配合第二阶段一起阅读：
@@ -221,3 +241,4 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 - GPT 和 BERT 的本质区别（Decoder vs Encoder）
 - LoRA、量化、RLHF 等工业实践背后的原理
 - 从 GPT 到 ChatGPT 经历了哪些关键步骤
+- DeepSeek 系列中的 MoE、MLA、GRPO、R1 推理后训练和现代推理服务优化
