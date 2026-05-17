@@ -59,6 +59,10 @@ llm-learning/
 │   ├── efficient-transformers/           # 高效 Transformer 与长上下文论文
 │   ├── scaling-laws/                     # 规模定律与 compute-optimal 训练论文
 │   ├── vision-transformers/              # Vision Transformer 论文
+│   ├── deepseek/                         # DeepSeek MoE / Coder / Math / V2 / V3 / R1
+│   ├── frontier-llms/                    # Llama 3、Qwen2.5 等现代开源 LLM 技术报告
+│   ├── efficient-training/               # QLoRA、DPO 等训练 / 微调 / 对齐论文
+│   ├── frontier-ai-2024-2025.md          # 现代前沿论文清单，含训练 / 视频材料
 │   ├── notes/                            # 论文精读笔记
 │   └── README.md                         # 论文阅读顺序与建议
 │
@@ -185,10 +189,11 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | GPT-2 | 2019 | 纯 Decoder 语言模型，无监督多任务 |
 | GPT-3 | 2020 | 175B 参数，In-context Learning |
 | InstructGPT | 2022 | RLHF 落地，让模型遵循人类指令 |
+| DeepSeek / 现代开源 LLM 论文清单 | 2023-2025 | MoE、MLA、代码/数学数据、推理型 RL、QLoRA、DPO |
 | Harness engineering（OpenAI） | 2026 | Agent 为先：人设计环境与反馈回路，Codex 产出代码与工程资产 |
 | Harness Engineering Is Cybernetics（George Zhang，X 原文） | 2026 | 将 Harness 置于控制论史：反馈回路在架构层闭合时的工程含义 |
 
-> 详见 [papers/README.md](papers/README.md)（Harness 章节附 Anthropic *Emotion Concepts* 长文延伸阅读）
+> 详见 [papers/README.md](papers/README.md) 和 [papers/frontier-ai-2024-2025.md](papers/frontier-ai-2024-2025.md)（Harness 章节附 Anthropic *Emotion Concepts* 长文延伸阅读）
 
 ### 推荐外部资源
 

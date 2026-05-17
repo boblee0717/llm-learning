@@ -8,3 +8,7 @@ phase2-transformer/01_positional_encoding.png
 
 # macOS
 .DS_Store
+
+# Obsidian
+.obsidian/
+papers/.obsidian/

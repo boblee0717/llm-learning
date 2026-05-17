@@ -9,7 +9,16 @@
 - `efficient-transformers/`: 高效 Transformer 与长上下文 benchmark / survey
 - `scaling-laws/`: 规模定律与 compute-optimal 训练论文
 - `vision-transformers/`: Vision Transformer 方向论文
+- `deepseek/`: DeepSeek MoE、Coder、Math、V2/V3/R1 系列论文
+- `frontier-llms/`: Llama 3、Qwen2.5 等现代开源 LLM 技术报告
+- `efficient-training/`: QLoRA、DPO 等训练 / 微调 / 对齐论文
 - `notes/`: 论文精读笔记
+
+## 现代前沿补充
+
+如果你已经读完 GPT-3 / InstructGPT / Chinchilla，建议接着看：
+
+- [frontier-ai-2024-2025.md](frontier-ai-2024-2025.md): DeepSeek 与新一代开源 LLM 的 10 篇进阶论文，附训练 / 视频材料
 
 ## 阅读顺序
 
@@ -141,12 +150,18 @@
 - **重点章节**: Section 3 (Methods), Figure 2
 - **一句话**: RLHF 的落地实践，让模型学会遵循人类指令
 
-### 7. Harness engineering: leveraging Codex in an agent-first world (OpenAI, 2026)
+### 7. 现代前沿论文：DeepSeek 与新一代开源 LLM (2023-2025)
+- **清单**: [frontier-ai-2024-2025.md](frontier-ai-2024-2025.md)
+- **包含**: DeepSeekMoE、DeepSeek-Coder、DeepSeekMath、DeepSeek-V2、DeepSeek-V3、DeepSeek-R1、Llama 3、Qwen2.5、QLoRA、DPO
+- **配合课程**: 第三阶段训练与微调，尤其是 LoRA、量化、RLHF/DPO、推理优化
+- **一句话**: 从“读懂 Transformer”过渡到“读懂现代开源大模型是怎么训练、对齐、压缩和高效推理的”。
+
+### 8. Harness engineering: leveraging Codex in an agent-first world (OpenAI, 2026)
 - **链接**: [openai.com/index/harness-engineering](https://openai.com/index/harness-engineering/)
 - **作者**: Ryan Lopopolo（OpenAI）
 - **一句话**: 在「以 agent 为先」的团队里，人负责设计环境、表达意图与搭建反馈回路，让 Codex 类 agent 可靠地产出代码与配套资产（测试、CI、文档、可观测性等），而不是以手写代码为主业。
 
-### 8. Harness Engineering Is Cybernetics（George Zhang, 2026）
+### 9. Harness Engineering Is Cybernetics（George Zhang, 2026）
 - **链接（X 原文长帖）**: [x.com/odysseus0z/status/2030416758138634583](https://x.com/odysseus0z/status/2030416758138634583)
 - **作者**: George Zhang（OpenClaw 维护者）
 - **一句话**: 把 Harness engineering 放进控制论视角：从瓦特调速器到 Kubernetes 控制器，再到在架构层用 LLM 闭合反馈回路——工程师从「拧阀门」转向「设计调速器与约束」。
