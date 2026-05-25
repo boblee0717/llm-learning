@@ -59,6 +59,12 @@ llm-learning/
 │   ├── benchmark_questions.md            # 本地推理优化与 reasoning budget 固定题库
 │   └── video_courses.md                  # 第四阶段视频课程材料清单
 │
+├── phase5-agent-architecture/        # 第五阶段：Agent 架构与 Agent 基础设施
+│   ├── README.md                         # 10 课：Agent Loop/Tool/规划/记忆/RAG/Runtime/沙箱/并发缓存/观测/Multi-Agent
+│   ├── 01_minimal_agent_loop.py          # 最小 agent loop（observe→think→act + 终止条件）
+│   ├── 02_tool_calling.py                # tool 注册表、dispatcher、参数校验、错误回灌
+│   └── 03_agent_runtime.py               # run/step、checkpoint/resume、trace 与成本报告
+│
 ├── papers/                          # 论文库
 │   ├── core-transformers/                # Transformer / GPT / BERT / InstructGPT 主线论文
 │   ├── attention-extensions/             # 位置编码、Self-Attention、线性注意力延伸论文
@@ -91,6 +97,10 @@ llm-learning/
    形状与反向                  基础数学                   核心架构                                    工业实践
    🚧 第 1 课进行中            ✅ 已完成三课               ✅ 第 1-3 课完成                          待学习                    后续进阶
                                                         下一步第 4 课；第 6 课已搭好待学
+
+                                          ┈┈┈→  第五阶段 (10课)：Agent 架构与 Agent 基础设施
+                                                 Agent Loop/Tool/规划/记忆/RAG + Runtime/沙箱/并发缓存/观测/Multi-Agent
+                                                 应用范式 + Agent infra 均衡 · 课程已搭好待学
 ```
 
 > **phase0-math 不是必经环节**：当你在 phase1/phase2 遇到形状或求导卡壳时回来跑对应那节即可。
@@ -198,6 +208,25 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | 第 8 课 | 蒸馏与测试时计算 | reasoning distillation、self-consistency、budgeted thinking、评测 |
 
 > 详见 [phase4-deepseek-reasoning/README.md](phase4-deepseek-reasoning/README.md)
+
+### 第五阶段：Agent 架构与 Agent 基础设施（课程已搭建，待学习）
+
+应用范式与基础设施均衡，配套零依赖可运行脚本（`FakeLLM` 跑通骨架，无需 GPU/网络/API key）。
+
+| 课程 | 主题 | 核心内容 | 配套代码 |
+|------|------|----------|----------|
+| 第 1 课 | Agent 总览与 Agent Loop | ReAct、agent loop、终止条件 | `01_minimal_agent_loop.py` |
+| 第 2 课 | Tool Use / Function Calling | tool schema、parse/dispatch、错误回灌 | `02_tool_calling.py` |
+| 第 3 课 | 规划与反思 | Plan-and-Execute、Reflexion、self-critique | — |
+| 第 4 课 | 记忆系统 | short/long-term memory、向量检索、压缩 | — |
+| 第 5 课 | RAG 与上下文工程 | chunking、retrieval、context assembly、context rot | — |
+| 第 6 课 | Agent Runtime 与状态管理 | run/step、checkpoint/resume、durable execution | `03_agent_runtime.py` |
+| 第 7 课 | 工具沙箱与安全 | sandbox、权限边界、超时、prompt injection、人审 | — |
+| 第 8 课 | 并发、调度与上下文复用 | continuous batching、prefix/KV cache 复用、限流 | — |
+| 第 9 课 | 可观测性、评测与成本 | tracing、span、token/latency/cost、agent eval | — |
+| 第 10 课 | Multi-Agent 编排与框架对比 | orchestrator-worker、handoff、LangGraph/AutoGen 等 | — |
+
+> 详见 [phase5-agent-architecture/README.md](phase5-agent-architecture/README.md)
 
 ### 核心论文
 
