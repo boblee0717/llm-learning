@@ -15,7 +15,8 @@
 | 第 3 课 | [多头注意力与残差](#lesson-3) | multi-head、residual、LayerNorm、Pre-Norm |
 | 第 4 课 | [Transformer Block](#lesson-4) | attention + FFN + add & norm |
 | 第 5 课 | [从零构建 GPT](#lesson-5) | embedding、blocks、LM head、文本生成 |
-| 复习资源 | [复习与补充资源](#review) | 完成 1-5 课后的集中复盘 |
+| 第 6 课 | [Scaling Law 与 Compute-Optimal 训练](#lesson-6) | Kaplan 幂律、Chinchilla、`C ≈ 6ND`、Chinchilla 之后 |
+| 复习资源 | [复习与补充资源](#review) | 完成 1-6 课后的集中复盘 |
 
 ## 前置要求
 
@@ -45,6 +46,7 @@ pip install -r requirements.txt
 | 第 3 课 | `03_multi_head_attention.py` | `03_multi_head_attention_self_write.py` | 多头注意力、残差连接、LayerNorm | 为什么多头比单头好 |
 | 第 4 课 | `04_transformer_block.py` | — | 完整 Transformer Block、FFN | 把所有组件拼起来 |
 | 第 5 课 | `05_gpt_from_scratch.py` | — | 完整 GPT 模型、文本生成 | 从零搭建一个能生成文本的模型 |
+| 第 6 课 | `06_scaling_laws.py` | — | Kaplan 幂律、Chinchilla、`C ≈ 6ND` | 该搭多大、用多少数据、烧多少 compute |
 
 <a id="progress"></a>
 
@@ -55,6 +57,7 @@ pip install -r requirements.txt
 - ✅ 第 3 课：`03_multi_head_attention.py` + `03_multi_head_attention_self_write.py`（9 个 TODO，覆盖 split/merge heads、multi-head、causal mask、residual、LayerNorm、Pre/Post-Norm）
 - 🚧 第 4 课：下一步从 `04_transformer_block.py` 开始，把 Attention、残差、LayerNorm 和 FFN 组合成完整 Transformer Block
 - ⏳ 第 5 课：待学习
+- ⏳ 第 6 课：待学习（Scaling Law / Chinchilla / Compute-Optimal，建在 `06_scaling_laws.py` + `papers/notes/scaling_laws_kaplan_2020.md` + `papers/notes/chinchilla_compute_optimal_2022.md`）
 
 ```bash
 # 在项目根目录执行
@@ -76,16 +79,16 @@ python3 phase2-transformer/03_multi_head_attention_self_write.py   # 跑第 3 �
 | GPT-3 | 2020 | 规模定律、In-context Learning |
 | InstructGPT | 2022 | RLHF，对齐技术的起点 |
 
-### Scaling Law 延伸阅读计划（未读）
+### Scaling Law 阅读路径（第 6 课正文）
 
-读 GPT-3 的 `2.1 Model and Architectures` 时，如果想补 Scaling Law 背景，按这个顺序读：
+Scaling Law 不再是「延伸阅读」，已经升级成 [第 6 课](#lesson-6) 的正文。读 GPT-3 `2.1 Model and Architectures` 时如果还没读 Scaling Law，按这个顺序补：
 
-| 顺序 | 资料 | 重点 |
-|------|------|------|
-| 1 | [Scaling Laws for Neural Language Models](../papers/scaling-laws/Scaling_Laws_for_Neural_Language_Models_2020.pdf)（OpenAI, 2020） | 先建立直觉：loss 如何随参数量、数据量、训练 compute 呈幂律变化 |
-| 2 | [Language Models are Few-Shot Learners](../papers/core-transformers/GPT3_Language_Models_are_Few_Shot_Learners_2020.pdf)（GPT-3, 2020） | 对照 GPT-3 为什么训练 8 个模型尺寸，重点看 `2.1` 和 scaling 相关图表 |
-| 3 | [Training Compute-Optimal Large Language Models](../papers/scaling-laws/Training_Compute_Optimal_Large_Language_Models_Chinchilla_2022.pdf)（Chinchilla, 2022） | 理解对 GPT-3 scaling 口径的修正：固定 compute 下，模型参数和训练 token 都要一起扩 |
-| 4 | [DeepMind 解读：compute-optimal large language model training](https://deepmind.google/discover/blog/an-empirical-analysis-of-compute-optimal-large-language-model-training/) | 用更轻量的方式复习 Chinchilla 的核心结论 |
+| 顺序 | 资料 | 重点 | 配套笔记 |
+|------|------|------|---------|
+| 1 | [Scaling Laws for Neural Language Models](../papers/scaling-laws/Scaling_Laws_for_Neural_Language_Models_2020.pdf)（OpenAI, 2020） | 先建立直觉：loss 如何随参数量 N、数据量 D、训练 compute C 呈幂律变化 | [scaling_laws_kaplan_2020.md](../papers/notes/scaling_laws_kaplan_2020.md) |
+| 2 | [Language Models are Few-Shot Learners](../papers/core-transformers/GPT3_Language_Models_are_Few_Shot_Learners_2020.pdf)（GPT-3, 2020） | 对照 GPT-3 为什么训练 8 个模型尺寸，重点看 `2.1` 和 scaling 相关图表 | [gpt3_reading_2.1_model_and_architectures.md](../papers/notes/gpt3_reading_2.1_model_and_architectures.md) |
+| 3 | [Training Compute-Optimal Large Language Models](../papers/scaling-laws/Training_Compute_Optimal_Large_Language_Models_Chinchilla_2022.pdf)（Chinchilla, 2022） | 理解对 GPT-3 scaling 口径的修正：固定 compute 下，N 和 D 应大致按 1:20 同步扩 | [chinchilla_compute_optimal_2022.md](../papers/notes/chinchilla_compute_optimal_2022.md) |
+| 4 | [DeepMind 解读：compute-optimal large language model training](https://deepmind.google/discover/blog/an-empirical-analysis-of-compute-optimal-large-language-model-training/) | 用更轻量的方式复习 Chinchilla 的核心结论 | — |
 
 ### 论文阅读建议
 
@@ -352,16 +355,75 @@ x_i W = token_embedding_i W + position_encoding_i W
 6. **⑥ 复盘**：能口述完整 GPT 的前向流程，并解释训练目标（next token prediction）
 7. **⑦ 延伸阅读**（可选）：`InstructGPT` → `3. Methods`（预习"预训练模型如何通过 RLHF 对齐"）
 
+<a id="lesson-6"></a>
+
+### 第 6 课：Scaling Law 与 Compute-Optimal 训练
+
+**核心概念**
+- 三个幂律：loss `L` 如何随参数量 `N`、数据量 `D`、训练 compute `C` 平滑下降
+- `C ≈ 6ND` —— Transformer 训练 FLOPs 的「6 倍参数 × token 数」估算
+- Kaplan (2020) vs Chinchilla (2022)：为什么同样的 compute，Chinchilla 70B 能打 Gopher 280B
+- **N : D ≈ 1 : 20**（Chinchilla 经验口径）——给定 compute 怎么算最优模型大小
+- Chinchilla 之后：Llama 3 / DeepSeek-V3 / Qwen 为什么又开始「over-train」（推理成本视角）
+- **与 LLM 的关系**：这是回答「GPT-3 该不该是 175B」「我手上 1024 张 H100 跑 30 天该训多大」的理论入口
+
+**前置印象（在 GPT-3 笔记里已经埋下的伏笔）**
+
+读完第 5 课后，你应该对以下事实已经眼熟：
+
+- GPT-3 训练了 8 个尺寸（125M → 175B）就是为了「**验证 Scaling Law**」
+- GPT-3 总 token 数 ≈ 300B；Chinchilla 后来指出按 175B 模型应该训 ≈ 3.5T tokens（差了 10 倍）
+- 「验证 loss 对架构细节不敏感」这句话来自 Kaplan 2020
+
+第 6 课就是把这些零散提及补成系统理解。
+
+**按顺序做**
+
+1. **① 看视频**（20-30 min）：
+   - 主：[Andrej Karpathy - Intro to Large Language Models（1h）](https://www.youtube.com/watch?v=zjkBMFhNj_g) → `21:00-26:00` 那 5 分钟，Karpathy 用一页 slide 把 Scaling Law 讲到「为什么 OpenAI 敢花几亿美金训 GPT-4」
+   - 备：[Jordan Hoffmann - Chinchilla（DeepMind talk）](https://www.youtube.com/watch?v=PZXN7jTL960)（30 min，论文一作亲讲）
+   - 关键词：power law、compute-optimal、N/D/C
+2. **② 读论文**（30-40 min）：
+   - `Scaling Laws for Neural Language Models (Kaplan et al., 2020)` → Abstract、§1 Introduction、§3.1（三条幂律 Figure 1）
+     - 对应精读笔记：[`papers/notes/scaling_laws_kaplan_2020.md`](../papers/notes/scaling_laws_kaplan_2020.md)
+   - `Training Compute-Optimal Large Language Models (Chinchilla, 2022)` → Abstract、§1、§3（三种 approach 与 Table 3）、§4.1（Chinchilla vs Gopher）
+     - 对应精读笔记：[`papers/notes/chinchilla_compute_optimal_2022.md`](../papers/notes/chinchilla_compute_optimal_2022.md)
+   - 不用读完整篇——前面两节 + 图 1 + Table 3 是 80% 的信息量
+3. **③ 跑代码**：运行 `06_scaling_laws.py`，重点看 4 个 Part 的输出
+   - Part 1：打印 Kaplan 三条幂律的公式与指数
+   - Part 2：画 `L(N)` / `L(D)` / `L(C)` 三条幂律曲线
+   - Part 3：实现并验证 `C ≈ 6ND` 与 `compute_optimal_chinchilla(C)`
+   - Part 4：把 GPT-3 / Chinchilla / Llama 3 / DeepSeek-V3 标在 N–D 平面上，看谁 over-trained / under-trained
+4. **④ 对照理解**：用 GPT-3 的数据（N=175B, D=300B）算一次「按 Chinchilla 该用多少 token」「按 Chinchilla 该用多大模型」，体会两个口径差 10 倍是什么概念
+5. **⑤ 动手算**（不用写代码，纸笔就行，对照 `06_scaling_laws.py` 的输出校验）：
+   - 给定 `C = 1e24 FLOPs`（≈ GPT-3 的 compute），按 Chinchilla 推 `N*` 与 `D*`
+   - 已知 `N = 70B`，按 Chinchilla 的 1:20 口径推 `D ≈ 1.4T tokens`
+   - 已知一卡 H100 算力 ≈ 1e15 BF16 FLOPs/s，估「1000 卡 × 30 天」能撑多大的 Chinchilla-optimal 模型
+6. **⑥ 复盘**：能口述以下 5 点
+   - 三条幂律 `L(N)` / `L(D)` / `L(C)` 的形式（不要求记指数）
+   - `C ≈ 6ND` 怎么来的（前向 2ND + 反向 4ND）
+   - Kaplan 和 Chinchilla 的核心分歧在哪一条曲线、为什么 Kaplan 那条曲线偏了
+   - Chinchilla 给「N=70B 应该配 D≈1.4T」这种结论的依据（三种 approach 给出一致结果）
+   - 为什么 Llama 3 / DeepSeek-V3 故意 over-train（推理成本视角：训练一次 vs 推理无数次）
+
+**关键领悟（提前剧透，看完笔记后回头校对）**
+
+1. **Scaling Law 不是「越大越好」，而是「按比例同步扩」**——单独扩 N 不扩 D，或者反过来，都会浪费 compute
+2. **`C ≈ 6ND` 是工程估算神器**——拿到任何一个开源模型的「N + 训练 token 数」就能秒算训练 FLOPs，再除以 GPU 算力就能估训练时长与成本
+3. **Chinchilla 的 1:20 是「训练 compute-optimal」，不是「推理 cost-optimal」**——一旦考虑模型要推理几亿次，最优解会偏向更小的模型 + 更多的 token（Llama 3-8B 训了 15T tokens 就是这个逻辑）
+4. **Kaplan 当年的错主要来自 LR schedule**——小模型没让 cosine 衰减到底，loss 看起来比真实差，导致拟合时低估了 D 的重要性
+5. **GPT-3 175B 在 Chinchilla 视角下是「严重欠训」**——同样 compute 训一个 ≈70B 模型用 ≈1.4T tokens，性能更好；这就是为什么 OpenAI 之后再没出更大的 dense 模型
+
 ---
 
 <a id="review"></a>
 
 ## 复习与补充资源
 
-建议在完成第 1-5 课后，用 2 天做集中复盘：
+建议在完成第 1-6 课后，用 2 天做集中复盘：
 - `Day 6`：[B 站 - Transformer 从零详细解读](https://www.bilibili.com/video/BV1Di4y1c7Zm/) + 回看 `02_self_attention.py`、`03_multi_head_attention.py`
-- `Day 7`：[B 站 - Transformer 理论到实战系列](https://www.bilibili.com/video/BV12bfPY1E1S/) + 回看 `04_transformer_block.py`、`05_gpt_from_scratch.py`
-- 复盘目标：补齐注释、修正命名、能口述完整 GPT 前向流程
+- `Day 7`：[B 站 - Transformer 理论到实战系列](https://www.bilibili.com/video/BV12bfPY1E1S/) + 回看 `04_transformer_block.py`、`05_gpt_from_scratch.py`、`06_scaling_laws.py`
+- 复盘目标：补齐注释、修正命名、能口述完整 GPT 前向流程，并能口算「这个尺寸的模型按 Chinchilla 该训多少 token」
 
 **最重要的 3 个补充资源**（其他都可以不看）：
 

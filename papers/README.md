@@ -126,23 +126,27 @@
 - **重点章节**: Section 1 (Introduction), Figure 1.1, Section 2.1 (Model and Architectures), Section 3
 - **一句话**: 175B 参数，展示 In-context Learning 和 Scaling Law
 
-#### Scaling Law 延伸阅读（未读）
+#### Scaling Law 阅读路径（已升级为第二阶段第 6 课正文）
 
-- **Scaling Laws for Neural Language Models** (2020)
-  - **状态**: 未读
+> 配套课程：[`phase2-transformer/06_scaling_laws.py`](../phase2-transformer/06_scaling_laws.py) 与第二阶段 README 的 [第 6 课大纲](../phase2-transformer/README.md#lesson-6)。读这两篇论文等于读完第 6 课的「② 读论文」环节。
+
+- **Scaling Laws for Neural Language Models** (Kaplan et al., 2020)
+  - **状态**: 配第二阶段第 6 课（已下载，待精读）
   - **文件**: [Scaling_Laws_for_Neural_Language_Models_2020.pdf](scaling-laws/Scaling_Laws_for_Neural_Language_Models_2020.pdf)
   - **来源**: [OpenAI 论文页](https://openai.com/research/scaling-laws-for-neural-language-models)、[arxiv.org/abs/2001.08361](https://arxiv.org/abs/2001.08361)
   - **作者**: Jared Kaplan, Sam McCandlish, Tom Henighan, Tom Brown, Benjamin Chess, Rewon Child, Scott Gray, Alec Radford, Jeffrey Wu, Dario Amodei
-  - **建议读法**: 先读 Abstract / Introduction，再看关于 model size、dataset size、compute 的 loss 曲线。
-  - **一句话**: GPT-3 背后的直接理论背景，说明语言模型 loss 会随参数量、数据量和训练 compute 呈近似幂律下降。
+  - **配套笔记**: [scaling_laws_kaplan_2020.md](notes/scaling_laws_kaplan_2020.md)
+  - **建议读法**: 先读 Abstract / Introduction，再看 §3.1 三条幂律曲线（Figure 1）。重点理解 `N` 不含 embedding、`C` 以 PF-days 为单位、loss 以 nats/token 为单位。
+  - **一句话**: GPT-3 背后的直接理论背景，说明语言模型 loss 会随参数量、数据量和训练 compute 呈近似幂律下降；论文最后给出「优先扩 N」的 compute-optimal 结论（后被 Chinchilla 修正）。
 
 - **Training Compute-Optimal Large Language Models** (Chinchilla, 2022)
-  - **状态**: 未读
+  - **状态**: 配第二阶段第 6 课（已下载，待精读）
   - **文件**: [Training_Compute_Optimal_Large_Language_Models_Chinchilla_2022.pdf](scaling-laws/Training_Compute_Optimal_Large_Language_Models_Chinchilla_2022.pdf)
   - **来源**: [arxiv.org/abs/2203.15556](https://arxiv.org/abs/2203.15556)、[DeepMind 官方解读](https://deepmind.google/discover/blog/an-empirical-analysis-of-compute-optimal-large-language-model-training/)
   - **作者**: Jordan Hoffmann et al. (DeepMind)
-  - **建议读法**: 重点看 Abstract、Introduction、Figure 1/2，以及 compute-optimal 训练数据量的结论。
-  - **一句话**: 对 GPT-3 式 scaling 路线的重要修正：固定训练 compute 时，不应只增大参数量，也要按比例增加训练 token。
+  - **配套笔记**: [chinchilla_compute_optimal_2022.md](notes/chinchilla_compute_optimal_2022.md)（含「Chinchilla 之后」：Llama 3 over-training、DeepSeek-V3、推理成本视角）
+  - **建议读法**: 重点看 Abstract、§1、§3 三种 approach 与 Table 3、§4.1 Chinchilla vs Gopher。
+  - **一句话**: 对 Kaplan scaling 路线的关键修正：固定训练 compute 时，N 和 D 应该按 ≈ 1:20 同步扩；Chinchilla 70B + 1.4T tokens 用相同 compute 击败 Gopher 280B + 300B tokens。
 
 ### 6. InstructGPT (2022)
 - **文件**: [InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf](core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf)

@@ -42,6 +42,7 @@ llm-learning/
 │   ├── 03_multi_head_attention_self_write.py # ↳ 自写练习（第 3 课，9 个 TODO）
 │   ├── 04_transformer_block.py           # 完整 Transformer Block
 │   ├── 05_gpt_from_scratch.py            # 从零搭建 GPT，文本生成
+│   ├── 06_scaling_laws.py                # Scaling Law、C≈6ND、Chinchilla compute-optimal
 │   ├── reset_exercises_01.py             # 重置第 1 课练习
 │   └── README.md
 │
@@ -62,13 +63,13 @@ llm-learning/
 │   ├── core-transformers/                # Transformer / GPT / BERT / InstructGPT 主线论文
 │   ├── attention-extensions/             # 位置编码、Self-Attention、线性注意力延伸论文
 │   ├── efficient-transformers/           # 高效 Transformer 与长上下文论文
-│   ├── scaling-laws/                     # 规模定律与 compute-optimal 训练论文
+│   ├── scaling-laws/                     # 规模定律与 compute-optimal 训练论文（配第二阶段第 6 课）
 │   ├── vision-transformers/              # Vision Transformer 论文
 │   ├── deepseek/                         # DeepSeek MoE / Coder / Math / V2 / V3 / R1
 │   ├── frontier-llms/                    # Llama 3、Qwen2.5 等现代开源 LLM 技术报告
 │   ├── efficient-training/               # QLoRA、DPO 等训练 / 微调 / 对齐论文
 │   ├── frontier-ai-2024-2025.md          # 现代前沿论文清单，含训练 / 视频材料
-│   ├── notes/                            # 论文精读笔记
+│   ├── notes/                            # 论文精读笔记（含 scaling_laws_kaplan_2020.md / chinchilla_compute_optimal_2022.md）
 │   └── README.md                         # 论文阅读顺序与建议
 │
 ├── karpathy-best-resources.md       # Karpathy 精选文章/视频与学习路径
@@ -85,11 +86,11 @@ llm-learning/
 ## 学习路线
 
 ```
-第 0 阶段 (4课, 按需)        第一阶段 (3课)            第二阶段 (5课)             第三阶段 (5课)             第四阶段 (8课)
-矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT  →  LoRA/量化/RLHF/推理优化  →  DeepSeek/推理优化
-   形状与反向                  基础数学                   核心架构                     工业实践
-   🚧 第 1 课进行中            ✅ 已完成三课               ✅ 第 1-3 课完成             待学习                    后续进阶
-                                                        下一步第 4 课
+第 0 阶段 (4课, 按需)        第一阶段 (3课)            第二阶段 (6课)             第三阶段 (5课)             第四阶段 (8课)
+矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT/Scaling Law  →  LoRA/量化/RLHF/推理优化  →  DeepSeek/推理优化
+   形状与反向                  基础数学                   核心架构                                    工业实践
+   🚧 第 1 课进行中            ✅ 已完成三课               ✅ 第 1-3 课完成                          待学习                    后续进阶
+                                                        下一步第 4 课；第 6 课已搭好待学
 ```
 
 > **phase0-math 不是必经环节**：当你在 phase1/phase2 遇到形状或求导卡壳时回来跑对应那节即可。
@@ -158,7 +159,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 > 详见 [phase1-foundations/README.md](phase1-foundations/README.md)
 
-### 第二阶段：Transformer 架构（第 1-3 课已完成，下一步第 4 课）
+### 第二阶段：Transformer 架构（第 1-3 课已完成，下一步第 4 课；第 6 课已搭好待学）
 
 | 课程 | 主课文件 | 自写练习 | 核心内容 |
 |------|----------|----------|----------|
@@ -167,6 +168,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | 第 3 课 | `03_multi_head_attention.py` | `03_multi_head_attention_self_write.py` | 多头注意力、残差连接、LayerNorm |
 | 第 4 课 | `04_transformer_block.py` | — | 完整 Transformer Block、FFN |
 | 第 5 课 | `05_gpt_from_scratch.py` | — | 完整 GPT 模型、文本生成 |
+| 第 6 课 | `06_scaling_laws.py` | — | Scaling Law、`C≈6ND`、Chinchilla compute-optimal、Chinchilla 之后 |
 
 > 详见 [phase2-transformer/README.md](phase2-transformer/README.md)
 
@@ -208,6 +210,8 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | BERT | 2018 | 双向编码器，预训练+微调范式 |
 | GPT-2 | 2019 | 纯 Decoder 语言模型，无监督多任务 |
 | GPT-3 | 2020 | 175B 参数，In-context Learning |
+| Scaling Laws for Neural Language Models | 2020 | GPT-3 的理论背景：loss 随 N/D/C 呈幂律下降，外推可计算 |
+| Chinchilla（Training Compute-Optimal LLMs） | 2022 | 修正 Kaplan：N 和 D 应按 1:20 同步扩，70B + 1.4T 打败 280B + 300B |
 | InstructGPT | 2022 | RLHF 落地，让模型遵循人类指令 |
 | DeepSeek / 现代开源 LLM 论文清单 | 2023-2025 | MoE、MLA、代码/数学数据、推理型 RL、QLoRA、DPO |
 | Harness engineering（OpenAI） | 2026 | Agent 为先：人设计环境与反馈回路，Codex 产出代码与工程资产 |
