@@ -44,7 +44,7 @@ pip install -r requirements.txt
 | 第 1 课 | `01_word_embeddings.py` | `01_word_embeddings_self_write.py` | 词嵌入、位置编码 | 文本如何变成数字向量 |
 | 第 2 课 | `02_self_attention.py` | `02_self_attention_self_write.py` | Q/K/V、注意力分数、掩码 | Transformer 的核心机制 |
 | 第 3 课 | `03_multi_head_attention.py` | `03_multi_head_attention_self_write.py` | 多头注意力、残差连接、LayerNorm | 为什么多头比单头好 |
-| 第 4 课 | `04_transformer_block.py` | — | 完整 Transformer Block、FFN | 把所有组件拼起来 |
+| 第 4 课 | `04_transformer_block.py` | `04_transformer_block_self_write.py` | 完整 Transformer Block、FFN | 把所有组件拼起来 |
 | 第 5 课 | `05_gpt_from_scratch.py` | — | 完整 GPT 模型、文本生成 | 从零搭建一个能生成文本的模型 |
 | 第 6 课 | `06_scaling_laws.py` | — | Kaplan 幂律、Chinchilla、`C ≈ 6ND` | 该搭多大、用多少数据、烧多少 compute |
 
@@ -55,7 +55,7 @@ pip install -r requirements.txt
 - ✅ 第 1 课：`01_word_embeddings_self_write.py`（重置脚本：`reset_exercises_01.py`）
 - ✅ 第 2 课：`02_self_attention_self_write.py`（8 个 TODO，覆盖 softmax / Q/K/V / scaled dot-product / 因果掩码；含内置 `require_*` 校验）
 - ✅ 第 3 课：`03_multi_head_attention.py` + `03_multi_head_attention_self_write.py`（9 个 TODO，覆盖 split/merge heads、multi-head、causal mask、residual、LayerNorm、Pre/Post-Norm）
-- 🚧 第 4 课：下一步从 `04_transformer_block.py` 开始，把 Attention、残差、LayerNorm 和 FFN 组合成完整 Transformer Block
+- 🚧 第 4 课：`04_transformer_block.py` + `04_transformer_block_self_write.py`（7 个 TODO，覆盖 GELU、FFN、LayerNorm、Pre-Norm / Post-Norm Block、堆叠 N 层、Dropout；含内置 `require_*` 校验，多头注意力已给好）
 - ⏳ 第 5 课：待学习
 - ⏳ 第 6 课：待学习（Scaling Law / Chinchilla / Compute-Optimal，建在 `06_scaling_laws.py` + `papers/notes/scaling_laws_kaplan_2020.md` + `papers/notes/chinchilla_compute_optimal_2022.md`）
 
@@ -64,6 +64,7 @@ pip install -r requirements.txt
 python3 phase2-transformer/reset_exercises_01.py   # 重置第二阶段第 1 课练习
 python3 phase2-transformer/02_self_attention_self_write.py   # 跑第 2 课练习并自动校验
 python3 phase2-transformer/03_multi_head_attention_self_write.py   # 跑第 3 课练习并自动校验
+python3 phase2-transformer/04_transformer_block_self_write.py   # 跑第 4 课练习并自动校验
 ```
 
 ## 必读论文
@@ -327,9 +328,21 @@ x_i W = token_embedding_i W + position_encoding_i W
    - `GPT-2` → `2.3 Model`（把论文中的 block 结构与你代码逐项对齐；对应精读：[`papers/notes/notes_gpt2_input_and_model.md`](../papers/notes/notes_gpt2_input_and_model.md) 中「§2.3 Model」）
    - `GPT-3` → `2.1 Model and Architectures`（理解"同构 block 堆叠 + 扩大规模"的主线；对应精读：[`papers/notes/gpt3_reading_2.1_model_and_architectures.md`](../papers/notes/gpt3_reading_2.1_model_and_architectures.md)）
 3. **③ 跑代码**：运行 `04_transformer_block.py`，跑通前向传播，观察中间张量维度
+   - 脚本会自动生成一张 `relu_vs_gelu.png`（ReLU vs GELU 的函数值 + 梯度对比图），跑完后打开看，直观理解为什么 GPT 用 GELU 而不是 ReLU，见下方「FFN 为什么用 GELU 而不是 ReLU」
 4. **④ 对照理解**：画一张 Block 内部流程图（Attention → Add & Norm → FFN → Add & Norm），对齐代码
-5. **⑤ 动手写**：修改 FFN 隐藏层维度、堆叠层数，观察参数量和输出变化；尝试切换 Pre-Norm / Post-Norm
+5. **⑤ 动手写**：完成 `04_transformer_block_self_write.py`（7 个 TODO，每填一个就跑一次依靠 `require_*` 校验即时纠错：GELU → FFN → LayerNorm → Pre-Norm Block → Post-Norm Block → 堆叠 N 层 → Dropout）；做完再做扩展实验：修改 FFN 隐藏层维度、堆叠层数，观察参数量和输出变化，对比 Pre-Norm / Post-Norm 的输出差异
 6. **⑥ 复盘**：能口述 Block 内部的完整数据流，说清残差 + LayerNorm 在 Block 内的位置
+
+**FFN 为什么用 GELU 而不是 ReLU？**
+
+运行 `04_transformer_block.py` 会自动生成下面这张对比图（`phase2-transformer/relu_vs_gelu.png`）：
+
+![ReLU vs GELU 对比](relu_vs_gelu.png)
+
+- **左图（函数值）**：ReLU 对负数一刀切成 0；GELU 在负数区保留少量负值（蓝色阴影），过渡平滑，不丢全部信息。
+- **右图（梯度）**：ReLU 梯度在 `x=0` 处 `0 → 1` 突变、负区恒为 0（容易出现 dying ReLU）；GELU 梯度处处连续，训练更稳定。
+
+一句话：**ReLU 是"一刀切"，GELU 是"平滑的一刀切"** —— 更平滑的梯度让深层 Transformer 训练更稳，这就是 GPT/BERT 普遍选 GELU 的原因。
 
 <a id="lesson-5"></a>
 

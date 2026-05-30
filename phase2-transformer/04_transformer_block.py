@@ -19,6 +19,8 @@
 - 残差连接和 LayerNorm（第 3 课）
 """
 
+import os
+
 import numpy as np
 
 np.random.seed(42)
@@ -39,9 +41,15 @@ def layer_norm(x, gamma=None, beta=None, eps=1e-5):
 
 
 def gelu(x):
-    """
+    r"""
     GELU 激活函数 —— GPT 使用的激活函数
     比 ReLU 更平滑，在 0 附近有非零梯度
+
+    精确定义（标准正态 CDF Φ）：
+        GELU(x) = x · Φ(x) = x · 0.5 · [1 + erf(x / √2)]
+
+    下面用的是 tanh 多项式近似（erf 计算慢，GPT-2 等用此近似，误差 < 0.001）：
+        GELU(x) = 0.5 · x · (1 + tanh(√(2/π) · (x + 0.044715 · x³)))
     """
     return 0.5 * x * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x**3)))
 
@@ -105,8 +113,71 @@ for i in range(len(test_x)):
 print("→ GELU 在负数区域不是完全为 0，保留了一些信息")
 
 
+def plot_relu_vs_gelu(save_path="relu_vs_gelu.png"):
+    """
+    画一张 ReLU vs GELU 的对比图（函数值 + 梯度），帮助直观理解二者区别。
+    左图：负数区 ReLU 直接砍成 0，GELU 保留少量负值（平滑过渡）。
+    右图：ReLU 梯度在 x=0 处 0→1 突变，GELU 梯度处处连续。
+    需要 matplotlib；未安装时静默跳过，不影响主流程。
+    """
+    try:
+        import matplotlib
+        matplotlib.use("Agg")  # 无界面环境也能保存图片
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("（未安装 matplotlib，跳过画图。可执行 pip install matplotlib 后重试）")
+        return
+
+    matplotlib.rcParams["axes.unicode_minus"] = False
+
+    xs = np.linspace(-4, 4, 400)
+    relu_y = np.maximum(0, xs)
+    gelu_y = gelu(xs)
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+    # 左图：函数值
+    ax = axes[0]
+    ax.plot(xs, relu_y, label="ReLU", color="#d62728", lw=2.5)
+    ax.plot(xs, gelu_y, label="GELU", color="#1f77b4", lw=2.5)
+    ax.axhline(0, color="gray", lw=0.8)
+    ax.axvline(0, color="gray", lw=0.8)
+    ax.fill_between(xs, relu_y, gelu_y, where=(xs < 0), color="#1f77b4", alpha=0.15)
+    ax.set_title("ReLU vs GELU (output value)", fontsize=14)
+    ax.set_xlabel("x")
+    ax.set_ylabel("f(x)")
+    ax.legend(fontsize=12)
+    ax.grid(alpha=0.3)
+
+    # 右图：导数 / 梯度（GELU 用数值微分近似）
+    relu_grad = (xs > 0).astype(float)
+    eps = 1e-4
+    gelu_grad = (gelu(xs + eps) - gelu(xs - eps)) / (2 * eps)
+
+    ax = axes[1]
+    ax.plot(xs, relu_grad, label="ReLU' (gradient)", color="#d62728", lw=2.5)
+    ax.plot(xs, gelu_grad, label="GELU' (gradient)", color="#1f77b4", lw=2.5)
+    ax.axhline(0, color="gray", lw=0.8)
+    ax.axvline(0, color="gray", lw=0.8)
+    ax.set_title("Gradient: ReLU vs GELU", fontsize=14)
+    ax.set_xlabel("x")
+    ax.set_ylabel("f'(x)")
+    ax.legend(fontsize=12)
+    ax.grid(alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=130, bbox_inches="tight")
+    plt.close(fig)
+    print(f"→ 已保存 ReLU vs GELU 对比图: {save_path}")
+
+
+# 在脚本所在目录生成对比图，方便配合 README 查看
+_here = os.path.dirname(os.path.abspath(__file__))
+plot_relu_vs_gelu(os.path.join(_here, "relu_vs_gelu.png"))
+
+
 # ============================================================
-# Part 2: 单头/多头注意力（复用上一课）
+# 辅助：单头/多头注意力（复用上一课，本段不打印，仅定义类）
 # ============================================================
 
 class MultiHeadAttention:
@@ -114,6 +185,10 @@ class MultiHeadAttention:
         self.n_heads = n_heads
         self.d_k = d_model // n_heads
 
+        # 形状是 (d_model, d_model) 而不是 (d_model, d_k)：
+        # 输入输出都是 d_model 维，这一个大矩阵把 n_heads 个头的投影打包在一起算，
+        # 算完再 reshape 切成各个头。所以单看维度像"没分头"，
+        # 其实分头是在后面 forward() 里的 reshape 那一步做的。
         self.W_Q = np.random.randn(d_model, d_model) * 0.02
         self.W_K = np.random.randn(d_model, d_model) * 0.02
         self.W_V = np.random.randn(d_model, d_model) * 0.02
@@ -127,6 +202,12 @@ class MultiHeadAttention:
         K = (x @ self.W_K).reshape(seq_len, self.n_heads, d_k).transpose(1, 0, 2)
         V = (x @ self.W_V).reshape(seq_len, self.n_heads, d_k).transpose(1, 0, 2)
 
+        # K.transpose(0, 2, 1): 保留"头"这一维，只把每个头内部的
+        #   (seq_len, d_k) 转成 (d_k, seq_len)，相当于在每个头里做 K^T。
+        # @ 作用在 >2 维数组时是"批量矩阵乘法"：最后两维做矩阵乘法，
+        #   前面的"头"维当作 batch，对所有头并行各算各的（省掉 for 循环）。
+        #   Q (n_heads, seq_len, d_k) @ Kᵀ (n_heads, d_k, seq_len)
+        #     -> scores (n_heads, seq_len, seq_len)
         scores = Q @ K.transpose(0, 2, 1) / np.sqrt(d_k)
 
         if mask is not None:
@@ -140,7 +221,7 @@ class MultiHeadAttention:
 
 
 # ============================================================
-# Part 3: 完整的 Transformer Block
+# Part 2: 完整的 Transformer Block
 # ============================================================
 
 print("\n" + "=" * 60)
@@ -155,6 +236,18 @@ class TransformerBlock:
     x → LayerNorm → MultiHeadAttention → + (残差) → LayerNorm → FFN → + (残差) → output
     |_____________________________________|         |_____________________|
                   残差连接                                残差连接
+
+    残差连接（Residual Connection）怎么理解：
+      一句话：输出 = 输入 + 子层的变换，即代码里的 `x = x + 子层(x)`。
+      类比：老师改作文时不重写，只在你原文上"打补丁"（标注修改意见），
+            最终 = 原文 + 修改。哪怕这次没什么可改的（子层输出≈0），原文也原样保留，绝不变差。
+      作用：
+        1. 信息不丢失：每层只在原基础上微调，原始信息有一条"直通车"一路传到最后。
+        2. 梯度修高速公路（最重要）：求导时这个 `x` 贡献一个 +1，给梯度留了一条
+           不必经过子层的直路；即使子层还没学会东西，梯度也能稳稳传回前面，
+           避免深层网络梯度消失。
+      前提：x 和子层输出形状必须完全一样（都是 (seq_len, d_model)）才能逐元素相加，
+            这也是为什么全程要保证输入输出同形状。
     """
     def __init__(self, d_model, n_heads, d_ff):
         self.attn = MultiHeadAttention(d_model, n_heads)
@@ -165,12 +258,12 @@ class TransformerBlock:
         # Sub-layer 1: LayerNorm → Attention → Residual
         x_norm = layer_norm(x)
         attn_out = self.attn.forward(x_norm, mask)
-        x = x + attn_out
+        x = x + attn_out  # 残差：原信息保底 + 给梯度留直路（详见类 docstring）
 
         # Sub-layer 2: LayerNorm → FFN → Residual
         x_norm = layer_norm(x)
         ffn_out = self.ffn.forward(x_norm)
-        x = x + ffn_out
+        x = x + ffn_out  # 残差：同上，子层只做"打补丁"式的微调
 
         return x
 
@@ -201,7 +294,7 @@ print(f"→ FFN 占了大部分参数！FFN 是模型'存储知识'的地方")
 
 
 # ============================================================
-# Part 4: 堆叠多个 Block
+# Part 3: 堆叠多个 Block
 # ============================================================
 
 print("\n" + "=" * 60)
@@ -227,7 +320,7 @@ print("→ 这要归功于残差连接和 LayerNorm！")
 
 
 # ============================================================
-# Part 5: 对比真实模型的规模
+# Part 4: 对比真实模型的规模
 # ============================================================
 
 print("\n" + "=" * 60)
@@ -268,7 +361,7 @@ print("""
 
 
 # ============================================================
-# Part 6: Dropout（正则化）
+# Part 5: Dropout（正则化）
 # ============================================================
 
 print("=" * 60)
@@ -278,12 +371,23 @@ print("=" * 60)
 
 def dropout(x, rate=0.1, training=True):
     """
-    Dropout: 训练时随机把一些值置 0
-    推理时不做 dropout，但要缩放
+    Dropout（反向 dropout / inverted dropout）：防止过拟合的正则化手段。
+
+    - 训练时：随机把约 rate 比例的值置 0（"丢弃"），存活的值放大 1/(1-rate)。
+              逼模型别过度依赖某几个神经元，学到更鲁棒的特征。
+    - 推理时：什么都不做，原样返回 x（既不丢弃，也不缩放）。
+
+    为什么训练时要 /(1-rate) 缩放：
+      训练丢掉一部分后数值总量会变小，而推理时全部保留、总量更大，两者会对不上。
+      训练时把存活的值放大 1/(1-rate)，使其期望值与推理时一致 —— 这样推理时就无需再做任何处理。
+      （这种"训练时缩放、推理时不动"的写法就叫 inverted dropout，是目前的标准实现。）
     """
+    # 推理阶段（或 rate=0）：直接返回，不丢弃也不缩放
     if not training or rate == 0:
         return x
+    # 训练阶段：生成 0/1 掩码，约 rate 比例为 0（丢弃），其余为 1（保留）
     mask = (np.random.rand(*x.shape) > rate).astype(float)
+    # 应用掩码并把存活值放大 1/(1-rate)，让期望值与推理时对齐
     return x * mask / (1 - rate)
 
 
