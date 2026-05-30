@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 4 课（Transformer Block / FFN / 残差 / Block 堆叠 / Dropout）主课已学完，配套自写练习待填，下一步完成第 4 课自写练习或进入第 5 课。
+当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 4 课（Transformer Block / FFN / 残差 / Block 堆叠 / Dropout）主课与自写练习均已完成，下一步进入第 5 课（从零搭建 GPT）。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 

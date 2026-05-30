@@ -206,7 +206,12 @@ section("TODO-2：实现 LayerNorm（复习）")
 
 def layer_norm(x, gamma=None, beta=None, eps=1e-5):
     # TODO-2: 实现 LayerNorm
-    return None
+    mean = np.mean(x, axis=-1, keepdims=True)
+    var = np.var(x, axis=-1, keepdims=True)
+    x_norm = (x - mean) / np.sqrt(var + eps)
+    if gamma is not None and beta is not None:
+        x_norm = gamma * x_norm + beta
+    return x_norm
 
 
 ln_out = layer_norm(X)
@@ -230,7 +235,7 @@ section("TODO-3：实现 GELU 激活函数")
 
 def gelu(x):
     # TODO-3: 实现 GELU（tanh 近似）
-    return None
+    return 0.5 * x * (1 + np.tanh(np.sqrt(2 / np.pi) * (x + 0.044715 * x ** 3)))
 
 
 _gelu_test = np.array([-2.0, -1.0, -0.5, 0.0, 0.5, 1.0, 2.0])
@@ -261,8 +266,8 @@ section("TODO-4：实现 Feed-Forward Network（两层 MLP）")
 
 
 def feed_forward(x, W1, b1, W2, b2):
-    # TODO-4: 实现两层 MLP + GELU
-    return None
+    hidden = gelu(x @ W1 + b1)
+    return hidden @ W2 + b2
 
 
 ffn_out = feed_forward(X, W1, b1, W2, b2)
@@ -299,7 +304,24 @@ section("TODO-5：实现多头注意力 multi_head_attention（复用第 3 课�
 
 def multi_head_attention(x, W_Q, W_K, W_V, W_O, num_heads, mask=None):
     # TODO-5: 实现多头注意力
-    return None
+    seq_len = x.shape[0]
+    d_model = x.shape[1]
+    d_k = d_model // num_heads
+
+    Q = (x @ W_Q).reshape(seq_len, num_heads, d_k).transpose(1, 0, 2)
+    K = (x @ W_K).reshape(seq_len, num_heads, d_k).transpose(1, 0, 2)
+    V = (x @ W_V).reshape(seq_len, num_heads, d_k).transpose(1, 0, 2)
+
+    scores = Q @ K.transpose(0, 2, 1) / np.sqrt(d_k)
+
+    if mask is not None:
+            scores = scores - mask * 1e9
+
+    weights = softmax(scores, axis=-1)
+    head_outputs = weights @ V  # (n_heads, seq_len, d_k)
+
+    concat = head_outputs.transpose(1, 0, 2).reshape(seq_len, -1)
+    return concat @ W_O
 
 
 mha_out = multi_head_attention(X, W_Q, W_K, W_V, W_O, num_heads)
@@ -336,7 +358,10 @@ section("TODO-6：实现 Pre-Norm 风格的 Transformer Block")
 def pre_norm_block(x, params, num_heads, mask=None):
     # TODO-6: 实现 Pre-Norm Transformer Block
     # 提示：params 是一个 dict，含 W_Q/W_K/W_V/W_O/W1/b1/W2/b2
-    return None
+    W_Q, W_K, W_V, W_O, W1, b1, W2, b2 = params.values()
+    x = x + multi_head_attention(layer_norm(x), W_Q, W_K, W_V, W_O, num_heads, mask=mask)
+    x = x + feed_forward(layer_norm(x), W1, b1, W2, b2)
+    return x
 
 
 pre_out = pre_norm_block(X, BLOCK_PARAMS, num_heads, mask=causal_mask)
@@ -363,7 +388,10 @@ section("TODO-7：实现 Post-Norm 风格的 Transformer Block")
 
 def post_norm_block(x, params, num_heads, mask=None):
     # TODO-7: 实现 Post-Norm Transformer Block
-    return None
+    W_Q, W_K, W_V, W_O, W1, b1, W2, b2 = params.values()
+    x = layer_norm(x + multi_head_attention(x, W_Q, W_K, W_V, W_O, num_heads, mask=mask))
+    x = layer_norm(x + feed_forward(x, W1, b1, W2, b2))
+    return x
 
 
 post_out = post_norm_block(X, BLOCK_PARAMS, num_heads, mask=causal_mask)
@@ -430,7 +458,9 @@ layer_params = [make_block_params(d_model, num_heads, d_ff, _layer_rng) for _ in
 def stack_blocks(x, layer_params_list, num_heads, mask=None):
     # TODO-8: 把 pre_norm_block 串联 len(layer_params_list) 次，每层用各自的参数
     #   提示：用一个循环，h = pre_norm_block(h, params, num_heads, mask=mask)
-    return None
+    for params in layer_params_list:
+        x = pre_norm_block(x, params, num_heads, mask=mask)
+    return x
 
 
 stacked_out = stack_blocks(X, layer_params, num_heads, mask=causal_mask)
@@ -488,7 +518,11 @@ def dropout(x, rate=0.1, training=True, rng=None):
     #     if (not training) or rate == 0: 直接返回 x
     #     rng 为 None 时用 np.random；keep = (rng.rand(*x.shape) > rate)
     #     注意保持 dtype：用 np.asarray(..., dtype=x.dtype) 包一下
-    return None
+    if (not training) or rate == 0:
+        return x
+    # 训练阶段：生成 0/1 掩码，约 rate 比例为 0（丢弃），其余为 1（保留）
+    mask = (rng.rand(*x.shape) > rate).astype(x.dtype)
+    return x * mask / (1 - rate)
 
 
 # 推理模式下应该完全不变
