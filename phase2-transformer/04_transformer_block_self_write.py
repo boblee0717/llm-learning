@@ -22,6 +22,14 @@ phase2 / 第 4 课（自写版）：完整的 Transformer Block
 - FFN 占了 Block 中约 2/3 的参数（"模型记忆知识的地方"）
 - 输入输出 shape 完全相同 → 可以堆叠任意多层
 - Pre-Norm 在深层模型中训练更稳定（GPT-2/3、LLaMA 都用 Pre-Norm）
+
+本课结构（Pre-Norm 风格）：
+    x -> LayerNorm -> MultiHeadAttention -> + (残差)
+      -> LayerNorm -> FFN               -> + (残差) -> output
+
+核心公式：
+    FFN(x)   = GELU(x W1 + b1) W2 + b2
+    Block(x) = x + FFN(LayerNorm(x + Attention(LayerNorm(x))))   # Pre-Norm
 """
 
 import sys
