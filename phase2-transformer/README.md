@@ -55,7 +55,7 @@ pip install -r requirements.txt
 - ✅ 第 1 课：`01_word_embeddings_self_write.py`（重置脚本：`reset_exercises_01.py`）
 - ✅ 第 2 课：`02_self_attention_self_write.py`（8 个 TODO，覆盖 softmax / Q/K/V / scaled dot-product / 因果掩码；含内置 `require_*` 校验）
 - ✅ 第 3 课：`03_multi_head_attention.py` + `03_multi_head_attention_self_write.py`（9 个 TODO，覆盖 split/merge heads、multi-head、causal mask、residual、LayerNorm、Pre/Post-Norm）
-- 🚧 第 4 课：`04_transformer_block.py` + `04_transformer_block_self_write.py`（7 个 TODO，覆盖 GELU、FFN、LayerNorm、Pre-Norm / Post-Norm Block、堆叠 N 层、Dropout；含内置 `require_*` 校验，多头注意力已给好）
+- 🚧 第 4 课：`04_transformer_block.py` + `04_transformer_block_self_write.py`（9 个 TODO，覆盖 softmax、LayerNorm、GELU、FFN、multi-head attention、Pre-Norm / Post-Norm Block、堆叠 N 层、inverted dropout；含内置 `require_*` 校验、参数量统计与真实模型规模对比）
 - ⏳ 第 5 课：待学习
 - ⏳ 第 6 课：待学习（Scaling Law / Chinchilla / Compute-Optimal，建在 `06_scaling_laws.py` + `papers/notes/scaling_laws_kaplan_2020.md` + `papers/notes/chinchilla_compute_optimal_2022.md`）
 
@@ -330,7 +330,7 @@ x_i W = token_embedding_i W + position_encoding_i W
 3. **③ 跑代码**：运行 `04_transformer_block.py`，跑通前向传播，观察中间张量维度
    - 脚本会自动生成一张 `relu_vs_gelu.png`（ReLU vs GELU 的函数值 + 梯度对比图），跑完后打开看，直观理解为什么 GPT 用 GELU 而不是 ReLU，见下方「FFN 为什么用 GELU 而不是 ReLU」
 4. **④ 对照理解**：画一张 Block 内部流程图（Attention → Add & Norm → FFN → Add & Norm），对齐代码
-5. **⑤ 动手写**：完成 `04_transformer_block_self_write.py`（7 个 TODO，每填一个就跑一次依靠 `require_*` 校验即时纠错：GELU → FFN → LayerNorm → Pre-Norm Block → Post-Norm Block → 堆叠 N 层 → Dropout）；做完再做扩展实验：修改 FFN 隐藏层维度、堆叠层数，观察参数量和输出变化，对比 Pre-Norm / Post-Norm 的输出差异
+5. **⑤ 动手写**：完成 `04_transformer_block_self_write.py`（9 个 TODO，每填一个就跑一次依靠 `require_*` 校验即时纠错：softmax → LayerNorm → GELU → FFN → multi_head_attention → Pre-Norm Block → Post-Norm Block → 堆叠 N 层 → inverted dropout）；做完再做扩展实验：修改 FFN 隐藏层维度、堆叠层数，观察参数量和输出变化，对比 Pre-Norm / Post-Norm 的输出差异
 6. **⑥ 复盘**：能口述 Block 内部的完整数据流，说清残差 + LayerNorm 在 Block 内的位置
 
 **FFN 为什么用 GELU 而不是 ReLU？**
