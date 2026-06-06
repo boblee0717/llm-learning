@@ -19,6 +19,10 @@
 - 基础 PyTorch（会在代码中解释）
 """
 
+import sys
+
+sys.stdout.reconfigure(encoding="utf-8")  # Windows / PowerShell 下中文输出防乱码
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
