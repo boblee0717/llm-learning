@@ -56,7 +56,7 @@ pip install -r requirements.txt
 - ✅ 第 2 课：`02_self_attention_self_write.py`（8 个 TODO，覆盖 softmax / Q/K/V / scaled dot-product / 因果掩码；含内置 `require_*` 校验；重置脚本：`reset_exercises_02.py`）
 - ✅ 第 3 课：`03_multi_head_attention.py` + `03_multi_head_attention_self_write.py`（9 个 TODO，覆盖 split/merge heads、multi-head、causal mask、residual、LayerNorm、Pre/Post-Norm；重置脚本：`reset_exercises_03.py`）
 - ✅ 第 4 课：`04_transformer_block.py` + `04_transformer_block_self_write.py`（9 个 TODO，覆盖 softmax、LayerNorm、GELU、FFN、multi-head attention、Pre-Norm / Post-Norm Block、堆叠 N 层、inverted dropout；含内置 `require_*` 校验、参数量统计与真实模型规模对比；重置脚本：`reset_exercises_04.py`）
-- 🚧 第 5 课：主课 `05_gpt_from_scratch.py` 已跑通，自写练习 `05_gpt_from_scratch_self_write.py`（10 个 TODO，首次用 PyTorch）待填（重置脚本：`reset_exercises_05.py`）
+- 🚧 第 5 课：主课 `05_gpt_from_scratch.py` 已跑通，自写练习 `05_gpt_from_scratch_self_write.py`（12 个 TODO，首次用 PyTorch，已融合主课练习区全部 6 道题）待填（重置脚本：`reset_exercises_05.py`）
 - ⏳ 第 6 课：待学习（Scaling Law / Chinchilla / Compute-Optimal，建在 `06_scaling_laws.py` + `papers/notes/scaling_laws_kaplan_2020.md` + `papers/notes/chinchilla_compute_optimal_2022.md`）
 
 ```bash
@@ -366,7 +366,7 @@ x_i W = token_embedding_i W + position_encoding_i W
    - `GPT-3` → `2. Training Dataset and Model`、`3. Methodology`（理解数据规模、训练范式和 few-shot 评估）
 3. **③ 跑代码**：运行 `05_gpt_from_scratch.py`，完成一次完整训练（观察 loss 下降曲线）
 4. **④ 对照理解**：把 GPT-2 论文的模型描述和你的代码逐模块对齐（Embedding → Blocks → LM Head）
-5. **⑤ 动手写**：完成 `05_gpt_from_scratch_self_write.py`（10 个 TODO，每填一个就跑一次依靠 `require_*` 校验即时纠错：因果掩码 → QKV 分头 → 注意力核心计算 → FFN → Pre-Norm Block → GPT.forward → get_batch → Top-K 过滤 → generate →（进阶可跳过）Top-P；全部通过后脚本会用你写的模型真的训练 300 步并生成文本）；做完再调整 temperature 和 top-k 参数，感受不同采样策略的效果差异
+5. **⑤ 动手写**：完成 `05_gpt_from_scratch_self_write.py`（12 个 TODO，每填一个就跑一次依靠 `require_*` 校验即时纠错：因果掩码 → QKV 分头 → 注意力核心计算 → FFN → Pre-Norm Block → weight tying → GPT.forward → get_batch → Top-K 过滤 → generate →（进阶可跳过）Top-P →（进阶可跳过）tiktoken BPE 分词；全部通过后脚本会用你写的模型真的训练 300 步并生成文本，支持换成 tiny-shakespeare 真实数据或自定义文本）；做完再调整 temperature 和 top-k 参数，感受不同采样策略的效果差异；主课练习区的 6 道题已全部融合进自写练习
 6. **⑥ 复盘**：能口述完整 GPT 的前向流程，并解释训练目标（next token prediction）
 7. **⑦ 延伸阅读**（可选）：`InstructGPT` → `3. Methods`（预习"预训练模型如何通过 RLHF 对齐"）
 

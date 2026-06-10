@@ -47,10 +47,10 @@ BLANK_BLOCKS = [
     # (范围锚点, 起点, 终点, 替换内容, 标签)
     (
         None,
-        "def build_causal_mask(block_size):",
+        "def build_causal_mask(context_len):",
         "_mask = build_causal_mask(8)",
-        "def build_causal_mask(block_size):\n"
-        "    # TODO-1: 返回 (block_size, block_size) 的因果掩码（float 张量，1=屏蔽 0=可见）\n"
+        "def build_causal_mask(context_len):\n"
+        "    # TODO-1: 返回 (context_len, context_len) 的因果掩码（float 张量，1=屏蔽 0=可见）\n"
         "    return None\n"
         "\n\n",
         "TODO-1 build_causal_mask",
@@ -97,22 +97,36 @@ BLANK_BLOCKS = [
     ),
     (
         "class GPT(nn.Module):",
+        "    def tie_weights(self):",
+        "    def _init_weights(self):",
+        "    def tie_weights(self):\n"
+        "        # TODO-6: 实现权重共享（weight tying）\n"
+        "        #   要点：让两者的 .weight 指向【同一个】Parameter 对象（赋值共享内存），\n"
+        "        #         而不是数值拷贝（copy_ 之后还是两份独立参数，训练会各走各的）\n"
+        "        #   想清楚把谁赋给谁（提示：nn.Linear 的 weight 形状本来就是 (out, in)，\n"
+        "        #   和 nn.Embedding 的 (vocab_size, n_embd) 恰好一致），写一行赋值即可\n"
+        "        pass  # ← 实现后删掉这行\n"
+        "\n",
+        "TODO-6 GPT.tie_weights",
+    ),
+    (
+        "class GPT(nn.Module):",
         "    def forward(self, idx, targets=None):",
         "    @torch.no_grad()",
         "    def forward(self, idx, targets=None):\n"
-        "        # TODO-6: 实现 GPT 前向，return logits, loss\n"
+        "        # TODO-7: 实现 GPT 前向，return logits, loss\n"
         "        return None\n"
         "\n",
-        "TODO-6 GPT.forward",
+        "TODO-7 GPT.forward",
     ),
     (
         "class GPT(nn.Module):",
         "    def generate(self, idx, max_new_tokens, temperature=1.0, top_k=None):",
         "torch.manual_seed(2)",
         "    def generate(self, idx, max_new_tokens, temperature=1.0, top_k=None):\n"
-        "        # TODO-9: 实现自回归生成（先做完 TODO-7/8 再回来写这里）\n"
+        "        # TODO-10: 实现自回归生成（先做完 TODO-8/9 再回来写这里）\n"
         "        # 每生成一个 token 重复以下步骤：\n"
-        "        #   1. 截断上下文：idx_crop = idx[:, -self.config.block_size:]\n"
+        "        #   1. 截断上下文：idx_crop = idx[:, -self.config.context_len:]\n"
         "        #   2. 前向拿 logits，只取最后一个位置：logits[:, -1, :]\n"
         "        #   3. 除以 temperature（越低分布越尖 → 越确定）\n"
         "        #   4. top_k 不为 None 时，用 apply_top_k 过滤\n"
@@ -120,37 +134,47 @@ BLANK_BLOCKS = [
         "        #   6. torch.cat 拼回 idx\n"
         "        return None\n"
         "\n\n",
-        "TODO-9 GPT.generate",
+        "TODO-10 GPT.generate",
     ),
     (
         None,
-        "def get_batch(data, block_size, batch_size):",
+        "def get_batch(data, context_len, batch_size):",
         "_data = torch.arange(200",
-        "def get_batch(data, block_size, batch_size):\n"
-        "    # TODO-7: 返回 (x, y)，各为 (batch_size, block_size)\n"
+        "def get_batch(data, context_len, batch_size):\n"
+        "    # TODO-8: 返回 (x, y)，各为 (batch_size, context_len)\n"
         "    return None\n"
         "\n\n",
-        "TODO-7 get_batch",
+        "TODO-8 get_batch",
     ),
     (
         None,
         "def apply_top_k(logits, k):",
         "_tk_logits = torch.tensor",
         "def apply_top_k(logits, k):\n"
-        "    # TODO-8: 返回过滤后的 logits，形状不变 (B, vocab_size)\n"
+        "    # TODO-9: 返回过滤后的 logits，形状不变 (B, vocab_size)\n"
         "    return None\n"
         "\n\n",
-        "TODO-8 apply_top_k",
+        "TODO-9 apply_top_k",
     ),
     (
         None,
         "def apply_top_p(logits, p):",
         "_tp_probs = torch.tensor",
         "def apply_top_p(logits, p):\n"
-        "    # TODO-10: 返回过滤后的 logits，形状不变 (B, vocab_size)（可跳过）\n"
+        "    # TODO-11: 返回过滤后的 logits，形状不变 (B, vocab_size)（可跳过）\n"
         "    return None\n"
         "\n\n",
-        "TODO-10 apply_top_p",
+        "TODO-11 apply_top_p",
+    ),
+    (
+        None,
+        "def encode_with_gpt2_bpe(text):",
+        '_sample = "To be or not to be that is the question"',
+        "def encode_with_gpt2_bpe(text):\n"
+        "    # TODO-12: 返回 GPT-2 BPE 编码后的 token id 列表（可跳过）\n"
+        "    return None\n"
+        "\n\n",
+        "TODO-12 encode_with_gpt2_bpe",
     ),
 ]
 

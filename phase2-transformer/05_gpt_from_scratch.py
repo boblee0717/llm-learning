@@ -43,14 +43,14 @@ class GPTConfig:
     def __init__(
         self,
         vocab_size=256,       # 词汇表大小（我们用字符级别，ASCII 256 个字符）
-        block_size=64,        # 最大序列长度（上下文窗口）
+        context_len=64,        # 最大序列长度（上下文窗口）
         n_layer=4,            # Transformer Block 的层数
         n_head=4,             # 注意力头数
         n_embd=64,            # 嵌入维度
         dropout=0.1,          # Dropout 率
     ):
         self.vocab_size = vocab_size
-        self.block_size = block_size
+        self.context_len = context_len
         self.n_layer = n_layer
         self.n_head = n_head
         self.n_embd = n_embd
@@ -59,7 +59,7 @@ class GPTConfig:
 
 config = GPTConfig()
 print(f"词汇表大小: {config.vocab_size}")
-print(f"上下文窗口: {config.block_size}")
+print(f"上下文窗口: {config.context_len}")
 print(f"层数: {config.n_layer}")
 print(f"注意力头数: {config.n_head}")
 print(f"嵌入维度: {config.n_embd}")
@@ -93,8 +93,8 @@ class CausalSelfAttention(nn.Module):
         # 因果掩码：上三角矩阵，注册为 buffer（不参与训练）
         self.register_buffer(
             "mask",
-            torch.triu(torch.ones(config.block_size, config.block_size), diagonal=1)
-                 .view(1, 1, config.block_size, config.block_size)
+            torch.triu(torch.ones(config.context_len, config.context_len), diagonal=1)
+                 .view(1, 1, config.context_len, config.context_len)
         )
 
     def forward(self, x):
@@ -178,7 +178,7 @@ class GPT(nn.Module):
         self.config = config
 
         self.token_embedding = nn.Embedding(config.vocab_size, config.n_embd)
-        self.position_embedding = nn.Embedding(config.block_size, config.n_embd)
+        self.position_embedding = nn.Embedding(config.context_len, config.n_embd)
         self.drop = nn.Dropout(config.dropout)
 
         self.blocks = nn.ModuleList([
@@ -216,8 +216,8 @@ class GPT(nn.Module):
         targets: (B, T) 目标 token 索引（训练时提供）
         """
         B, T = idx.shape
-        assert T <= self.config.block_size, \
-            f"序列长度 {T} 超过最大长度 {self.config.block_size}"
+        assert T <= self.config.context_len, \
+            f"序列长度 {T} 超过最大长度 {self.config.context_len}"
 
         # Token + Position Embedding
         tok_emb = self.token_embedding(idx)                    # (B, T, n_embd)
@@ -251,7 +251,7 @@ class GPT(nn.Module):
         """
         for _ in range(max_new_tokens):
             # 截断到最大上下文长度
-            idx_crop = idx[:, -self.config.block_size:]
+            idx_crop = idx[:, -self.config.context_len:]
 
             logits, _ = self(idx_crop)
             logits = logits[:, -1, :] / temperature  # 只取最后一个位置
@@ -316,7 +316,7 @@ print(f"词汇表: {''.join(chars)}")
 
 # 重新创建适合实际词汇表大小的模型
 # （词汇表从 256 缩到实际字符数，embedding/lm_head 跟着变小，所以参数量和 Part 3 不同）
-config = GPTConfig(vocab_size=actual_vocab_size, block_size=64, n_layer=4, n_head=4, n_embd=64)
+config = GPTConfig(vocab_size=actual_vocab_size, context_len=64, n_layer=4, n_head=4, n_embd=64)
 model = GPT(config)
 print(f"实际训练的模型参数量: {model.count_parameters():,}")
 
@@ -324,11 +324,11 @@ print(f"实际训练的模型参数量: {model.count_parameters():,}")
 data = torch.tensor([char_to_idx[c] for c in training_text], dtype=torch.long)
 
 
-def get_batch(data, block_size, batch_size):
+def get_batch(data, context_len, batch_size):
     """随机采样训练批次"""
-    ix = torch.randint(len(data) - block_size - 1, (batch_size,))
-    x = torch.stack([data[i:i + block_size] for i in ix])
-    y = torch.stack([data[i + 1:i + block_size + 1] for i in ix])
+    ix = torch.randint(len(data) - context_len - 1, (batch_size,))
+    x = torch.stack([data[i:i + context_len] for i in ix])
+    y = torch.stack([data[i + 1:i + context_len + 1] for i in ix])
     return x, y
 
 
@@ -341,7 +341,7 @@ n_steps = 500
 batch_size = 8
 
 for step in range(n_steps):
-    x_batch, y_batch = get_batch(data, config.block_size, batch_size)
+    x_batch, y_batch = get_batch(data, config.context_len, batch_size)
     logits, loss = model(x_batch, y_batch)
 
     optimizer.zero_grad()
@@ -455,23 +455,25 @@ print("\n" + "=" * 60)
 print("练习")
 print("=" * 60)
 print("""
+以下练习已全部融合进自写练习 05_gpt_from_scratch_self_write.py，
+建议直接去那边做（带 require_* 校验，即时纠错）：
+
 1. 调整训练步数 (500 → 2000)，观察 loss 和生成质量的变化
+   → 自写练习「延伸思考」第 1 条
 
 2. 修改模型大小: 试试 n_layer=2, n_head=2, n_embd=32
-   - 更小的模型训练更快，但效果更差
+   → 自写练习的终极训练环节用的就是这套配置，可与本文件 (4层/64维) 直接对比
 
 3. 用不同的训练文本（比如中文、代码、歌词）
+   → 自写练习终极验证环节支持直接替换 training_text
 
-4. 实现 Top-P (Nucleus) 采样:
-   - 按概率从高到低排序
-   - 选择累计概率超过 P 的最小集合
-   - 从这个集合中采样
+4. 实现 Top-P (Nucleus) 采样
+   → 自写练习 TODO-11（含 p=0.75 / 0.9 两组校验用例）
 
-5. (进阶) 用 tiktoken 替换字符级分词器:
-   import tiktoken
-   enc = tiktoken.get_encoding("gpt2")
-   tokens = enc.encode("Hello world")
+5. (进阶) 用 tiktoken 替换字符级分词器
+   → 自写练习 TODO-12（编码 + 解码还原 + 与字符级对比序列长度）
 
-6. (进阶) 下载 tiny-shakespeare 数据集，用更多数据训练:
-   wget https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt
+6. (进阶) 下载 tiny-shakespeare 数据集，用更多数据训练
+   → 把 input.txt 存为 phase2-transformer/tiny_shakespeare.txt，
+     自写练习的训练环节会自动检测并优先使用
 """)

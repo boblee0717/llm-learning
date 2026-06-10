@@ -5,7 +5,7 @@ phase2 / 第 5 课（自写版）：从零构建 GPT（PyTorch）
 
 用法：
 1. 运行：python 05_gpt_from_scratch_self_write.py
-2. 按 TODO-1 到 TODO-10 顺序补全实现
+2. 按 TODO-1 到 TODO-12 顺序补全实现
 3. 每补完一个 TODO 就运行一次，依靠 require_xxx 校验即时纠错
    （没填的 TODO 会返回 None，校验提示「未实现」，这是正常的）
 
@@ -13,10 +13,12 @@ phase2 / 第 5 课（自写版）：从零构建 GPT（PyTorch）
 - 手写因果掩码（torch.triu）
 - 手写注意力的核心计算：QKV 分头 → scores → mask → softmax → 加权 → 合并
 - 手写 FFN 与 Pre-Norm TransformerBlock 的 forward
+- 手写权重共享 weight tying（embedding 和 lm_head 共用一份参数）
 - 手写 GPT.forward（embedding 相加 → N 层 Block → ln_f → lm_head → loss）
 - 手写训练数据采样 get_batch（next token prediction 的本质就藏在这里）
 - 手写 Top-K 过滤与自回归生成 generate
 - （进阶，可跳过）手写 Top-P / nucleus 过滤
+- （进阶，可跳过）用 tiktoken 体验 BPE 分词，对比字符级分词
 
 与第 4 课自写版的关系：
 - 第 4 课用 NumPy 手写了所有组件的"裸公式"
@@ -28,6 +30,8 @@ phase2 / 第 5 课（自写版）：从零构建 GPT（PyTorch）
 attention weights / 残差输出上各加一层 nn.Dropout，原理见第 4 课 TODO-9）。
 
 全部 TODO 校验通过后，脚本会用你写的模型真的训练 300 步并生成文本。
+（想用真实数据练？把 tiny-shakespeare 存为本目录的 tiny_shakespeare.txt，
+  训练环节会自动优先使用，下载方式见「终极验证」一节的注释。）
 """
 
 import sys
@@ -36,6 +40,7 @@ sys.stdout.reconfigure(encoding="utf-8")  # Windows / PowerShell 下中文输出
 sys.stderr.reconfigure(encoding="utf-8")  # ValidationError 走 stderr，也要防乱码
 
 import math
+from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -82,10 +87,10 @@ def require_close(name, actual, expected, atol=1e-5):
 
 # ---------- 模型配置（不需要你改） ----------
 class GPTConfig:
-    def __init__(self, vocab_size=64, block_size=32, n_layer=2, n_head=2, n_embd=16):
+    def __init__(self, vocab_size=64, context_len=32, n_layer=2, n_head=2, n_embd=16):
         assert n_embd % n_head == 0
         self.vocab_size = vocab_size
-        self.block_size = block_size
+        self.context_len = context_len
         self.n_layer = n_layer
         self.n_head = n_head
         self.n_embd = n_embd
@@ -100,8 +105,8 @@ section("TODO-1：构造因果掩码 build_causal_mask")
 # 提示：torch.triu(torch.ones(T, T), diagonal=1)
 
 
-def build_causal_mask(block_size):
-    # TODO-1: 返回 (block_size, block_size) 的因果掩码（float 张量，1=屏蔽 0=可见）
+def build_causal_mask(context_len):
+    # TODO-1: 返回 (context_len, context_len) 的因果掩码（float 张量，1=屏蔽 0=可见）
     return None
 
 
@@ -203,7 +208,7 @@ class CausalSelfAttention(nn.Module):
         self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd)
         self.c_proj = nn.Linear(config.n_embd, config.n_embd)
         # mask 注册为 buffer：跟着模型走（保存/搬 device），但不参与训练
-        self.register_buffer("mask", build_causal_mask(config.block_size))
+        self.register_buffer("mask", build_causal_mask(config.context_len))
 
     def forward(self, x):
         B, T, C = x.shape
@@ -278,9 +283,14 @@ print("TransformerBlock OK：输入输出 shape 相同 → 可堆叠任意层")
 
 
 # ============================================================
-section("TODO-6：GPT.forward —— 把所有组件拼成完整模型")
+section("TODO-6/7：权重共享 tie_weights 与 GPT.forward")
 # ============================================================
-# 数据流（对应主课 Part 3）：
+# TODO-6（在 GPT 类的 tie_weights 方法里）：
+#   token_embedding.weight 和 lm_head.weight 形状都是 (vocab_size, n_embd)：
+#   一个把 token 查成向量（查表），一个把向量和每个词的"原型向量"做点积打回词表（反查），
+#   语义上互为逆操作 → 可以共用同一份参数（GPT-2/GPT-3 都这么做）。
+#
+# TODO-7（GPT.forward）数据流（对应主课 Part 3）：
 #   idx (B, T)
 #     → token_embedding + position_embedding   (B, T, C)
 #     → N × TransformerBlock                   (B, T, C)
@@ -300,15 +310,22 @@ class GPT(nn.Module):
         super().__init__()
         self.config = config
         self.token_embedding = nn.Embedding(config.vocab_size, config.n_embd)
-        self.position_embedding = nn.Embedding(config.block_size, config.n_embd)
+        self.position_embedding = nn.Embedding(config.context_len, config.n_embd)
         self.blocks = nn.ModuleList(
             [TransformerBlock(config) for _ in range(config.n_layer)]
         )
         self.ln_f = nn.LayerNorm(config.n_embd)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
-        # 权重共享（weight tying）：embedding 查表与 lm_head 反查共用一份 (V, C) 权重
-        self.token_embedding.weight = self.lm_head.weight
+        self.tie_weights()
         self._init_weights()
+
+    def tie_weights(self):
+        # TODO-6: 实现权重共享（weight tying）
+        #   要点：让两者的 .weight 指向【同一个】Parameter 对象（赋值共享内存），
+        #         而不是数值拷贝（copy_ 之后还是两份独立参数，训练会各走各的）
+        #   想清楚把谁赋给谁（提示：nn.Linear 的 weight 形状本来就是 (out, in)，
+        #   和 nn.Embedding 的 (vocab_size, n_embd) 恰好一致），写一行赋值即可
+        pass  # ← 实现后删掉这行
 
     def _init_weights(self):
         for module in self.modules():
@@ -320,14 +337,14 @@ class GPT(nn.Module):
                 nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
     def forward(self, idx, targets=None):
-        # TODO-6: 实现 GPT 前向，return logits, loss
+        # TODO-7: 实现 GPT 前向，return logits, loss
         return None
 
     @torch.no_grad()
     def generate(self, idx, max_new_tokens, temperature=1.0, top_k=None):
-        # TODO-9: 实现自回归生成（先做完 TODO-7/8 再回来写这里）
+        # TODO-10: 实现自回归生成（先做完 TODO-8/9 再回来写这里）
         # 每生成一个 token 重复以下步骤：
-        #   1. 截断上下文：idx_crop = idx[:, -self.config.block_size:]
+        #   1. 截断上下文：idx_crop = idx[:, -self.config.context_len:]
         #   2. 前向拿 logits，只取最后一个位置：logits[:, -1, :]
         #   3. 除以 temperature（越低分布越尖 → 越确定）
         #   4. top_k 不为 None 时，用 apply_top_k 过滤
@@ -337,18 +354,29 @@ class GPT(nn.Module):
 
 
 torch.manual_seed(2)
-_gpt_cfg = GPTConfig(vocab_size=64, block_size=32, n_layer=2, n_head=2, n_embd=16)
+_gpt_cfg = GPTConfig(vocab_size=64, context_len=32, n_layer=2, n_head=2, n_embd=16)
 _model = GPT(_gpt_cfg)
 _idx = torch.randint(0, _gpt_cfg.vocab_size, (2, 10))
 _targets = torch.randint(0, _gpt_cfg.vocab_size, (2, 10))
 
+# ---- TODO-6 校验：weight tying ----
+require_true(
+    "TODO-6 weight tying：共享同一个 Parameter",
+    _model.token_embedding.weight is _model.lm_head.weight,
+    "应让 token_embedding.weight 和 lm_head.weight 指向同一个 Parameter 对象"
+    "（用赋值共享，而不是 copy_ 数值拷贝；实现后记得删掉 pass）",
+)
+_tied = _model.token_embedding.weight.numel()
+print(f"weight tying OK：embedding 和 lm_head 共用一份参数，省下 {_tied:,} 个参数")
+
+# ---- TODO-7 校验：GPT.forward ----
 _fwd = _model(_idx, _targets)
-require_not_none("TODO-6 GPT.forward", _fwd)
-require_true("TODO-6 返回 (logits, loss)", isinstance(_fwd, tuple) and len(_fwd) == 2,
+require_not_none("TODO-7 GPT.forward", _fwd)
+require_true("TODO-7 返回 (logits, loss)", isinstance(_fwd, tuple) and len(_fwd) == 2,
              "应 return logits, loss")
 _logits, _loss = _fwd
-require_shape("TODO-6 logits", _logits, (2, 10, _gpt_cfg.vocab_size))
-require_not_none("TODO-6 loss", _loss)
+require_shape("TODO-7 logits", _logits, (2, 10, _gpt_cfg.vocab_size))
+require_not_none("TODO-7 loss", _loss)
 
 # 和参考前向对数值
 with torch.no_grad():
@@ -361,56 +389,56 @@ with torch.no_grad():
     _ref_loss = F.cross_entropy(
         _ref_logits.view(-1, _gpt_cfg.vocab_size), _targets.view(-1)
     )
-require_close("TODO-6 logits 数值", _logits, _ref_logits)
-require_close("TODO-6 loss 数值", _loss, _ref_loss)
+require_close("TODO-7 logits 数值", _logits, _ref_logits)
+require_close("TODO-7 loss 数值", _loss, _ref_loss)
 
 # 没有 targets 时 loss 应为 None
 _logits2, _loss2 = _model(_idx)
-require_true("TODO-6 无 targets 时 loss=None", _loss2 is None, "推理时不该算 loss")
+require_true("TODO-7 无 targets 时 loss=None", _loss2 is None, "推理时不该算 loss")
 
 # 因果性验证：改动最后一个 token，前面所有位置的 logits 不应变化
 _idx_mod = _idx.clone()
 _idx_mod[:, -1] = (_idx_mod[:, -1] + 1) % _gpt_cfg.vocab_size
 _logits_mod, _ = _model(_idx_mod)
-require_close("TODO-6 因果性（改未来不影响过去）", _logits_mod[:, :-1], _logits[:, :-1])
+require_close("TODO-7 因果性（改未来不影响过去）", _logits_mod[:, :-1], _logits[:, :-1])
 
 print(f"GPT.forward OK：随机初始化 loss = {_loss.item():.4f}"
       f"（≈ ln({_gpt_cfg.vocab_size}) = {math.log(_gpt_cfg.vocab_size):.4f}，即均匀瞎猜）")
 
 
 # ============================================================
-section("TODO-7：训练数据采样 get_batch")
+section("TODO-8：训练数据采样 get_batch")
 # ============================================================
 # Language Modeling 的本质就在这两行里：
-#   x = data[i     : i+block_size]      # 输入
-#   y = data[i+1   : i+block_size+1]    # 目标 = 输入右移一位
+#   x = data[i     : i+context_len]      # 输入
+#   y = data[i+1   : i+context_len+1]    # 目标 = 输入右移一位
 # 每个位置都在学「预测下一个 token」。
 #
 # 提示：
-#   1. ix = torch.randint(len(data) - block_size, (batch_size,)) 随机起点
-#   2. torch.stack 把 batch_size 个切片摞成 (batch_size, block_size)
+#   1. ix = torch.randint(len(data) - context_len, (batch_size,)) 随机起点
+#   2. torch.stack 把 batch_size 个切片摞成 (batch_size, context_len)
 
 
-def get_batch(data, block_size, batch_size):
-    # TODO-7: 返回 (x, y)，各为 (batch_size, block_size)
+def get_batch(data, context_len, batch_size):
+    # TODO-8: 返回 (x, y)，各为 (batch_size, context_len)
     return None
 
 
 _data = torch.arange(200, dtype=torch.long)
-_batch = get_batch(_data, block_size=8, batch_size=4)
-require_not_none("TODO-7 get_batch", _batch)
-require_true("TODO-7 返回 (x, y)", isinstance(_batch, tuple) and len(_batch) == 2, "应 return x, y")
+_batch = get_batch(_data, context_len=8, batch_size=4)
+require_not_none("TODO-8 get_batch", _batch)
+require_true("TODO-8 返回 (x, y)", isinstance(_batch, tuple) and len(_batch) == 2, "应 return x, y")
 _bx, _by = _batch
-require_shape("TODO-7 x", _bx, (4, 8))
-require_shape("TODO-7 y", _by, (4, 8))
+require_shape("TODO-8 x", _bx, (4, 8))
+require_shape("TODO-8 y", _by, (4, 8))
 # data 是 0..199 的等差数列，所以 y 必须恰好等于 x + 1（右移一位的直接证据）
-require_close("TODO-7 y = x 右移一位", _by.float(), (_bx + 1).float())
-require_true("TODO-7 索引没越界", _by.max().item() < 200, "y 的最大索引超出了 data 范围")
+require_close("TODO-8 y = x 右移一位", _by.float(), (_bx + 1).float())
+require_true("TODO-8 索引没越界", _by.max().item() < 200, "y 的最大索引超出了 data 范围")
 print("get_batch OK：y 恰好是 x 右移一位 → 每个位置都在学预测下一个 token")
 
 
 # ============================================================
-section("TODO-8：Top-K 过滤 apply_top_k")
+section("TODO-9：Top-K 过滤 apply_top_k")
 # ============================================================
 # 把每行 logits 中「不在前 k 大」的位置填成 -inf，
 # softmax 后这些位置概率为 0 → 永远不会被采样到。
@@ -421,26 +449,26 @@ section("TODO-8：Top-K 过滤 apply_top_k")
 
 
 def apply_top_k(logits, k):
-    # TODO-8: 返回过滤后的 logits，形状不变 (B, vocab_size)
+    # TODO-9: 返回过滤后的 logits，形状不变 (B, vocab_size)
     return None
 
 
 _tk_logits = torch.tensor([[1.0, 5.0, 3.0, 2.0],
                            [-1.0, 0.0, 2.0, 1.0]])
 _tk_out = apply_top_k(_tk_logits.clone(), 2)
-require_shape("TODO-8 输出形状", _tk_out, (2, 4))
+require_shape("TODO-9 输出形状", _tk_out, (2, 4))
 _finite = torch.isfinite(_tk_out)
-require_close("TODO-8 每行保留 2 个", _finite.sum(dim=-1).float(), torch.tensor([2.0, 2.0]))
-require_true("TODO-8 保留的是最大的两个",
+require_close("TODO-9 每行保留 2 个", _finite.sum(dim=-1).float(), torch.tensor([2.0, 2.0]))
+require_true("TODO-9 保留的是最大的两个",
              bool(_finite[0, 1] and _finite[0, 2] and _finite[1, 2] and _finite[1, 3]),
              "第 0 行应保留 5.0/3.0，第 1 行应保留 2.0/1.0")
-require_close("TODO-8 保留位置数值不变", _tk_out[_finite], _tk_logits[_finite])
+require_close("TODO-9 保留位置数值不变", _tk_out[_finite], _tk_logits[_finite])
 print("apply_top_k OK：")
 print(_tk_out)
 
 
 # ============================================================
-section("TODO-9：自回归生成 GPT.generate")
+section("TODO-10：自回归生成 GPT.generate")
 # ============================================================
 # 回到上面 GPT 类里把 generate 补全（步骤注释已写在方法里）。
 # 校验思路：top_k=1 时只剩一个候选 → 采样退化为贪心 → 必须和逐位 argmax 一致。
@@ -448,22 +476,22 @@ section("TODO-9：自回归生成 GPT.generate")
 _model.eval()
 _prompt = torch.randint(0, _gpt_cfg.vocab_size, (1, 4))
 _gen = _model.generate(_prompt.clone(), max_new_tokens=6, temperature=1.0, top_k=1)
-require_not_none("TODO-9 generate", _gen)
-require_shape("TODO-9 输出长度 = 输入 + 新 token", _gen, (1, 4 + 6))
-require_close("TODO-9 前缀保持不变", _gen[:, :4].float(), _prompt.float())
+require_not_none("TODO-10 generate", _gen)
+require_shape("TODO-10 输出长度 = 输入 + 新 token", _gen, (1, 4 + 6))
+require_close("TODO-10 前缀保持不变", _gen[:, :4].float(), _prompt.float())
 
 with torch.no_grad():
     _ref_gen = _prompt.clone()
     for _ in range(6):
-        _l, _ = _model(_ref_gen[:, -_gpt_cfg.block_size:])
+        _l, _ = _model(_ref_gen[:, -_gpt_cfg.context_len:])
         _next = _l[:, -1, :].argmax(dim=-1, keepdim=True)
         _ref_gen = torch.cat([_ref_gen, _next], dim=1)
-require_close("TODO-9 top_k=1 等价贪心解码", _gen.float(), _ref_gen.float())
+require_close("TODO-10 top_k=1 等价贪心解码", _gen.float(), _ref_gen.float())
 print(f"generate OK：top_k=1 与贪心解码完全一致 → 采样管线正确")
 
 
 # ============================================================
-section("TODO-10（进阶，可跳过）：Top-P / nucleus 过滤 apply_top_p")
+section("TODO-11（进阶，可跳过）：Top-P / nucleus 过滤 apply_top_p")
 # ============================================================
 # ChatGPT 实际用的采样策略。规则：
 #   1. 把 logits softmax 成概率，按概率从高到低排序
@@ -475,7 +503,7 @@ section("TODO-10（进阶，可跳过）：Top-P / nucleus 过滤 apply_top_p")
 
 
 def apply_top_p(logits, p):
-    # TODO-10: 返回过滤后的 logits，形状不变 (B, vocab_size)（可跳过）
+    # TODO-11: 返回过滤后的 logits，形状不变 (B, vocab_size)（可跳过）
     return None
 
 
@@ -483,30 +511,82 @@ _tp_probs = torch.tensor([[0.5, 0.3, 0.15, 0.05]])
 _tp_logits = torch.log(_tp_probs)
 _tp_out = apply_top_p(_tp_logits.clone(), 0.75)
 if _tp_out is None:
-    print("TODO-10 未实现，跳过（这是可选进阶题）")
+    print("TODO-11 未实现，跳过（这是可选进阶题）")
 else:
     _finite_p = torch.isfinite(_tp_out)
     # p=0.75：0.5 不够，加上 0.3 后 0.8 ≥ 0.75 → 保留前两个
-    require_true("TODO-10 p=0.75 保留 {0.5, 0.3}",
+    require_true("TODO-11 p=0.75 保留 {0.5, 0.3}",
                  bool(_finite_p[0, 0] and _finite_p[0, 1]
                       and not _finite_p[0, 2] and not _finite_p[0, 3]),
                  f"isfinite={_finite_p.tolist()}，期望 [True, True, False, False]")
     _tp_out2 = apply_top_p(_tp_logits.clone(), 0.9)
     _finite_p2 = torch.isfinite(_tp_out2)
     # p=0.9：0.5+0.3=0.8 < 0.9，要再加 0.15 → 保留前三个
-    require_true("TODO-10 p=0.9 保留前三个",
+    require_true("TODO-11 p=0.9 保留前三个",
                  bool(_finite_p2[0, :3].all() and not _finite_p2[0, 3]),
                  f"isfinite={_finite_p2.tolist()}，期望 [True, True, True, False]")
     print("apply_top_p OK：nucleus 采样过滤正确")
 
 
 # ============================================================
+section("TODO-12（进阶，可跳过）：用 tiktoken 体验 BPE 分词")
+# ============================================================
+# 我们的迷你 GPT 用字符级分词（词表只有 30 来个字符），真实 GPT 用 BPE 子词分词
+# （GPT-2 词表 50257）。本题用 GPT-2 的 BPE 编码同一句话，直观对比两种粒度。
+#
+# 提示：
+#   import tiktoken
+#   enc = tiktoken.get_encoding("gpt2")   # 首次运行需联网下载 BPE 词表
+#   return enc.encode(text)
+# （requirements.txt 里已包含 tiktoken；没装或没网就先跳过，不影响后面）
+
+
+def encode_with_gpt2_bpe(text):
+    # TODO-12: 返回 GPT-2 BPE 编码后的 token id 列表（可跳过）
+    return None
+
+
+_sample = "To be or not to be that is the question"
+try:
+    _bpe_ids = encode_with_gpt2_bpe(_sample)
+except Exception as _e:  # tiktoken 未安装 / 下载词表失败等
+    _bpe_ids = None
+    print(f"TODO-12 跳过（tiktoken 不可用：{_e}）")
+
+if _bpe_ids is None:
+    print("TODO-12 未实现或不可用，跳过（这是可选进阶题）")
+else:
+    import tiktoken
+
+    _enc = tiktoken.get_encoding("gpt2")
+    require_true("TODO-12 解码还原", _enc.decode(_bpe_ids) == _sample,
+                 "enc.encode 后 enc.decode 应能还原原文")
+    require_true("TODO-12 BPE 序列更短", len(_bpe_ids) < len(_sample),
+                 f"BPE 子词数（{len(_bpe_ids)}）应明显少于字符数（{len(_sample)}）")
+    print(f"同一句话：字符级 {len(_sample)} 个 token  vs  GPT-2 BPE {len(_bpe_ids)} 个 token")
+    print("BPE 切分结果：", [_enc.decode([t]) for t in _bpe_ids])
+    print("→ 子词分词让序列短 ~4 倍：同样 context_len 能装下更多内容，这就是真实 GPT 不用字符级的原因")
+
+
+# ============================================================
 section("终极验证：用你写的 GPT 真的训练 + 生成")
 # ============================================================
-# 走到这里说明 TODO-1~9 全部通过。下面的代码（不需要你改）会用
-# 你自己写的模型在莎士比亚片段上训练 300 步，再生成文本。
+# 走到这里说明 TODO-1~10 全部通过。下面的代码（不需要你改）会用
+# 你自己写的模型训练 300 步，再生成文本。
+#
+# 想换数据玩（对应主课练习 3 / 6，都不影响校验）：
+#   * 练习 6：下载 tiny-shakespeare 存到本课同目录，会自动优先使用——
+#     Invoke-WebRequest https://raw.githubusercontent.com/karpathy/char-rnn/master/data/tinyshakespeare/input.txt -OutFile phase2-transformer/tiny_shakespeare.txt
+#   * 练习 3：直接把下面的 training_text 换成中文、代码或歌词，
+#     观察字符级 GPT 学不同「语言」的速度差异
 
-training_text = """To be or not to be that is the question
+_ts_path = Path(__file__).with_name("tiny_shakespeare.txt")
+if _ts_path.exists():
+    # 真实数据集约 1.1M 字符，CPU 上训练取前 5 万字符即可看到效果
+    training_text = _ts_path.read_text(encoding="utf-8")[:50_000]
+    print("检测到 tiny_shakespeare.txt → 用真实数据集训练（截取前 50,000 字符）")
+else:
+    training_text = """To be or not to be that is the question
 Whether tis nobler in the mind to suffer
 The slings and arrows of outrageous fortune
 Or to take arms against a sea of troubles
@@ -522,7 +602,7 @@ char_to_idx = {c: i for i, c in enumerate(chars)}
 idx_to_char = {i: c for c, i in char_to_idx.items()}
 
 train_config = GPTConfig(
-    vocab_size=len(chars), block_size=32, n_layer=2, n_head=2, n_embd=32
+    vocab_size=len(chars), context_len=32, n_layer=2, n_head=2, n_embd=32
 )
 torch.manual_seed(42)
 model = GPT(train_config)
@@ -535,7 +615,7 @@ optimizer = torch.optim.AdamW(model.parameters(), lr=3e-3)
 model.train()
 first_loss = None
 for step in range(300):
-    xb, yb = get_batch(data, train_config.block_size, batch_size=16)
+    xb, yb = get_batch(data, train_config.context_len, batch_size=16)
     _, loss = model(xb, yb)
     optimizer.zero_grad()
     loss.backward()
@@ -547,7 +627,7 @@ for step in range(300):
 
 require_true(
     "训练后 loss 显著下降",
-    loss.item() < first_loss * 0.6,
+    loss.item() < first_loss * 0.75,
     f"初始 {first_loss:.4f} → 最终 {loss.item():.4f}，下降不足，检查 forward/get_batch",
 )
 
@@ -568,18 +648,22 @@ print("""
   2. QKV 合并投影的拆分与分头
   3. 注意力核心计算（scores → mask → softmax → 加权 → 合并多头）
   4. FeedForward / Pre-Norm TransformerBlock 的 forward
-  5. GPT.forward（embedding 相加 → Blocks → ln_f → lm_head → cross_entropy）
-  6. get_batch（y = x 右移一位 = next token prediction 的本质）
-  7. Top-K 过滤 + 自回归 generate（temperature / top_k）
-  8.（可选）Top-P / nucleus 过滤
+  5. weight tying（embedding 和 lm_head 共享同一个 Parameter）
+  6. GPT.forward（embedding 相加 → Blocks → ln_f → lm_head → cross_entropy）
+  7. get_batch（y = x 右移一位 = next token prediction 的本质）
+  8. Top-K 过滤 + 自回归 generate（temperature / top_k）
+  9.（可选）Top-P / nucleus 过滤
+ 10.（可选）tiktoken BPE 分词，对比字符级粒度
 
 复盘三问（对照第 5 课 README 的步骤⑥）：
   * 输入是什么？—— (B, T) 的 token 索引
   * 核心计算是什么？—— embedding 相加 → N × (attention + FFN, 都带 Pre-Norm 残差) → lm_head
   * 输出是什么？—— (B, T, vocab) 的 logits；训练时附带 cross_entropy loss
 
-延伸思考：
-  * 把训练步数改成 1000，生成质量有什么变化？loss 还能降多少？
+延伸思考（对应主课练习区，做完可在那边划掉）：
+  * 练习 1：把训练步数改成 1000~2000，生成质量有什么变化？loss 还能降多少？
+  * 练习 3：把 training_text 换成中文/代码/歌词，观察字符级 GPT 的学习差异
+  * 练习 6：下载 tiny_shakespeare.txt（方法见「终极验证」注释），用真实数据训练
   * 把 get_batch 改成 90/10 切分 train/val，观察 val loss 何时开始不降（过拟合）
   * 在 generate 里接上你的 apply_top_p，对比 top_k=8 和 top_p=0.9 的生成差异
 """)
