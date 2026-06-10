@@ -1,49 +1,47 @@
 """
 ======================================================
-phase2 / 第 5 课（自写版）：从零构建一个迷你 GPT
+phase2 / 第 5 课（自写版）：从零构建 GPT（PyTorch）
 ======================================================
 
 用法：
-1) 运行：python3 05_gpt_from_scratch_self_write.py
-2) 按 TODO-1 到 TODO-7 顺序补全（建议照这个顺序，后面的 TODO 依赖前面的）
-3) 每补完一个 TODO 就运行一次，靠底部的自动校验即时纠错
-   （没填的 TODO 会 raise NotImplementedError，校验会提示「未实现」，这是正常的）
+1. 运行：python 05_gpt_from_scratch_self_write.py
+2. 按 TODO-1 到 TODO-10 顺序补全实现
+3. 每补完一个 TODO 就运行一次，依靠 require_xxx 校验即时纠错
+   （没填的 TODO 会返回 None，校验提示「未实现」，这是正常的）
 
 目标：
-- 把前 4 课的零件（多头注意力 / 残差 / LayerNorm / FFN）用 PyTorch 拼成完整 GPT
-- 理解 token + position embedding 怎么拼出模型输入
-- 理解 LM Head 输出 logits、交叉熵损失怎么算
-- 理解权重共享（weight tying）
-- 手写自回归生成：temperature 与 top-k 采样
-- 手写 next-token 训练样本的构造（x / y 错位一个）
+- 手写因果掩码（torch.triu）
+- 手写注意力的核心计算：QKV 分头 → scores → mask → softmax → 加权 → 合并
+- 手写 FFN 与 Pre-Norm TransformerBlock 的 forward
+- 手写 GPT.forward（embedding 相加 → N 层 Block → ln_f → lm_head → loss）
+- 手写训练数据采样 get_batch（next token prediction 的本质就藏在这里）
+- 手写 Top-K 过滤与自回归生成 generate
+- （进阶，可跳过）手写 Top-P / nucleus 过滤
 
-完整结构（Pre-Norm 风格）：
-    idx ──► token_embedding ─┐
-                             + ──► drop ──► [TransformerBlock] × N ──► ln_f ──► lm_head ──► logits
-    pos ──► position_embedding ┘
+与第 4 课自写版的关系：
+- 第 4 课用 NumPy 手写了所有组件的"裸公式"
+- 本课换成 PyTorch：同样的数学，但用 nn.Module / 自动求导 / 优化器表达
+- 各个类的 __init__（建层）都已给出，你只需要写 forward（数据流）——
+  这正是读懂任何 PyTorch 模型代码的关键能力
 
-    其中每个 Block：
-        x = x + Attention(LayerNorm(x))
-        x = x + FFN(LayerNorm(x))
+为聚焦数据流，本自写版省略了主课中的 Dropout（主课里它只是在
+attention weights / 残差输出上各加一层 nn.Dropout，原理见第 4 课 TODO-9）。
 
-核心公式：
-    logits = lm_head( ln_f( blocks( tok_emb + pos_emb ) ) )
-    loss   = CrossEntropy( logits[:, t], target[:, t] )   # 逐位置预测下一个 token
-
-提示：本文件是第 5 课主课 05_gpt_from_scratch.py 的「填空版」，
-      实现卡住时可以回去对照主课，但建议先自己想清楚再看。
+全部 TODO 校验通过后，脚本会用你写的模型真的训练 300 步并生成文本。
 """
 
 import sys
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")  # Windows / PowerShell 下中文输出防乱码
+sys.stdout.reconfigure(encoding="utf-8")  # Windows / PowerShell 下中文输出防乱码
+sys.stderr.reconfigure(encoding="utf-8")  # ValidationError 走 stderr，也要防乱码
 
 import math
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+torch.manual_seed(42)
 
 
 def section(title: str) -> None:
@@ -53,7 +51,7 @@ def section(title: str) -> None:
 
 
 class ValidationError(Exception):
-    """统一的练习校验错误。"""
+    pass
 
 
 def require_not_none(name, value):
@@ -61,103 +59,166 @@ def require_not_none(name, value):
         raise ValidationError(f"{name} 未实现：结果是 None。")
 
 
-def require_shape(name, actual_shape, expected_shape):
-    if tuple(actual_shape) != tuple(expected_shape):
+def require_true(name, cond, hint=""):
+    if not cond:
+        raise ValidationError(f"{name} 条件不满足：{hint}")
+
+
+def require_shape(name, actual, expected_shape):
+    require_not_none(name, actual)
+    if tuple(actual.shape) != tuple(expected_shape):
         raise ValidationError(
-            f"{name} 形状不对：actual={tuple(actual_shape)}, expected={tuple(expected_shape)}"
+            f"{name} 形状不对：actual={tuple(actual.shape)}, expected={tuple(expected_shape)}"
         )
 
 
 def require_close(name, actual, expected, atol=1e-5):
     require_not_none(name, actual)
     if not torch.allclose(actual, expected, atol=atol):
-        diff = (actual - expected).abs().max().item()
-        raise ValidationError(f"{name} 数值不对：最大误差 {diff:.3e}（容差 {atol:.1e}）")
+        raise ValidationError(
+            f"{name} 数值不对\nactual=\n{actual}\nexpected=\n{expected}"
+        )
 
 
-def require_true(name, cond, hint=""):
-    if not cond:
-        raise ValidationError(f"{name} 条件不满足：{hint}")
-
-
-# ============================================================
-# 模型配置（不需要你改）
-# ============================================================
+# ---------- 模型配置（不需要你改） ----------
 class GPTConfig:
-    """GPT 模型配置 —— 所有超参数集中管理"""
-
-    def __init__(
-        self,
-        vocab_size=32,
-        block_size=16,
-        n_layer=2,
-        n_head=2,
-        n_embd=16,
-        dropout=0.0,  # 校验时设 0，避免随机性；训练时可调大
-    ):
+    def __init__(self, vocab_size=64, block_size=32, n_layer=2, n_head=2, n_embd=16):
+        assert n_embd % n_head == 0
         self.vocab_size = vocab_size
         self.block_size = block_size
         self.n_layer = n_layer
         self.n_head = n_head
         self.n_embd = n_embd
-        self.dropout = dropout
 
 
 # ============================================================
-# Part 1：带因果掩码的多头自注意力（TODO-1）
+section("TODO-1：构造因果掩码 build_causal_mask")
 # ============================================================
-section("Part 1：CausalSelfAttention（TODO-1）")
-# 数据流（B=batch, T=seq_len, C=n_embd）：
-#   1. qkv = c_attn(x)                    # (B, T, 3C)，一次性算出 Q/K/V
-#   2. q, k, v = qkv.split(C, dim=2)      # 各 (B, T, C)
-#   3. 拆成多头：(B, T, C) -> (B, n_head, T, d_k)
-#      用 view(B, T, n_head, d_k).transpose(1, 2)
-#   4. scores = q @ k^T / sqrt(d_k)       # (B, n_head, T, T)
-#   5. 用因果掩码把「看未来」的位置填成 -inf：scores.masked_fill(self.mask[...] == 1, -inf)
-#   6. weights = softmax(scores, dim=-1)，再过 attn_dropout
-#   7. out = weights @ v                  # (B, n_head, T, d_k)
-#   8. 合并多头：transpose(1, 2).contiguous().view(B, T, C)
-#   9. out = resid_dropout(c_proj(out))
+# 因果掩码：上三角为 1（屏蔽未来），对角线及以下为 0（可见）。
+# 与第 2/3/4 课的 np.triu(..., k=1) 完全同一个东西，换成 torch 写法。
+#
+# 提示：torch.triu(torch.ones(T, T), diagonal=1)
 
 
+def build_causal_mask(block_size):
+    # TODO-1: 返回 (block_size, block_size) 的因果掩码（float 张量，1=屏蔽 0=可见）
+    return None
+
+
+_mask = build_causal_mask(8)
+require_shape("TODO-1 mask", _mask, (8, 8))
+require_close("TODO-1 对角线应为 0（自己能看自己）", _mask.diagonal(), torch.zeros(8))
+require_close("TODO-1 上三角应为 1", _mask[0, 1:], torch.ones(7))
+require_close("TODO-1 下三角应为 0", _mask[-1], torch.zeros(8))
+print("因果掩码 OK：")
+print(_mask.int())
+
+
+# ============================================================
+section("TODO-2：把合并的 QKV 拆成多头 split_qkv_heads")
+# ============================================================
+# 主课的 CausalSelfAttention 用一个大矩阵 c_attn 一次算出 QKV（效率更高），
+# 得到形状 (B, T, 3C)。本题把它拆开并分头：
+#
+#   输入 qkv: (B, T, 3C)
+#   输出 q, k, v: 各为 (B, n_head, T, d_k)，其中 d_k = C // n_head
+#
+# 提示：
+#   1. q, k, v = qkv.split(C, dim=2)        # 各 (B, T, C)
+#   2. 再 view 成 (B, T, n_head, d_k)，transpose(1, 2) 把 head 提前
+#      （和第 4 课 numpy 的 reshape + transpose(1,0,2) 是同一件事，多了 batch 维）
+
+
+def split_qkv_heads(qkv, n_head):
+    # TODO-2: 返回 (q, k, v) 三元组，各为 (B, n_head, T, d_k)
+    return None
+
+
+_B, _T, _C, _H = 2, 5, 16, 4
+_qkv = torch.randn(_B, _T, 3 * _C)
+_res = split_qkv_heads(_qkv, _H)
+require_not_none("TODO-2 split_qkv_heads", _res)
+require_true("TODO-2 返回三元组", isinstance(_res, tuple) and len(_res) == 3, "应 return q, k, v")
+_q, _k, _v = _res
+require_shape("TODO-2 q", _q, (_B, _H, _T, _C // _H))
+require_shape("TODO-2 k", _k, (_B, _H, _T, _C // _H))
+require_shape("TODO-2 v", _v, (_B, _H, _T, _C // _H))
+_expected_q = _qkv[..., :_C].view(_B, _T, _H, _C // _H).transpose(1, 2)
+_expected_v = _qkv[..., 2 * _C:].view(_B, _T, _H, _C // _H).transpose(1, 2)
+require_close("TODO-2 q 内容", _q, _expected_q)
+require_close("TODO-2 v 内容", _v, _expected_v)
+print(f"split_qkv_heads OK：(B={_B}, T={_T}, 3C={3 * _C}) → 3 × (B, {_H}, {_T}, {_C // _H})")
+
+
+# ============================================================
+section("TODO-3：注意力核心计算 causal_attention")
+# ============================================================
+# 输入 q, k, v: (B, n_head, T, d_k)，mask: (T, T)
+# 输出: (B, T, C)，其中 C = n_head * d_k
+#
+# 论文公式：Attention(Q,K,V) = softmax(QKᵀ/√d_k) V
+#
+# 提示（对应主课 forward 的 112~120 行）：
+#   1. scores = q @ k.transpose(-2, -1) / math.sqrt(d_k)     # (B, H, T, T)
+#   2. scores = scores.masked_fill(mask == 1, float("-inf"))  # 屏蔽未来
+#   3. weights = softmax(scores, dim=-1)
+#   4. out = weights @ v                                      # (B, H, T, d_k)
+#   5. 合并多头：transpose(1, 2) → contiguous() → view(B, T, C)
+
+
+def causal_attention(q, k, v, mask):
+    # TODO-3: 实现带因果掩码的多头注意力计算（不含输出投影 W_O）
+    return None
+
+
+_B, _H, _T, _Dk = 2, 2, 4, 3
+_q = torch.randn(_B, _H, _T, _Dk)
+_k = torch.randn(_B, _H, _T, _Dk)
+_v = torch.randn(_B, _H, _T, _Dk)
+_mask4 = build_causal_mask(_T)
+
+_attn_out = causal_attention(_q, _k, _v, _mask4)
+require_shape("TODO-3 输出", _attn_out, (_B, _T, _H * _Dk))
+
+_scores = _q @ _k.transpose(-2, -1) / math.sqrt(_Dk)
+_scores = _scores.masked_fill(_mask4 == 1, float("-inf"))
+_ref_out = (F.softmax(_scores, dim=-1) @ _v).transpose(1, 2).contiguous().view(_B, _T, _H * _Dk)
+require_close("TODO-3 数值", _attn_out, _ref_out)
+
+# 因果性的直接体现：第 0 个 token 只能看到自己 → 输出就是它自己的 v
+require_close(
+    "TODO-3 第 0 个 token 只能看自己",
+    _attn_out[:, 0],
+    _v[:, :, 0, :].reshape(_B, _H * _Dk),
+)
+print("causal_attention OK：第 0 个 token 的输出 = 它自己的 v（mask 生效）")
+
+
+# ---------- CausalSelfAttention 模块（forward 已给出，复用你的 TODO-2/3） ----------
 class CausalSelfAttention(nn.Module):
     def __init__(self, config):
         super().__init__()
-        assert config.n_embd % config.n_head == 0
         self.n_head = config.n_head
-        self.d_k = config.n_embd // config.n_head
-
-        # Q, K, V 合并成一个线性层，效率更高
+        # QKV 合并成一个大矩阵，一次矩阵乘法算完，比三个小矩阵更高效
         self.c_attn = nn.Linear(config.n_embd, 3 * config.n_embd)
         self.c_proj = nn.Linear(config.n_embd, config.n_embd)
-        self.attn_dropout = nn.Dropout(config.dropout)
-        self.resid_dropout = nn.Dropout(config.dropout)
-
-        # 因果掩码：上三角（不含对角线）为 1，表示「未来位置」要被屏蔽
-        # 注册为 buffer：跟着模型走（.to(device)），但不是可训练参数
-        self.register_buffer(
-            "mask",
-            torch.triu(torch.ones(config.block_size, config.block_size), diagonal=1)
-            .view(1, 1, config.block_size, config.block_size),
-        )
+        # mask 注册为 buffer：跟着模型走（保存/搬 device），但不参与训练
+        self.register_buffer("mask", build_causal_mask(config.block_size))
 
     def forward(self, x):
-        # TODO-1: 按上面 9 步实现因果多头自注意力
-        #   形状自检：输入 (B, T, C)，输出 (B, T, C)
-        #   关键点：
-        #     - q @ k.transpose(-2, -1) 才是 (..., T, T)，别忘了只转最后两维
-        #     - 掩码切片用 self.mask[:, :, :T, :T]，因为真实 T 可能小于 block_size
-        #     - masked_fill 填 float('-inf')，softmax 后这些位置就变 0
-        raise NotImplementedError("TODO-1 未完成：请实现 CausalSelfAttention.forward")
+        B, T, C = x.shape
+        q, k, v = split_qkv_heads(self.c_attn(x), self.n_head)
+        out = causal_attention(q, k, v, self.mask[:T, :T])
+        return self.c_proj(out)  # W_O：混合各 head 的信息
 
 
 # ============================================================
-# Part 2：Feed-Forward Network（TODO-2）
+section("TODO-4：FeedForward 的 forward")
 # ============================================================
-section("Part 2：FeedForward（TODO-2）")
-# 两层 MLP：升维 4 倍 -> GELU -> 降回原维
-#   x = gelu(c_fc(x))        # (B, T, C) -> (B, T, 4C)
-#   x = dropout(c_proj(x))   # (B, T, 4C) -> (B, T, C)
+# 第 4 课手写过的两层 MLP，这次用 nn.Linear 表达：
+#   FFN(x) = GELU(x @ W1 + b1) @ W2 + b2
+#          = self.c_proj(F.gelu(self.c_fc(x)))
+# 升维 4 倍 → GELU → 降回 d_model。
 
 
 class FeedForward(nn.Module):
@@ -165,21 +226,30 @@ class FeedForward(nn.Module):
         super().__init__()
         self.c_fc = nn.Linear(config.n_embd, 4 * config.n_embd)
         self.c_proj = nn.Linear(4 * config.n_embd, config.n_embd)
-        self.dropout = nn.Dropout(config.dropout)
 
     def forward(self, x):
-        # TODO-2: 实现 FFN（用 F.gelu）
-        raise NotImplementedError("TODO-2 未完成：请实现 FeedForward.forward")
+        # TODO-4: 实现 FFN 前向
+        return None
+
+
+_cfg = GPTConfig()
+torch.manual_seed(0)
+_ffn = FeedForward(_cfg)
+_x = torch.randn(2, 6, _cfg.n_embd)
+_ffn_out = _ffn(_x)
+require_shape("TODO-4 ffn_out", _ffn_out, (2, 6, _cfg.n_embd))
+with torch.no_grad():
+    _ref_ffn = _ffn.c_proj(F.gelu(_ffn.c_fc(_x)))
+require_close("TODO-4 数值", _ffn_out, _ref_ffn)
+print("FeedForward OK：升维 4 倍 + GELU + 降维")
 
 
 # ============================================================
-# Part 3：Transformer Block（Pre-Norm，TODO-3）
+section("TODO-5：Pre-Norm TransformerBlock 的 forward")
 # ============================================================
-section("Part 3：TransformerBlock（TODO-3）")
-# Pre-Norm（GPT-2/3、LLaMA 用的版本）：LayerNorm 放在子层「之前」
-#   x = x + self.attn(self.ln_1(x))
-#   x = x + self.ffn(self.ln_2(x))
-# 注意「残差相加」：子层输出加回输入 x，而不是直接替换。
+# 第 4 课 TODO-6 的 PyTorch 版，伪代码完全一样：
+#   x = x + Attention(LayerNorm(x))
+#   x = x + FFN(LayerNorm(x))
 
 
 class TransformerBlock(nn.Module):
@@ -191,40 +261,53 @@ class TransformerBlock(nn.Module):
         self.ffn = FeedForward(config)
 
     def forward(self, x):
-        # TODO-3: 实现 Pre-Norm 的两条残差
-        raise NotImplementedError("TODO-3 未完成：请实现 TransformerBlock.forward")
+        # TODO-5: 实现 Pre-Norm Block 前向（两条残差支路）
+        return None
+
+
+torch.manual_seed(1)
+_block = TransformerBlock(_cfg)
+_x = torch.randn(2, 6, _cfg.n_embd)
+_block_out = _block(_x)
+require_shape("TODO-5 block_out", _block_out, (2, 6, _cfg.n_embd))
+with torch.no_grad():
+    _ref_b = _x + _block.attn(_block.ln_1(_x))
+    _ref_b = _ref_b + _block.ffn(_block.ln_2(_ref_b))
+require_close("TODO-5 数值", _block_out, _ref_b)
+print("TransformerBlock OK：输入输出 shape 相同 → 可堆叠任意层")
 
 
 # ============================================================
-# Part 4 & 5：完整的 GPT 模型（TODO-4 权重共享、TODO-5 forward、TODO-6 generate）
+section("TODO-6：GPT.forward —— 把所有组件拼成完整模型")
 # ============================================================
-section("Part 4 & 5：GPT 模型（TODO-4 / TODO-5 / TODO-6）")
+# 数据流（对应主课 Part 3）：
+#   idx (B, T)
+#     → token_embedding + position_embedding   (B, T, C)
+#     → N × TransformerBlock                   (B, T, C)
+#     → ln_f（final LayerNorm，第 3 课复盘提过的 Pre-Norm 收尾）
+#     → lm_head                                (B, T, vocab_size)
+#   targets 不为 None 时再算 cross_entropy loss
+#
+# 提示：
+#   1. 位置索引 torch.arange(T, device=idx.device) —— device 要跟着输入走！
+#   2. pos_emb 形状 (T, C)，与 tok_emb (B, T, C) 相加时自动广播
+#   3. cross_entropy 要求把 (B, T, V) 摊平成 (B*T, V)、targets 摊平成 (B*T,)
+#   4. 没有 targets 时 loss 返回 None
 
 
 class GPT(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.config = config
-
         self.token_embedding = nn.Embedding(config.vocab_size, config.n_embd)
         self.position_embedding = nn.Embedding(config.block_size, config.n_embd)
-        self.drop = nn.Dropout(config.dropout)
-
         self.blocks = nn.ModuleList(
             [TransformerBlock(config) for _ in range(config.n_layer)]
         )
-
         self.ln_f = nn.LayerNorm(config.n_embd)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
-
-        # TODO-4: 实现权重共享（weight tying）
-        #   token_embedding 和 lm_head 的权重形状都是 (vocab_size, n_embd)，
-        #   本质是同一张「词表 ↔ 向量」表，可以让它们共用一份参数（省参数、效果更好）。
-        #   要点：是让两者的 .weight 指向【同一个】Parameter 对象（共享内存），
-        #         而不是把数值拷贝过去（拷贝后还是两份独立参数，训练会各走各的）。
-        #   想清楚把谁赋给谁后，写一行赋值；再删掉下面这行 pass。
-        pass  # TODO-4：占位，实现后删掉
-
+        # 权重共享（weight tying）：embedding 查表与 lm_head 反查共用一份 (V, C) 权重
+        self.token_embedding.weight = self.lm_head.weight
         self._init_weights()
 
     def _init_weights(self):
@@ -237,343 +320,266 @@ class GPT(nn.Module):
                 nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
     def forward(self, idx, targets=None):
-        """
-        idx:     (B, T) token 索引
-        targets: (B, T) 目标 token 索引（训练时提供；推理时为 None）
-        返回:    (logits, loss)，loss 在 targets 为 None 时是 None
-        """
-        # TODO-5: 实现完整前向
-        #   1. B, T = idx.shape；断言 T <= block_size
-        #   2. tok_emb = token_embedding(idx)              # (B, T, n_embd)
-        #   3. pos_emb = position_embedding(arange(T))      # (T, n_embd)，靠广播加到每个 batch
-        #      注意 arange 要和 idx 在同一个 device：torch.arange(T, device=idx.device)
-        #   4. x = drop(tok_emb + pos_emb)
-        #   5. 依次过每个 block
-        #   6. x = ln_f(x)；logits = lm_head(x)            # (B, T, vocab_size)
-        #   7. 若 targets 不为 None，用 F.cross_entropy 算 loss：
-        #        loss = F.cross_entropy(logits.view(-1, vocab_size), targets.view(-1))
-        #   8. return logits, loss
-        raise NotImplementedError("TODO-5 未完成：请实现 GPT.forward")
+        # TODO-6: 实现 GPT 前向，return logits, loss
+        return None
 
     @torch.no_grad()
     def generate(self, idx, max_new_tokens, temperature=1.0, top_k=None):
-        """
-        自回归生成：每步预测下一个 token，拼回去，再预测下一个。
+        # TODO-9: 实现自回归生成（先做完 TODO-7/8 再回来写这里）
+        # 每生成一个 token 重复以下步骤：
+        #   1. 截断上下文：idx_crop = idx[:, -self.config.block_size:]
+        #   2. 前向拿 logits，只取最后一个位置：logits[:, -1, :]
+        #   3. 除以 temperature（越低分布越尖 → 越确定）
+        #   4. top_k 不为 None 时，用 apply_top_k 过滤
+        #   5. softmax → torch.multinomial 采样 1 个 token
+        #   6. torch.cat 拼回 idx
+        return None
 
-        temperature: 控制随机性（<1 更确定，>1 更随机）
-        top_k:       只在概率最高的 k 个 token 里采样（None 表示全词表采样）
-        """
-        # TODO-6: 实现自回归采样生成
-        #   循环 max_new_tokens 次，每次：
-        #     1. 把上下文截断到最后 block_size 个 token：idx_crop = idx[:, -block_size:]
-        #     2. logits, _ = self(idx_crop)
-        #     3. 只取最后一个位置的 logits 并除以 temperature：
-        #          logits = logits[:, -1, :] / temperature
-        #     4. 若 top_k 不为 None：取 top_k 个最大值，把小于第 k 大的位置设为 -inf
-        #          v, _ = torch.topk(logits, min(top_k, logits.size(-1)))
-        #          logits[logits < v[:, [-1]]] = float('-inf')
-        #     5. probs = softmax(logits, dim=-1)
-        #     6. next_token = torch.multinomial(probs, num_samples=1)
-        #     7. idx = torch.cat([idx, next_token], dim=1)
-        #   循环结束后 return idx
-        raise NotImplementedError("TODO-6 未完成：请实现 GPT.generate")
 
-    def count_parameters(self):
-        return sum(p.numel() for p in self.parameters())
+torch.manual_seed(2)
+_gpt_cfg = GPTConfig(vocab_size=64, block_size=32, n_layer=2, n_head=2, n_embd=16)
+_model = GPT(_gpt_cfg)
+_idx = torch.randint(0, _gpt_cfg.vocab_size, (2, 10))
+_targets = torch.randint(0, _gpt_cfg.vocab_size, (2, 10))
+
+_fwd = _model(_idx, _targets)
+require_not_none("TODO-6 GPT.forward", _fwd)
+require_true("TODO-6 返回 (logits, loss)", isinstance(_fwd, tuple) and len(_fwd) == 2,
+             "应 return logits, loss")
+_logits, _loss = _fwd
+require_shape("TODO-6 logits", _logits, (2, 10, _gpt_cfg.vocab_size))
+require_not_none("TODO-6 loss", _loss)
+
+# 和参考前向对数值
+with torch.no_grad():
+    _h = _model.token_embedding(_idx) + _model.position_embedding(
+        torch.arange(_idx.shape[1], device=_idx.device)
+    )
+    for _b in _model.blocks:
+        _h = _b(_h)
+    _ref_logits = _model.lm_head(_model.ln_f(_h))
+    _ref_loss = F.cross_entropy(
+        _ref_logits.view(-1, _gpt_cfg.vocab_size), _targets.view(-1)
+    )
+require_close("TODO-6 logits 数值", _logits, _ref_logits)
+require_close("TODO-6 loss 数值", _loss, _ref_loss)
+
+# 没有 targets 时 loss 应为 None
+_logits2, _loss2 = _model(_idx)
+require_true("TODO-6 无 targets 时 loss=None", _loss2 is None, "推理时不该算 loss")
+
+# 因果性验证：改动最后一个 token，前面所有位置的 logits 不应变化
+_idx_mod = _idx.clone()
+_idx_mod[:, -1] = (_idx_mod[:, -1] + 1) % _gpt_cfg.vocab_size
+_logits_mod, _ = _model(_idx_mod)
+require_close("TODO-6 因果性（改未来不影响过去）", _logits_mod[:, :-1], _logits[:, :-1])
+
+print(f"GPT.forward OK：随机初始化 loss = {_loss.item():.4f}"
+      f"（≈ ln({_gpt_cfg.vocab_size}) = {math.log(_gpt_cfg.vocab_size):.4f}，即均匀瞎猜）")
 
 
 # ============================================================
-# Part 6：训练样本构造（TODO-7）
+section("TODO-7：训练数据采样 get_batch")
 # ============================================================
-section("Part 6：get_batch（TODO-7）")
-# next-token 预测的样本：从一长串 token 里随机切窗口
-#   x = data[i   : i+block]        # 输入
-#   y = data[i+1 : i+block+1]      # 目标 = 输入右移一位
-# 这样 x 的第 t 个位置，对应要预测的就是 y 的第 t 个位置（即原文的下一个 token）。
+# Language Modeling 的本质就在这两行里：
+#   x = data[i     : i+block_size]      # 输入
+#   y = data[i+1   : i+block_size+1]    # 目标 = 输入右移一位
+# 每个位置都在学「预测下一个 token」。
+#
+# 提示：
+#   1. ix = torch.randint(len(data) - block_size, (batch_size,)) 随机起点
+#   2. torch.stack 把 batch_size 个切片摞成 (batch_size, block_size)
 
 
 def get_batch(data, block_size, batch_size):
-    """
-    data:       一维 LongTensor（整段语料的 token 序列）
-    返回:       x, y，形状都是 (batch_size, block_size)，y 是 x 右移一位
-    """
-    # TODO-7: 实现随机批次采样
-    #   1. 随机起点：ix = torch.randint(len(data) - block_size - 1, (batch_size,))
-    #   2. x = 把每个起点 i 的 data[i:i+block_size] stack 起来
-    #   3. y = 把每个起点 i 的 data[i+1:i+block_size+1] stack 起来
-    #   4. return x, y
-    raise NotImplementedError("TODO-7 未完成：请实现 get_batch")
+    # TODO-7: 返回 (x, y)，各为 (batch_size, block_size)
+    return None
+
+
+_data = torch.arange(200, dtype=torch.long)
+_batch = get_batch(_data, block_size=8, batch_size=4)
+require_not_none("TODO-7 get_batch", _batch)
+require_true("TODO-7 返回 (x, y)", isinstance(_batch, tuple) and len(_batch) == 2, "应 return x, y")
+_bx, _by = _batch
+require_shape("TODO-7 x", _bx, (4, 8))
+require_shape("TODO-7 y", _by, (4, 8))
+# data 是 0..199 的等差数列，所以 y 必须恰好等于 x + 1（右移一位的直接证据）
+require_close("TODO-7 y = x 右移一位", _by.float(), (_bx + 1).float())
+require_true("TODO-7 索引没越界", _by.max().item() < 200, "y 的最大索引超出了 data 范围")
+print("get_batch OK：y 恰好是 x 右移一位 → 每个位置都在学预测下一个 token")
 
 
 # ============================================================
-# 参考实现（仅供自动校验使用，请不要照抄到上面）
+section("TODO-8：Top-K 过滤 apply_top_k")
 # ============================================================
-def _ref_attn_forward(attn, x):
-    B, T, C = x.shape
-    qkv = attn.c_attn(x)
-    q, k, v = qkv.split(C, dim=2)
-    q = q.view(B, T, attn.n_head, attn.d_k).transpose(1, 2)
-    k = k.view(B, T, attn.n_head, attn.d_k).transpose(1, 2)
-    v = v.view(B, T, attn.n_head, attn.d_k).transpose(1, 2)
-    scores = (q @ k.transpose(-2, -1)) / math.sqrt(attn.d_k)
-    scores = scores.masked_fill(attn.mask[:, :, :T, :T] == 1, float("-inf"))
-    weights = F.softmax(scores, dim=-1)
-    weights = attn.attn_dropout(weights)
-    out = weights @ v
-    out = out.transpose(1, 2).contiguous().view(B, T, C)
-    return attn.resid_dropout(attn.c_proj(out))
+# 把每行 logits 中「不在前 k 大」的位置填成 -inf，
+# softmax 后这些位置概率为 0 → 永远不会被采样到。
+#
+# 提示：
+#   1. torch.topk(logits, k) 拿到每行第 k 大的值（返回值的最后一列）
+#   2. masked_fill / 布尔索引，把小于该值的位置设为 float("-inf")
 
 
-def _ref_ffn_forward(ffn, x):
-    return ffn.dropout(ffn.c_proj(F.gelu(ffn.c_fc(x))))
+def apply_top_k(logits, k):
+    # TODO-8: 返回过滤后的 logits，形状不变 (B, vocab_size)
+    return None
 
 
-def _ref_block_forward(block, x):
-    x = x + _ref_attn_forward(block.attn, block.ln_1(x))
-    x = x + _ref_ffn_forward(block.ffn, block.ln_2(x))
-    return x
-
-
-def _ref_gpt_forward(model, idx, targets=None):
-    B, T = idx.shape
-    tok = model.token_embedding(idx)
-    pos = model.position_embedding(torch.arange(T, device=idx.device))
-    x = model.drop(tok + pos)
-    for block in model.blocks:
-        x = _ref_block_forward(block, x)
-    x = model.ln_f(x)
-    logits = model.lm_head(x)
-    loss = None
-    if targets is not None:
-        loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
-    return logits, loss
-
-
-@torch.no_grad()
-def _ref_generate_greedy(model, idx, max_new_tokens):
-    # top_k=1 时 softmax 只剩一个非零位置，multinomial 必选它 → 等价于贪心 argmax。
-    # 用它做确定性对照，能在不依赖随机种子的情况下验证 generate 的核心逻辑。
-    for _ in range(max_new_tokens):
-        idx_crop = idx[:, -model.config.block_size:]
-        logits, _ = _ref_gpt_forward(model, idx_crop)
-        next_token = logits[:, -1, :].argmax(dim=-1, keepdim=True)
-        idx = torch.cat([idx, next_token], dim=1)
-    return idx
+_tk_logits = torch.tensor([[1.0, 5.0, 3.0, 2.0],
+                           [-1.0, 0.0, 2.0, 1.0]])
+_tk_out = apply_top_k(_tk_logits.clone(), 2)
+require_shape("TODO-8 输出形状", _tk_out, (2, 4))
+_finite = torch.isfinite(_tk_out)
+require_close("TODO-8 每行保留 2 个", _finite.sum(dim=-1).float(), torch.tensor([2.0, 2.0]))
+require_true("TODO-8 保留的是最大的两个",
+             bool(_finite[0, 1] and _finite[0, 2] and _finite[1, 2] and _finite[1, 3]),
+             "第 0 行应保留 5.0/3.0，第 1 行应保留 2.0/1.0")
+require_close("TODO-8 保留位置数值不变", _tk_out[_finite], _tk_logits[_finite])
+print("apply_top_k OK：")
+print(_tk_out)
 
 
 # ============================================================
-# 自动校验
+section("TODO-9：自回归生成 GPT.generate")
 # ============================================================
-def run_check(label, fn):
-    try:
-        fn()
-        print(f"  ✓ {label}")
-        return True
-    except NotImplementedError as err:
-        print(f"  … {label}：未实现 —— {err}")
-        return False
-    except ValidationError as err:
-        print(f"  ✗ {label}：{err}")
-        return False
-    except Exception as err:  # noqa: BLE001
-        print(f"  ✗ {label}：运行出错 —— {type(err).__name__}: {err}")
-        return False
+# 回到上面 GPT 类里把 generate 补全（步骤注释已写在方法里）。
+# 校验思路：top_k=1 时只剩一个候选 → 采样退化为贪心 → 必须和逐位 argmax 一致。
 
+_model.eval()
+_prompt = torch.randint(0, _gpt_cfg.vocab_size, (1, 4))
+_gen = _model.generate(_prompt.clone(), max_new_tokens=6, temperature=1.0, top_k=1)
+require_not_none("TODO-9 generate", _gen)
+require_shape("TODO-9 输出长度 = 输入 + 新 token", _gen, (1, 4 + 6))
+require_close("TODO-9 前缀保持不变", _gen[:, :4].float(), _prompt.float())
 
-def check_todo1():
-    torch.manual_seed(0)
-    cfg = GPTConfig()
-    attn = CausalSelfAttention(cfg).eval()
-    x = torch.randn(2, cfg.block_size, cfg.n_embd)
-    out = attn(x)
-    require_not_none("TODO-1", out)
-    require_shape("TODO-1", out.shape, (2, cfg.block_size, cfg.n_embd))
-    require_close("TODO-1 数值", out, _ref_attn_forward(attn, x))
-    # 因果性：改动最后一个位置的输入，不应影响前面位置的输出
-    x2 = x.clone()
-    x2[:, -1, :] += 5.0
-    out2 = attn(x2)
-    require_close("TODO-1 因果掩码", out[:, :-1], out2[:, :-1])
-
-
-def check_todo2():
-    torch.manual_seed(1)
-    cfg = GPTConfig()
-    ffn = FeedForward(cfg).eval()
-    x = torch.randn(2, cfg.block_size, cfg.n_embd)
-    out = ffn(x)
-    require_not_none("TODO-2", out)
-    require_shape("TODO-2", out.shape, (2, cfg.block_size, cfg.n_embd))
-    require_close("TODO-2 数值", out, _ref_ffn_forward(ffn, x))
-
-
-def check_todo3():
-    torch.manual_seed(2)
-    cfg = GPTConfig()
-    block = TransformerBlock(cfg).eval()
-    x = torch.randn(2, cfg.block_size, cfg.n_embd)
-    out = block(x)
-    require_not_none("TODO-3", out)
-    require_shape("TODO-3", out.shape, (2, cfg.block_size, cfg.n_embd))
-    require_close("TODO-3 数值", out, _ref_block_forward(block, x))
-    # Pre-Norm 是残差结构：输出应明显不同于纯子层输出，但量级可控
-    require_true("TODO-3 残差存在", not torch.allclose(out, x), "输出和输入完全相同，可能漏了残差或子层")
-
-
-def check_todo4():
-    cfg = GPTConfig()
-    model = GPT(cfg)
-    shared = model.token_embedding.weight is model.lm_head.weight
-    if not shared:
-        # 留白态（还没写共享）/ 只拷了数值（两份独立对象）都归到「未实现」一列，
-        # 提示统一指向「要共享同一个对象」。
-        if torch.equal(model.token_embedding.weight, model.lm_head.weight):
-            raise NotImplementedError(
-                "TODO-4 未完成：两者数值相同但不是同一个对象——别拷数值，要共享同一个 Parameter"
-            )
-        raise NotImplementedError("TODO-4 未完成：请让 token_embedding 与 lm_head 共享权重")
-    # 真共享后，改一个应同时改另一个（确认是同一块内存）
-    with torch.no_grad():
-        model.lm_head.weight[0, 0] += 1.0
-    require_true(
-        "TODO-4 权重共享",
-        model.token_embedding.weight[0, 0].item() == model.lm_head.weight[0, 0].item(),
-        "改 lm_head.weight 应同步反映到 token_embedding.weight（同一块内存）",
-    )
-
-
-def check_todo5():
-    torch.manual_seed(3)
-    cfg = GPTConfig()
-    model = GPT(cfg).eval()
-    idx = torch.randint(0, cfg.vocab_size, (2, cfg.block_size))
-    targets = torch.randint(0, cfg.vocab_size, (2, cfg.block_size))
-    logits, loss = model(idx, targets)
-    require_not_none("TODO-5 logits", logits)
-    require_shape("TODO-5 logits", logits.shape, (2, cfg.block_size, cfg.vocab_size))
-    ref_logits, ref_loss = _ref_gpt_forward(model, idx, targets)
-    require_close("TODO-5 logits 数值", logits, ref_logits, atol=1e-4)
-    require_not_none("TODO-5 loss", loss)
-    require_true("TODO-5 loss 是标量", loss.dim() == 0, f"loss 应是标量，实际维度 {loss.dim()}")
-    require_true("TODO-5 loss 有限", torch.isfinite(loss).item(), "loss 出现 NaN/Inf")
-    require_close("TODO-5 loss 数值", loss, ref_loss, atol=1e-4)
-    # targets=None 时不应返回 loss
-    _, none_loss = model(idx)
-    require_true("TODO-5 推理无 loss", none_loss is None, "targets=None 时 loss 应为 None")
-
-
-def check_todo6():
-    torch.manual_seed(4)
-    cfg = GPTConfig()
-    model = GPT(cfg).eval()
-    prompt = torch.randint(0, cfg.vocab_size, (1, 3))
-    out = model.generate(prompt, max_new_tokens=5, temperature=1.0, top_k=4)
-    require_not_none("TODO-6", out)
-    require_shape("TODO-6 输出长度", out.shape, (1, 3 + 5))
-    require_true(
-        "TODO-6 保留前缀",
-        torch.equal(out[:, :3], prompt),
-        "生成结果应以原始 prompt 开头",
-    )
-    require_true(
-        "TODO-6 token 合法",
-        bool(((out >= 0) & (out < cfg.vocab_size)).all().item()),
-        "生成的 token 索引应落在 [0, vocab_size) 内",
-    )
-    # 确定性对照：top_k=1 必然贪心，应与参考的 argmax 逐步生成完全一致。
-    # 这能抓出「忘了取最后一个位置 / 忘了拼接 / top_k 实现错」等逻辑错误。
-    greedy = model.generate(prompt.clone(), max_new_tokens=5, temperature=1.0, top_k=1)
-    ref_greedy = _ref_generate_greedy(model, prompt.clone(), max_new_tokens=5)
-    require_true(
-        "TODO-6 贪心逻辑",
-        torch.equal(greedy, ref_greedy),
-        "top_k=1 时应等价于贪心（每步取概率最高 token），结果与参考实现不一致",
-    )
-    # 上下文裁剪：prompt 比 block_size 还长时，必须截断到最后 block_size 个 token，
-    # 否则 forward 里的 T <= block_size 断言会失败。
-    long_prompt = torch.randint(0, cfg.vocab_size, (1, cfg.block_size + 4))
-    out_long = model.generate(long_prompt, max_new_tokens=3, temperature=1.0, top_k=1)
-    require_shape("TODO-6 超长 prompt 裁剪", out_long.shape, (1, cfg.block_size + 4 + 3))
-
-
-def check_todo7():
-    torch.manual_seed(5)
-    block_size, batch_size = 8, 4
-    data = torch.arange(100, dtype=torch.long)  # 0,1,2,... 便于看错位
-    x, y = get_batch(data, block_size, batch_size)
-    require_not_none("TODO-7 x", x)
-    require_not_none("TODO-7 y", y)
-    require_shape("TODO-7 x", x.shape, (batch_size, block_size))
-    require_shape("TODO-7 y", y.shape, (batch_size, block_size))
-    # 核心不变量：y 是 x 右移一位 -> y[:, :-1] == x[:, 1:]
-    require_true(
-        "TODO-7 next-token 错位",
-        torch.equal(y[:, :-1], x[:, 1:]),
-        "y 应该是 x 整体右移一位（每个位置的目标 = 下一个 token）",
-    )
-
-
-section("开始自动校验（按 TODO 顺序，未实现的会标 …）")
-results = [
-    run_check("TODO-1 CausalSelfAttention.forward", check_todo1),
-    run_check("TODO-2 FeedForward.forward", check_todo2),
-    run_check("TODO-3 TransformerBlock.forward", check_todo3),
-    run_check("TODO-4 权重共享 weight tying", check_todo4),
-    run_check("TODO-5 GPT.forward", check_todo5),
-    run_check("TODO-6 GPT.generate", check_todo6),
-    run_check("TODO-7 get_batch", check_todo7),
-]
-
-passed = sum(results)
-print(f"\n通过 {passed}/{len(results)} 个 TODO")
+with torch.no_grad():
+    _ref_gen = _prompt.clone()
+    for _ in range(6):
+        _l, _ = _model(_ref_gen[:, -_gpt_cfg.block_size:])
+        _next = _l[:, -1, :].argmax(dim=-1, keepdim=True)
+        _ref_gen = torch.cat([_ref_gen, _next], dim=1)
+require_close("TODO-9 top_k=1 等价贪心解码", _gen.float(), _ref_gen.float())
+print(f"generate OK：top_k=1 与贪心解码完全一致 → 采样管线正确")
 
 
 # ============================================================
-# 全部通过后：跑一个迷你训练 + 生成（无需补全，作为奖励演示）
+section("TODO-10（进阶，可跳过）：Top-P / nucleus 过滤 apply_top_p")
 # ============================================================
-if all(results):
-    section("彩蛋：全部通过！来训练一个字符级迷你 GPT")
+# ChatGPT 实际用的采样策略。规则：
+#   1. 把 logits softmax 成概率，按概率从高到低排序
+#   2. 取累计概率刚好达到 p 的最小集合（包含越过 p 的那一个）
+#   3. 集合外的位置填 -inf
+#
+# 提示：torch.sort(descending=True) → softmax → cumsum →
+#       找出「前一位累计已 ≥ p」的位置标记删除 → scatter 还原回原顺序
 
-    text = (
-        "to be or not to be that is the question "
-        "whether tis nobler in the mind to suffer "
-    ) * 20
 
-    chars = sorted(set(text))
-    stoi = {c: i for i, c in enumerate(chars)}
-    itos = {i: c for c, i in stoi.items()}
+def apply_top_p(logits, p):
+    # TODO-10: 返回过滤后的 logits，形状不变 (B, vocab_size)（可跳过）
+    return None
 
-    cfg = GPTConfig(
-        vocab_size=len(chars),
-        block_size=16,
-        n_layer=2,
-        n_head=2,
-        n_embd=32,
-        dropout=0.1,
-    )
-    model = GPT(cfg)
-    print(f"词表大小 {len(chars)}，模型参数量 {model.count_parameters():,}")
 
-    data = torch.tensor([stoi[c] for c in text], dtype=torch.long)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=3e-3)
-
-    model.train()
-    for step in range(300):
-        xb, yb = get_batch(data, cfg.block_size, batch_size=16)
-        _, loss = model(xb, yb)
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        if step % 50 == 0 or step == 299:
-            print(f"  step {step:>3d}  loss {loss.item():.4f}")
-
-    model.eval()
-    prompt = "to be"
-    idx = torch.tensor([[stoi[c] for c in prompt]], dtype=torch.long)
-    out = model.generate(idx, max_new_tokens=60, temperature=0.8, top_k=5)
-    generated = "".join(itos[i] for i in out[0].tolist())
-    print(f"\n提示词 '{prompt}' 续写：\n  {generated!r}")
-    print("\n（数据极少、模型极小，能复读出训练片段就算成功，体会 next-token 预测即可）")
+_tp_probs = torch.tensor([[0.5, 0.3, 0.15, 0.05]])
+_tp_logits = torch.log(_tp_probs)
+_tp_out = apply_top_p(_tp_logits.clone(), 0.75)
+if _tp_out is None:
+    print("TODO-10 未实现，跳过（这是可选进阶题）")
 else:
-    section("还有 TODO 没完成")
-    print("把上面标 … 或 ✗ 的 TODO 补全后再运行，全部通过会触发训练 + 生成彩蛋。")
+    _finite_p = torch.isfinite(_tp_out)
+    # p=0.75：0.5 不够，加上 0.3 后 0.8 ≥ 0.75 → 保留前两个
+    require_true("TODO-10 p=0.75 保留 {0.5, 0.3}",
+                 bool(_finite_p[0, 0] and _finite_p[0, 1]
+                      and not _finite_p[0, 2] and not _finite_p[0, 3]),
+                 f"isfinite={_finite_p.tolist()}，期望 [True, True, False, False]")
+    _tp_out2 = apply_top_p(_tp_logits.clone(), 0.9)
+    _finite_p2 = torch.isfinite(_tp_out2)
+    # p=0.9：0.5+0.3=0.8 < 0.9，要再加 0.15 → 保留前三个
+    require_true("TODO-10 p=0.9 保留前三个",
+                 bool(_finite_p2[0, :3].all() and not _finite_p2[0, 3]),
+                 f"isfinite={_finite_p2.tolist()}，期望 [True, True, True, False]")
+    print("apply_top_p OK：nucleus 采样过滤正确")
+
+
+# ============================================================
+section("终极验证：用你写的 GPT 真的训练 + 生成")
+# ============================================================
+# 走到这里说明 TODO-1~9 全部通过。下面的代码（不需要你改）会用
+# 你自己写的模型在莎士比亚片段上训练 300 步，再生成文本。
+
+training_text = """To be or not to be that is the question
+Whether tis nobler in the mind to suffer
+The slings and arrows of outrageous fortune
+Or to take arms against a sea of troubles
+And by opposing end them To die to sleep
+No more and by a sleep to say we end
+The heartache and the thousand natural shocks
+That flesh is heir to Tis a consummation
+Devoutly to be wished To die to sleep
+To sleep perchance to dream""" * 3
+
+chars = sorted(set(training_text))
+char_to_idx = {c: i for i, c in enumerate(chars)}
+idx_to_char = {i: c for c, i in char_to_idx.items()}
+
+train_config = GPTConfig(
+    vocab_size=len(chars), block_size=32, n_layer=2, n_head=2, n_embd=32
+)
+torch.manual_seed(42)
+model = GPT(train_config)
+data = torch.tensor([char_to_idx[c] for c in training_text], dtype=torch.long)
+
+print(f"训练文本: {len(training_text)} 字符，词汇表: {len(chars)}，"
+      f"模型参数量: {sum(p.numel() for p in model.parameters()):,}")
+
+optimizer = torch.optim.AdamW(model.parameters(), lr=3e-3)
+model.train()
+first_loss = None
+for step in range(300):
+    xb, yb = get_batch(data, train_config.block_size, batch_size=16)
+    _, loss = model(xb, yb)
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+    if first_loss is None:
+        first_loss = loss.item()
+    if step % 100 == 0 or step == 299:
+        print(f"  Step {step:>4d}/300  Loss: {loss.item():.4f}")
+
+require_true(
+    "训练后 loss 显著下降",
+    loss.item() < first_loss * 0.6,
+    f"初始 {first_loss:.4f} → 最终 {loss.item():.4f}，下降不足，检查 forward/get_batch",
+)
+
+model.eval()
+prompt = "To be or"
+prompt_ids = torch.tensor([[char_to_idx[c] for c in prompt]], dtype=torch.long)
+out = model.generate(prompt_ids, max_new_tokens=120, temperature=0.8, top_k=8)
+print(f"\n提示词: '{prompt}'，生成结果（temperature=0.8, top_k=8）:")
+print("".join(idx_to_char[i] for i in out[0].tolist()))
+
+
+# ============================================================
+section("全部 TODO 校验通过 ✓")
+# ============================================================
+print("""
+你已经手写完成：
+  1. 因果掩码（torch.triu）
+  2. QKV 合并投影的拆分与分头
+  3. 注意力核心计算（scores → mask → softmax → 加权 → 合并多头）
+  4. FeedForward / Pre-Norm TransformerBlock 的 forward
+  5. GPT.forward（embedding 相加 → Blocks → ln_f → lm_head → cross_entropy）
+  6. get_batch（y = x 右移一位 = next token prediction 的本质）
+  7. Top-K 过滤 + 自回归 generate（temperature / top_k）
+  8.（可选）Top-P / nucleus 过滤
+
+复盘三问（对照第 5 课 README 的步骤⑥）：
+  * 输入是什么？—— (B, T) 的 token 索引
+  * 核心计算是什么？—— embedding 相加 → N × (attention + FFN, 都带 Pre-Norm 残差) → lm_head
+  * 输出是什么？—— (B, T, vocab) 的 logits；训练时附带 cross_entropy loss
+
+延伸思考：
+  * 把训练步数改成 1000，生成质量有什么变化？loss 还能降多少？
+  * 把 get_batch 改成 90/10 切分 train/val，观察 val loss 何时开始不降（过拟合）
+  * 在 generate 里接上你的 apply_top_p，对比 top_k=8 和 top_p=0.9 的生成差异
+""")

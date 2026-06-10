@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 4 课（Transformer Block / FFN / 残差 / Block 堆叠 / Dropout）主课与自写练习均已完成，下一步进入第 5 课（从零搭建 GPT）。
+当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 5 课（从零搭建 GPT，首次进入 PyTorch）进行中——主课已跑通，自写练习（10 个 TODO）已搭好待填。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -43,8 +43,9 @@ llm-learning/
 │   ├── 04_transformer_block.py           # 完整 Transformer Block
 │   ├── 04_transformer_block_self_write.py # ↳ 自写练习（第 4 课，9 个 TODO）
 │   ├── 05_gpt_from_scratch.py            # 从零搭建 GPT，文本生成
+│   ├── 05_gpt_from_scratch_self_write.py # ↳ 自写练习（第 5 课，10 个 TODO，PyTorch）
 │   ├── 06_scaling_laws.py                # Scaling Law、C≈6ND、Chinchilla compute-optimal
-│   ├── reset_exercises_01.py             # 重置第 1 课练习
+│   ├── reset_exercises_0X.py             # 每课配套重置脚本（01–05，二刷用）
 │   └── README.md
 │
 ├── phase3-training/                 # 第三阶段：训练与微调
@@ -96,8 +97,8 @@ llm-learning/
 第 0 阶段 (4课, 按需)        第一阶段 (3课)            第二阶段 (6课)             第三阶段 (5课)             第四阶段 (8课)
 矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT/Scaling Law  →  LoRA/量化/RLHF/推理优化  →  DeepSeek/推理优化
    形状与反向                  基础数学                   核心架构                                    工业实践
-   🚧 第 1 课进行中            ✅ 已完成三课               ✅ 第 4 课主课完成                        待学习                    后续进阶
-                                                        自写练习待填/第 5 课；第 6 课已搭好待学
+   🚧 第 1 课进行中            ✅ 已完成三课               🚧 第 5 课进行中（GPT/PyTorch）           待学习                    后续进阶
+                                                        自写练习 10 个 TODO 待填；第 6 课已搭好待学
 
                                           ┈┈┈→  第五阶段 (10课)：Agent 架构与 Agent 基础设施
                                                  Agent Loop/Tool/规划/记忆/RAG + Runtime/沙箱/并发缓存/观测/Multi-Agent

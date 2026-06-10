@@ -188,12 +188,20 @@ class GPT(nn.Module):
         self.ln_f = nn.LayerNorm(config.n_embd)
         self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
-        # 权重共享：token embedding 和 output projection 共享权重
+        # 权重共享（weight tying）：token embedding 和 lm_head 共享同一份权重
+        # - 两者形状恰好都是 (vocab_size, n_embd)：一个把 token 查成向量（查表），
+        #   一个把向量和每个词的"原型向量"做点积打回词表（反查）——语义上互为逆操作
+        # - 好处：省掉一份 vocab_size × n_embd 的参数（真实模型里词表是 5 万+，省得可观），
+        #   且实践上泛化更好；GPT-2/GPT-3 都这么做
         self.token_embedding.weight = self.lm_head.weight
 
         self._init_weights()
 
     def _init_weights(self):
+        # 注：GPT-2 还会对残差路径上的投影层（attn.c_proj / ffn.c_proj）额外用
+        # std / sqrt(2 * n_layer) 的更小标准差初始化——因为每层有 2 个残差分支，
+        # N 层累加后方差会随深度增长，缩小初始化能抵消这一点。
+        # 玩具规模（4 层）影响不大，这里从简统一用 std=0.02。
         for module in self.modules():
             if isinstance(module, nn.Linear):
                 torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
@@ -213,7 +221,8 @@ class GPT(nn.Module):
 
         # Token + Position Embedding
         tok_emb = self.token_embedding(idx)                    # (B, T, n_embd)
-        pos_emb = self.position_embedding(torch.arange(T))     # (T, n_embd)
+        # 位置索引必须和输入在同一个 device 上，否则模型挪到 GPU 后这里会报错
+        pos_emb = self.position_embedding(torch.arange(T, device=idx.device))  # (T, n_embd)
         x = self.drop(tok_emb + pos_emb)
 
         # N 个 Transformer Block
@@ -261,11 +270,12 @@ class GPT(nn.Module):
         return sum(p.numel() for p in self.parameters())
 
 
-# 创建模型
+# 创建模型（注意：这里用的还是 Part 1 的演示配置 vocab_size=256，
+# Part 4 训练前会按实际词汇表大小重建一个更小的模型）
 model = GPT(config)
 n_params = model.count_parameters()
 
-print(f"\n模型总参数量: {n_params:,}")
+print(f"\n模型总参数量: {n_params:,}（vocab_size=256 的演示配置）")
 print(f"\n模型结构:")
 for name, module in model.named_children():
     if hasattr(module, 'weight'):
@@ -305,8 +315,10 @@ print(f"实际词汇表大小: {actual_vocab_size}")
 print(f"词汇表: {''.join(chars)}")
 
 # 重新创建适合实际词汇表大小的模型
+# （词汇表从 256 缩到实际字符数，embedding/lm_head 跟着变小，所以参数量和 Part 3 不同）
 config = GPTConfig(vocab_size=actual_vocab_size, block_size=64, n_layer=4, n_head=4, n_embd=64)
 model = GPT(config)
+print(f"实际训练的模型参数量: {model.count_parameters():,}")
 
 # 编码文本
 data = torch.tensor([char_to_idx[c] for c in training_text], dtype=torch.long)
