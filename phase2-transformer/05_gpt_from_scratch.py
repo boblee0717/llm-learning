@@ -326,7 +326,9 @@ data = torch.tensor([char_to_idx[c] for c in training_text], dtype=torch.long)
 
 def get_batch(data, context_len, batch_size):
     """随机采样训练批次"""
-    ix = torch.randint(len(data) - context_len - 1, (batch_size,))
+    # 上界用 len(data) - context_len：randint 取 [0, n)，最大起点应是 len(data)-context_len-1，
+    # 此时 y = data[i+1 : i+context_len+1] 末尾正好落在 len(data)-1（合法）。原来多减 1 会丢掉最后一个窗口。
+    ix = torch.randint(len(data) - context_len, (batch_size,))
     x = torch.stack([data[i:i + context_len] for i in ix])
     y = torch.stack([data[i + 1:i + context_len + 1] for i in ix])
     return x, y

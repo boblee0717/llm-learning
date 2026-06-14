@@ -495,7 +495,9 @@ def speculative_decode(
         start_pos = tokens.size(1)
         for i in range(num_speculative):
             pos = start_pos + i
-            target_token = target_logits[:, pos - 1, :].argmax(dim=-1)
+            # keepdim=True 让 target_token 保持 (B, 1) 两维，才能和 tokens (B, T) 在 dim=1 上 cat；
+            # 否则 argmax 得到 (B,) 再连续两次 unsqueeze 会变成 (1,1,1) 三维，torch.cat 直接崩。
+            target_token = target_logits[:, pos - 1, :].argmax(dim=-1, keepdim=True)
             draft_token = draft_tokens[:, pos]
 
             if target_token.item() == draft_token.item():
@@ -504,7 +506,7 @@ def speculative_decode(
                 tokens = torch.cat([
                     tokens,
                     draft_tokens[:, start_pos:start_pos + n_accepted],
-                    target_token.unsqueeze(0).unsqueeze(0),
+                    target_token,
                 ], dim=1)
                 break
         else:

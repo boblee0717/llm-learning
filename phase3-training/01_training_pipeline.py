@@ -99,14 +99,17 @@ class MiniGPT(nn.Module):
         self.token_emb = nn.Embedding(vocab_size, d_model)
         self.pos_emb = nn.Embedding(seq_len, d_model)
 
-        decoder_layer = nn.TransformerDecoderLayer(
+        # GPT 是 decoder-only：每层只有「带因果掩码的自注意力 + FFN」，没有 encoder-decoder
+        # 的 cross-attention。所以用 TransformerEncoder + 因果 mask 来搭，而不是 TransformerDecoder
+        # （后者每层多一支 cross-attention，参数更多、结构也不对）。
+        encoder_layer = nn.TransformerEncoderLayer(
             d_model=d_model,
             nhead=n_heads,
             dim_feedforward=d_model * 4,
             dropout=0.1,
             batch_first=True,
         )
-        self.transformer = nn.TransformerDecoder(decoder_layer, num_layers=n_layers)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
         self.ln_f = nn.LayerNorm(d_model)
         self.head = nn.Linear(d_model, vocab_size)
         self.seq_len = seq_len
@@ -117,7 +120,7 @@ class MiniGPT(nn.Module):
         h = self.token_emb(x) + self.pos_emb(pos)
 
         causal_mask = nn.Transformer.generate_square_subsequent_mask(T, device=x.device)
-        h = self.transformer(h, h, tgt_mask=causal_mask, memory_mask=causal_mask)
+        h = self.transformer(h, mask=causal_mask)
 
         h = self.ln_f(h)
         logits = self.head(h)
@@ -218,7 +221,9 @@ def train_one_epoch_amp(model, dataloader, optimizer, scaler, device):
     for batch_x, batch_y in dataloader:
         batch_x, batch_y = batch_x.to(device), batch_y.to(device)
 
-        with torch.amp.autocast(device_type=device.type, dtype=torch.float16):
+        # CPU 不支持 float16 autocast（PyTorch 2.x 会直接报错），CPU/MPS 用 bfloat16，仅 CUDA 用 float16
+        amp_dtype = torch.float16 if device.type == "cuda" else torch.bfloat16
+        with torch.amp.autocast(device_type=device.type, dtype=amp_dtype):
             logits = model(batch_x)
             loss = F.cross_entropy(
                 logits.view(-1, logits.size(-1)),
@@ -432,7 +437,7 @@ def full_training_loop(
 
             with torch.amp.autocast(
                 device_type=device.type,
-                dtype=torch.float16,
+                dtype=torch.float16 if device.type == "cuda" else torch.bfloat16,
                 enabled=use_amp,
             ):
                 logits = model(batch_x)

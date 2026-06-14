@@ -271,8 +271,15 @@ def compute_ppo_loss(log_probs, old_log_probs, advantages, clip_eps=0.2):
 
 
 def kl_penalty(log_probs_new, log_probs_ref, beta=0.1):
-    """KL 散度惩罚：防止偏离参考模型太远"""
-    kl = (log_probs_ref.exp() * (log_probs_ref - log_probs_new)).sum(-1).mean()
+    """KL 散度惩罚：防止偏离参考模型太远
+
+    这里 log_probs_* 是 get_log_probs 返回的「每个位置所选 token 的 log 概率」(B, T)，
+    是标量序列、不是词表分布，所以不能对它做 .exp() 当成分布去套 KL 公式。
+    RLHF 标准做法是惩罚 KL(π_new ‖ π_ref)，用 log 概率比按序列求和近似：
+        KL ≈ E_new[ log π_new - log π_ref ] ≈ Σ_t (logp_new - logp_ref)
+    （注意方向是 new 相对 ref，不是反过来。）
+    """
+    kl = (log_probs_new - log_probs_ref).sum(-1).mean()
     return beta * kl
 
 
