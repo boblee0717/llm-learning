@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 5 课（从零搭建 GPT，首次进入 PyTorch）进行中——主课已跑通，自写练习（12 个 TODO，含主课全部练习题）已搭好待填。
+当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 5 课（从零搭建 GPT，首次进入 PyTorch）已完成——主课跑通 + 自写练习（12 个 TODO，含主课全部练习题）全部亲手填完并校验通过，迷你 GPT 从零搭通；下一步第 6 课（Scaling Law）。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -97,8 +97,8 @@ llm-learning/
 第 0 阶段 (4课, 按需)        第一阶段 (3课)            第二阶段 (6课)             第三阶段 (5课)             第四阶段 (8课)
 矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT/Scaling Law  →  LoRA/量化/RLHF/推理优化  →  DeepSeek/推理优化
    形状与反向                  基础数学                   核心架构                                    工业实践
-   🚧 第 1 课进行中            ✅ 已完成三课               🚧 第 5 课进行中（GPT/PyTorch）           待学习                    后续进阶
-                                                        自写练习 12 个 TODO 待填；第 6 课已搭好待学
+   🚧 第 1 课进行中            ✅ 已完成三课               ✅ 第 5 课已完成（GPT/PyTorch）           待学习                    后续进阶
+                                                        自写练习 12 个 TODO 全部填完；下一步第 6 课
 
                                           ┈┈┈→  第五阶段 (10课)：Agent 架构与 Agent 基础设施
                                                  Agent Loop/Tool/规划/记忆/RAG + Runtime/沙箱/并发缓存/观测/Multi-Agent
@@ -171,7 +171,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 > 详见 [phase1-foundations/README.md](phase1-foundations/README.md)
 
-### 第二阶段：Transformer 架构（第 4 课主课已学完，自写练习待填，下一步第 5 课；第 6 课已搭好待学）
+### 第二阶段：Transformer 架构（第 1～5 课已完成，下一步第 6 课；第 6 课已搭好待学）
 
 | 课程 | 主课文件 | 自写练习 | 核心内容 |
 |------|----------|----------|----------|
@@ -179,7 +179,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | 第 2 课 | `02_self_attention.py` | `02_self_attention_self_write.py` | Q/K/V、注意力分数、因果掩码 |
 | 第 3 课 | `03_multi_head_attention.py` | `03_multi_head_attention_self_write.py` | 多头注意力、残差连接、LayerNorm |
 | 第 4 课 | `04_transformer_block.py` | `04_transformer_block_self_write.py` | 完整 Transformer Block、FFN |
-| 第 5 课 | `05_gpt_from_scratch.py` | — | 完整 GPT 模型、文本生成 |
+| 第 5 课 | `05_gpt_from_scratch.py` | `05_gpt_from_scratch_self_write.py` | 完整 GPT 模型、文本生成（12 个 TODO，PyTorch） |
 | 第 6 课 | `06_scaling_laws.py` | — | Scaling Law、`C≈6ND`、Chinchilla compute-optimal、Chinchilla 之后 |
 
 > 详见 [phase2-transformer/README.md](phase2-transformer/README.md)

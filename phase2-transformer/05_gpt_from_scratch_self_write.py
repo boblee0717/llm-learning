@@ -107,7 +107,7 @@ section("TODO-1：构造因果掩码 build_causal_mask")
 
 def build_causal_mask(context_len):
     # TODO-1: 返回 (context_len, context_len) 的因果掩码（float 张量，1=屏蔽 0=可见）
-    return None
+    return torch.triu(torch.ones(context_len, context_len), diagonal=1)
 
 
 _mask = build_causal_mask(8)
@@ -136,7 +136,13 @@ section("TODO-2：把合并的 QKV 拆成多头 split_qkv_heads")
 
 def split_qkv_heads(qkv, n_head):
     # TODO-2: 返回 (q, k, v) 三元组，各为 (B, n_head, T, d_k)
-    return None
+    B, T, C = qkv.shape[0], qkv.shape[1], qkv.shape[2] // 3
+    d_k = C // n_head
+    q, k, v = qkv.split(C, dim=2)
+    q = q.view(B, T, n_head, d_k).transpose(1, 2)
+    k = k.view(B, T, n_head, d_k).transpose(1, 2)
+    v = v.view(B, T, n_head, d_k).transpose(1, 2)
+    return q, k, v
 
 
 _B, _T, _C, _H = 2, 5, 16, 4
@@ -173,7 +179,14 @@ section("TODO-3：注意力核心计算 causal_attention")
 
 def causal_attention(q, k, v, mask):
     # TODO-3: 实现带因果掩码的多头注意力计算（不含输出投影 W_O）
-    return None
+    B, n_head, T, d_k = q.shape[0], q.shape[1], q.shape[2], q.shape[3]
+    C = n_head * d_k
+    scores = q @ k.transpose(-2, -1) / math.sqrt(d_k)
+    scores = scores.masked_fill(mask == 1, float("-inf"))
+    weights = F.softmax(scores, dim=-1)
+    out = weights @ v
+    out = out.transpose(1, 2).contiguous().view(B, T, C)
+    return out
 
 
 _B, _H, _T, _Dk = 2, 2, 4, 3
@@ -213,6 +226,7 @@ class CausalSelfAttention(nn.Module):
     def forward(self, x):
         B, T, C = x.shape
         q, k, v = split_qkv_heads(self.c_attn(x), self.n_head)
+        # mask 按最大长度 context_len 预建，这里按本次实际序列长 T 裁出左上角 (T, T) 子块
         out = causal_attention(q, k, v, self.mask[:T, :T])
         return self.c_proj(out)  # W_O：混合各 head 的信息
 
@@ -234,7 +248,7 @@ class FeedForward(nn.Module):
 
     def forward(self, x):
         # TODO-4: 实现 FFN 前向
-        return None
+        return self.c_proj(F.gelu(self.c_fc(x)))
 
 
 _cfg = GPTConfig()
@@ -267,7 +281,13 @@ class TransformerBlock(nn.Module):
 
     def forward(self, x):
         # TODO-5: 实现 Pre-Norm Block 前向（两条残差支路）
-        return None
+        ln_1 = self.ln_1(x)
+        attn1 = self.attn(ln_1)
+        x = x + attn1 
+        ln_2 = self.ln_2(x)
+        ffn2 = self.ffn(ln_2)
+        x = x + ffn2
+        return x
 
 
 torch.manual_seed(1)
@@ -325,7 +345,7 @@ class GPT(nn.Module):
         #         而不是数值拷贝（copy_ 之后还是两份独立参数，训练会各走各的）
         #   想清楚把谁赋给谁（提示：nn.Linear 的 weight 形状本来就是 (out, in)，
         #   和 nn.Embedding 的 (vocab_size, n_embd) 恰好一致），写一行赋值即可
-        pass  # ← 实现后删掉这行
+        self.lm_head.weight = self.token_embedding.weight
 
     def _init_weights(self):
         for module in self.modules():
@@ -338,7 +358,18 @@ class GPT(nn.Module):
 
     def forward(self, idx, targets=None):
         # TODO-7: 实现 GPT 前向，return logits, loss
-        return None
+        B, T = idx.shape
+        tok_emb = self.token_embedding(idx)
+        pos_emb = self.position_embedding(torch.arange(T, device=idx.device))
+        x = tok_emb + pos_emb
+        for single_block in self.blocks:
+            x = single_block(x)
+        x = self.ln_f(x)
+        logits = self.lm_head(x)
+        loss = None
+        if targets is not None:
+            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
+        return logits, loss
 
     @torch.no_grad()
     def generate(self, idx, max_new_tokens, temperature=1.0, top_k=None):
@@ -350,7 +381,16 @@ class GPT(nn.Module):
         #   4. top_k 不为 None 时，用 apply_top_k 过滤
         #   5. softmax → torch.multinomial 采样 1 个 token
         #   6. torch.cat 拼回 idx
-        return None
+        for _ in range(max_new_tokens):
+            idx_crop = idx[:, -self.config.context_len:]
+            logits, _ = self(idx_crop)
+            logits = logits[:, -1, :] / temperature
+            if top_k is not None:
+                logits = apply_top_k(logits, top_k)
+            probs = F.softmax(logits, dim=-1)
+            next_idx = torch.multinomial(probs, num_samples=1)
+            idx = torch.cat([idx, next_idx], dim=1)
+        return idx
 
 
 torch.manual_seed(2)
@@ -421,7 +461,10 @@ section("TODO-8：训练数据采样 get_batch")
 
 def get_batch(data, context_len, batch_size):
     # TODO-8: 返回 (x, y)，各为 (batch_size, context_len)
-    return None
+    ix = torch.randint(len(data) - context_len, (batch_size,))
+    x = torch.stack([data[i     : i + context_len]     for i in ix])
+    y = torch.stack([data[i + 1 : i + context_len + 1] for i in ix])
+    return x, y
 
 
 _data = torch.arange(200, dtype=torch.long)
@@ -450,7 +493,10 @@ section("TODO-9：Top-K 过滤 apply_top_k")
 
 def apply_top_k(logits, k):
     # TODO-9: 返回过滤后的 logits，形状不变 (B, vocab_size)
-    return None
+    kth = torch.topk(logits, k).values[..., -1, None]
+    mask = logits < kth
+    logits = logits.masked_fill(mask, float("-inf"))
+    return logits
 
 
 _tk_logits = torch.tensor([[1.0, 5.0, 3.0, 2.0],
@@ -504,7 +550,14 @@ section("TODO-11（进阶，可跳过）：Top-P / nucleus 过滤 apply_top_p")
 
 def apply_top_p(logits, p):
     # TODO-11: 返回过滤后的 logits，形状不变 (B, vocab_size)（可跳过）
-    return None
+    sorted_logits, sorted_idx = torch.sort(logits, descending=True, dim=-1)
+    probs = F.softmax(sorted_logits, dim=-1)
+    cumprobs = torch.cumsum(probs, dim=-1)
+    remove = cumprobs > p
+    remove[..., 1:] = remove[..., :-1].clone()
+    remove[..., 0] = False
+    remove_orig = torch.zeros_like(remove).scatter(-1, sorted_idx, remove)
+    return logits.masked_fill(remove_orig, float("-inf"))
 
 
 _tp_probs = torch.tensor([[0.5, 0.3, 0.15, 0.05]])
@@ -543,7 +596,9 @@ section("TODO-12（进阶，可跳过）：用 tiktoken 体验 BPE 分词")
 
 def encode_with_gpt2_bpe(text):
     # TODO-12: 返回 GPT-2 BPE 编码后的 token id 列表（可跳过）
-    return None
+    import tiktoken
+    enc = tiktoken.get_encoding("gpt2")
+    return enc.encode(text)
 
 
 _sample = "To be or not to be that is the question"
@@ -564,8 +619,28 @@ else:
     require_true("TODO-12 BPE 序列更短", len(_bpe_ids) < len(_sample),
                  f"BPE 子词数（{len(_bpe_ids)}）应明显少于字符数（{len(_sample)}）")
     print(f"同一句话：字符级 {len(_sample)} 个 token  vs  GPT-2 BPE {len(_bpe_ids)} 个 token")
-    print("BPE 切分结果：", [_enc.decode([t]) for t in _bpe_ids])
-    print("→ 子词分词让序列短 ~4 倍：同样 context_len 能装下更多内容，这就是真实 GPT 不用字符级的原因")
+
+    # ① 把 token id 和它对应的切片并排打出来：BPE 是「字符串片段 ↔ 整数 id」的双向字典
+    print("\n[① id ↔ 切片] 每个 token 都是词表里的一个整数（用 ⎵ 代表前导空格）：")
+    for _tid in _bpe_ids:
+        _piece = _enc.decode([_tid]).replace(" ", "⎵")
+        print(f"    id={_tid:<6d} → '{_piece}'")
+
+    # ② 先头空格也被吃进 token：' be'（带空格）和 'be'（不带）是两个不同的 id
+    print("\n[② 空格归属] GPT-2 把『词前的空格』并进词里，所以同一个词带不带空格 id 不同：")
+    for _w in ["be", " be", "question", " question"]:
+        _ids = _enc.encode(_w)
+        print(f"    encode({_w!r}) = {_ids}  →  {[_enc.decode([t]) for t in _ids]}")
+
+    # ③ 常见词 1 个 token，生僻/长词被拆成多个 → 这就是「子词」的含义
+    print("\n[③ 常见 vs 生僻] 高频词一个 id 搞定，没见过的词拆成多个子词拼出来：")
+    for _w in ["the", "transformer", "antidisestablishmentarianism", "GPT", "霸王龙"]:
+        _ids = _enc.encode(_w)
+        _pieces = [_enc.decode([t]).replace(" ", "⎵") for t in _ids]
+        print(f"    {_w!r:<32s} → {len(_ids)} 个 token: {_pieces}")
+
+    print("\n→ 子词分词让序列短 ~4 倍：同样 context_len 能装下更多内容，"
+          "且生僻词/拼写错误也能用子词拼出来，不会变成 <UNK>，这就是真实 GPT 不用字符级的原因")
 
 
 # ============================================================
