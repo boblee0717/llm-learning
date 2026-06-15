@@ -22,6 +22,7 @@ python3 -m pip install numpy matplotlib
 python3 01_numpy_basics.py
 python3 02_gradient_descent.py
 python3 03_neural_network.py
+python3 04_optimizers.py
 ```
 
 ## 课程结构
@@ -33,6 +34,7 @@ python3 03_neural_network.py
 | 第 1 课 | `01_numpy_basics.py` | `01_numpy_basics_self_write.py` | 张量运算、矩阵乘法、Softmax | Transformer 底层运算 |
 | 第 2 课 | `02_gradient_descent.py` | `02_gradient_descent_self_write.py` | 损失函数、梯度、参数更新 | 模型训练核心机制 |
 | 第 3 课 | `03_neural_network.py` | `03_neural_network_self_write.py` | 前向/反向传播、激活函数 | 深度学习完整流程 |
+| 第 4 课 | `04_optimizers.py` | `04_optimizers_self_write.py` | SGD/Momentum/RMSprop/Adam/AdamW、优化器内存代价、Adafactor | 真实训练用什么优化器、为什么吃显存 |
 
 ## 推荐学习路径（可执行版）
 
@@ -58,6 +60,9 @@ python3 reset_exercises_02.py
 
 # 第3课重置
 python3 reset_exercises_03.py
+
+# 第4课重置
+python3 reset_exercises_04.py
 ```
 
 说明：
@@ -166,14 +171,41 @@ ReLU 激活函数会把一半负值变成 0（方差减半），需要补偿 ×2
 
 第 3 课代码中用的是 **He 初始化**（因为隐藏层用了 ReLU）。
 
+## 补充概念速查：优化器（第 4 课）
+
+朴素 SGD（`w = w - lr*grad`）在"各向异性"地形上要么慢、要么震荡，于是有了一系列改进：
+
+| 优化器 | 关键改进 | 额外状态（每参数） |
+|--------|----------|--------------------|
+| SGD | 朝梯度反方向走固定步长 | 0 |
+| + Momentum | 累积历史梯度当"惯性"，加速 + 抑制震荡 | 1 份（速度 `v`） |
+| RMSprop | 用梯度平方滑动平均给每个参数定步长 | 1 份（`sq_avg`） |
+| Adam | Momentum + RMSprop + 偏差修正（现代默认） | 2 份（`m` + `v`） |
+| AdamW | Adam 上把 weight decay 解耦，正则化更干净 | 2 份 |
+| Adafactor | 把二阶矩矩阵因式分解，`O(mn)→O(m+n)` 省内存 | <1 份 |
+
+核心公式（Adam）：
+
+```
+m = β1·m + (1-β1)·g          # 一阶矩（动量）
+v = β2·v + (1-β2)·g²         # 二阶矩（自适应）
+m̂ = m/(1-β1^t),  v̂ = v/(1-β2^t)   # 偏差修正
+w = w - lr · m̂/(√v̂ + ε)
+```
+
+**为什么训大模型这么吃显存**：混合精度 + Adam 下，每参数约 16 字节
+（fp16 权重 2 + fp16 梯度 2 + fp32 主权重 4 + fp32 `m` 4 + fp32 `v` 4），
+其中优化器状态 `m`+`v` 就占 8 字节——这也是 LoRA（只训极少参数）能省显存的关键。
+
 ## 阶段完成标准（自检）
 
 完成第一阶段后，你应该能自己解释：
 
-- 为什么大模型训练需要大量 GPU（本质是大规模矩阵运算）
+- 为什么大模型训练需要大量 GPU（本质是大规模矩阵运算 + 优化器状态吃显存）
 - 学习率为什么会导致“收敛慢 / 震荡 / 发散”
 - 前向传播和反向传播到底分别在做什么
 - 小模型手写训练与 GPT 训练在原理上哪里相同
+- Adam 在 SGD 基础上多做了什么，为什么 `torch.optim.AdamW` 是默认选择
 
 ## 推荐配套资源
 

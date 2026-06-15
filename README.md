@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段已完成，第二阶段第 5 课（从零搭建 GPT，首次进入 PyTorch）已完成——主课跑通 + 自写练习（12 个 TODO，含主课全部练习题）全部亲手填完并校验通过，迷你 GPT 从零搭通；下一步第 6 课（Scaling Law）。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（SGD→Momentum→RMSprop→Adam→AdamW + Adafactor/显存代价，三件套已搭好待填），第二阶段第 5 课（从零搭建 GPT，首次进入 PyTorch）已完成——主课跑通 + 自写练习（12 个 TODO，含主课全部练习题）全部亲手填完并校验通过，迷你 GPT 从零搭通；下一步第 6 课（Scaling Law）。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -28,9 +28,12 @@ llm-learning/
 │   ├── 02_gradient_descent_self_write.py # ↳ 自写练习（6 个 TODO）
 │   ├── 03_neural_network.py              # 前向/反向传播、激活函数
 │   ├── 03_neural_network_self_write.py   # ↳ 自写练习（7 个 TODO）
+│   ├── 04_optimizers.py                  # SGD/Momentum/RMSprop/Adam/AdamW、内存代价、Adafactor
+│   ├── 04_optimizers_self_write.py       # ↳ 自写练习（6 个 TODO）
 │   ├── reset_exercises_01.py             # 重置第 1 课练习
 │   ├── reset_exercises_02.py             # 重置第 2 课练习
 │   ├── reset_exercises_03.py             # 重置第 3 课练习
+│   ├── reset_exercises_04.py             # 重置第 4 课练习
 │   └── README.md                         # 第一阶段详细指南
 │
 ├── phase2-transformer/              # 第二阶段：Transformer 架构
@@ -94,10 +97,10 @@ llm-learning/
 ## 学习路线
 
 ```
-第 0 阶段 (4课, 按需)        第一阶段 (3课)            第二阶段 (6课)             第三阶段 (5课)             第四阶段 (8课)
-矩阵运算补强            →  NumPy/梯度/神经网络    →  Attention/Transformer/GPT/Scaling Law  →  LoRA/量化/RLHF/推理优化  →  DeepSeek/推理优化
+第 0 阶段 (4课, 按需)        第一阶段 (4课)            第二阶段 (6课)             第三阶段 (5课)             第四阶段 (8课)
+矩阵运算补强            →  NumPy/梯度/网络/优化器  →  Attention/Transformer/GPT/Scaling Law  →  LoRA/量化/RLHF/推理优化  →  DeepSeek/推理优化
    形状与反向                  基础数学                   核心架构                                    工业实践
-   🚧 第 1 课进行中            ✅ 已完成三课               ✅ 第 5 课已完成（GPT/PyTorch）           待学习                    后续进阶
+   🚧 第 1 课进行中            ✅ 已完成三课，新增第4课优化器  ✅ 第 5 课已完成（GPT/PyTorch）           待学习                    后续进阶
                                                         自写练习 12 个 TODO 全部填完；下一步第 6 课
 
                                           ┈┈┈→  第五阶段 (10课)：Agent 架构与 Agent 基础设施
@@ -168,6 +171,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | 第 1 课 | `01_numpy_basics.py` | `01_numpy_basics_self_write.py` | 张量运算、矩阵乘法、Softmax、广播 |
 | 第 2 课 | `02_gradient_descent.py` | `02_gradient_descent_self_write.py` | MSE 损失、梯度计算、参数更新、学习率实验 |
 | 第 3 课 | `03_neural_network.py` | `03_neural_network_self_write.py` | ReLU/Sigmoid、前向传播、反向传播、XOR 分类 |
+| 第 4 课 | `04_optimizers.py` | `04_optimizers_self_write.py` | SGD/Momentum/RMSprop/Adam/AdamW、优化器内存代价、Adafactor |
 
 > 详见 [phase1-foundations/README.md](phase1-foundations/README.md)
 

@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 .env
 phase1-foundations/gradient_visualization.png
+optimizers_convergence.png
+phase1-foundations/optimizers_convergence.png
 phase2-transformer/01_positional_encoding.png
 phase2-transformer/scaling_laws_part2.png
 phase2-transformer/scaling_laws_part4.png

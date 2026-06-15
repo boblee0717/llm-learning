@@ -5,7 +5,7 @@
 ## 当前状态
 
 - 第 0 阶段：第 1 课进行中
-- 第一阶段：三课已完成
+- 第一阶段：三课已完成；新增第 4 课「优化器」（SGD/Momentum/RMSprop/Adam/AdamW + Adafactor/显存代价），三件套已搭好、6 个 TODO 待亲手填
 - 第二阶段：第 5 课（从零搭建 GPT，首次进入 PyTorch）已完成——主课跑通 + 自写练习 `05_gpt_from_scratch_self_write.py`（12 个 TODO，已融合主课练习区全部 6 道题）全部亲手填完并校验通过，迷你 GPT 从零搭通；下一步第 6 课（Scaling Law，已搭好待学）
 - 第三阶段：待学习
 - 第四阶段（DeepSeek 与推理优化）：课程已搭建，待学习
@@ -13,6 +13,7 @@
 
 ## 进展记录
 
+- 2026-06-15：在第一阶段新增**第 4 课「优化器」**，补上"梯度下降 → 真实训练/显存"之间一直缺的一环（第 2 课只学了朴素 SGD、phase3 直接把 `torch.optim.AdamW` 当黑盒）。新增三件套：（1）[phase1-foundations/04_optimizers.py](phase1-foundations/04_optimizers.py)：用一个条件数=100 的各向异性碗，从零 NumPy 实现并对比 SGD（260 步）/Momentum（64 步）/RMSprop（287 步，并说明它对 lr 敏感、本为带噪声场景设计）/Adam（98 步），讲清动量、自适应学习率、偏差修正、AdamW 解耦权重衰减，并算了 GPT-2/7B/70B 仅 Adam 状态(m+v)的显存（0.9/52/521 GB）+「每参数约 16 字节」拆解 + Adafactor 因式分解省内存原理，输出收敛曲线图；（2）[phase1-foundations/04_optimizers_self_write.py](phase1-foundations/04_optimizers_self_write.py)：6 个 TODO（sgd_step→momentum_step→rmsprop_step→adam_step→adamw_step→adam_training_bytes_per_param），单步更新函数设计成纯函数，校验用固定梯度序列对拍参考实现、并检查 weight_decay=0 时 AdamW≡Adam、端到端把碗优化下去；（3）[phase1-foundations/reset_exercises_04.py](phase1-foundations/reset_exercises_04.py)：已验证幂等（对留白版字节不变）、填满→重置可字节级还原。同步更新 phase1 README（课表/重置/优化器速查表）、根 README（结构树/路线图/课表/当前状态）。AI 协助搭建，6 个 TODO 全部留白待自己填。
 - 2026-04-14：完成第一阶段第 3 课（神经网络前向/反向传播与 XOR 分类）自写练习，并已重置练习文件准备二刷。
 - 2026-04-18：完成第二阶段第 1 课（词嵌入与位置编码）。跑通 `01_word_embeddings.py`、吃透正弦位置编码公式与 `div_term` 的 `exp(log)` 写法，看懂位置编码热力图/曲线图，完成自写练习 `01_word_embeddings_self_write.py`，并在 [phase2-transformer/README.md](phase2-transformer/README.md) 沉淀了"相加不是无损拼接，而是低成本注入顺序信息"和"放大镜 + 望远镜（小维度高频看近处、大维度低频看远处）"等 6 点关键领悟。可用 `reset_exercises_01.py` 重置练习准备二刷。
 - 2026-04-18：补充 GPT-1 论文 PDF（`papers/core-transformers/GPT1_2018_improving_language_understanding.pdf`），并整理 [papers/notes/notes_gpt2_input_and_model.md](papers/notes/notes_gpt2_input_and_model.md) 笔记，配合第 1 课对照理解 decoder-only 的输入表示。
