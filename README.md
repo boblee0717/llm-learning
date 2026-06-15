@@ -247,6 +247,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | GPT-3 | 2020 | 175B 参数，In-context Learning |
 | Scaling Laws for Neural Language Models | 2020 | GPT-3 的理论背景：loss 随 N/D/C 呈幂律下降，外推可计算 |
 | Chinchilla（Training Compute-Optimal LLMs） | 2022 | 修正 Kaplan：N 和 D 应按 1:20 同步扩，70B + 1.4T 打败 280B + 300B |
+| An Empirical Model of Large-Batch Training | 2018 | critical batch size 与 gradient noise scale 的源头：batch 多大才不浪费 compute，Kaplan §5.3 引用 |
 | InstructGPT | 2022 | RLHF 落地，让模型遵循人类指令 |
 | DeepSeek / 现代开源 LLM 论文清单 | 2023-2025 | MoE、MLA、代码/数学数据、推理型 RL、QLoRA、DPO |
 | Harness engineering（OpenAI） | 2026 | Agent 为先：人设计环境与反馈回路，Codex 产出代码与工程资产 |

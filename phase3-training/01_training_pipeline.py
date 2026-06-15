@@ -268,6 +268,17 @@ print("""
 等效关系：
   batch_size=16, accumulation_steps=4
   ≡ batch_size=64 (但显存只占 16 的量)
+
+那 batch 到底该凑多大？—— critical batch size（临界批量）
+  来自 McCandlish et al. 2018《An Empirical Model of Large-Batch Training》
+  （arXiv:1812.06162，也是 Kaplan scaling laws §5.3 引用的源头论文）：
+  - 增大 batch 能减少达到目标 loss 所需的「步数」，但有收益递减
+  - 拐点叫 critical batch size B_crit，约等于可测量的 gradient noise scale B_noise
+  - 比 B_crit 小 → 浪费时间（步数多）；比 B_crit 大 → 浪费 compute（样本多）
+  - B_noise 随训练推进 / 任务难度增大 → 后期才适合用更大 batch
+    （正是 GPT-3 把 batch 从 0.5M warmup 到 3.2M tokens 的依据）
+  → 梯度累积的目标就是「凑到 B_crit 附近」，不是越大越好
+  精读：papers/notes/large_batch_training_mccandlish_2018.md
 """)
 
 model_accum = MiniGPT(vocab_size=dataset.vocab_size, seq_len=seq_len).to(device)

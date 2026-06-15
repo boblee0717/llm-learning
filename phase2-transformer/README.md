@@ -404,6 +404,8 @@ x_i W = token_embedding_i W + position_encoding_i W
    - `Training Compute-Optimal Large Language Models (Chinchilla, 2022)` → Abstract、§1、§3（三种 approach 与 Table 3）、§4.1（Chinchilla vs Gopher）
      - 对应精读笔记：[`papers/notes/chinchilla_compute_optimal_2022.md`](../papers/notes/chinchilla_compute_optimal_2022.md)
    - 不用读完整篇——前面两节 + 图 1 + Table 3 是 80% 的信息量
+   - 延伸阅读（可选，想搞透 Kaplan §5.3 的 critical batch size）：`An Empirical Model of Large-Batch Training (McCandlish et al., 2018)` → 抓 critical batch size `B_crit` 与 gradient noise scale `B_noise` 两个概念即可
+     - 对应精读笔记：[`papers/notes/large_batch_training_mccandlish_2018.md`](../papers/notes/large_batch_training_mccandlish_2018.md)，与第三阶段第 1 课 Part 5（梯度累积）配合看
 3. **③ 跑代码**：运行 `06_scaling_laws.py`，重点看 4 个 Part 的输出
    - Part 1：打印 Kaplan 三条幂律的公式与指数
    - Part 2：画 `L(N)` / `L(D)` / `L(C)` 三条幂律曲线

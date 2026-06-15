@@ -148,6 +148,15 @@
   - **建议读法**: 重点看 Abstract、§1、§3 三种 approach 与 Table 3、§4.1 Chinchilla vs Gopher。
   - **一句话**: 对 Kaplan scaling 路线的关键修正：固定训练 compute 时，N 和 D 应该按 ≈ 1:20 同步扩；Chinchilla 70B + 1.4T tokens 用相同 compute 击败 Gopher 280B + 300B tokens。
 
+- **An Empirical Model of Large-Batch Training** (McCandlish et al., 2018)
+  - **状态**: 配第二阶段第 6 课 + 第三阶段第 1 课（已下载，待精读）
+  - **文件**: [An_Empirical_Model_of_Large_Batch_Training_2018.pdf](scaling-laws/An_Empirical_Model_of_Large_Batch_Training_2018.pdf)
+  - **来源**: [arxiv.org/abs/1812.06162](https://arxiv.org/abs/1812.06162)、[OpenAI blog](https://openai.com/index/how-ai-training-scales/)
+  - **作者**: Sam McCandlish, Jared Kaplan, Dario Amodei, OpenAI Dota Team
+  - **配套笔记**: [large_batch_training_mccandlish_2018.md](notes/large_batch_training_mccandlish_2018.md)
+  - **建议读法**: 抓两个概念即可——critical batch size `B_crit`（步数 vs 样本数双曲线的拐点）与 gradient noise scale `B_noise`（可测、能预测 `B_crit`）。配合第三阶段第 1 课 Part 5 梯度累积一起看。
+  - **一句话**: Kaplan scaling laws §5.3 critical batch size 的源头论文。同一作者班底先把「batch size 该多大」这条轴量化清楚：batch 增大能省步数但收益递减，拐点 `B_crit ≈ B_noise`，且 `B_noise` 随训练推进 / 任务难度增大——正是 GPT-3 把 batch 从 0.5M warmup 到 3.2M tokens 的理论依据。
+
 ### 6. InstructGPT (2022)
 - **文件**: [InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf](core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf)
 - **作者**: Ouyang et al. (OpenAI)

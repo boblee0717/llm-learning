@@ -207,6 +207,8 @@ $$
 
 论文借用了另一篇工作（McCandlish et al. 2018, *An Empirical Model of Large-Batch Training*）的概念：**gradient noise scale**。
 
+> 这篇源头论文已下载并配了精读笔记：[`large_batch_training_mccandlish_2018.md`](./large_batch_training_mccandlish_2018.md)（PDF：[`papers/scaling-laws/An_Empirical_Model_of_Large_Batch_Training_2018.pdf`](../scaling-laws/An_Empirical_Model_of_Large_Batch_Training_2018.pdf)）。想把「critical batch size 到底怎么算」搞透，读它。
+
 **直觉**：
 
 - 小 batch：每一步的梯度估计噪声大，需要更多步才能收敛
