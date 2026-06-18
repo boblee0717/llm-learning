@@ -30,6 +30,7 @@ pip install -r requirements.txt
 | 第 3 课 | `03_quantization.py` | FP32→FP16→INT8→INT4 量化 | 让大模型跑在消费级显卡上 |
 | 第 4 课 | `04_rlhf.py` | 奖励模型、PPO、DPO | 让模型变得"有用且安全" |
 | 第 5 课 | `05_inference_optimization.py` | KV Cache、采样策略、投机解码 | 让推理速度快 10 倍 |
+| 第 5 课·附 | `kv_cache_numpy_demo.py` | 纯 NumPy 最小 KV Cache 对照演示 | 剥掉框架看懂「缓存复用」 |
 
 ## 每课详细大纲
 
@@ -78,6 +79,7 @@ pip install -r requirements.txt
 - Beam Search vs Sampling
 - 投机解码（Speculative Decoding）：用小模型加速大模型
 - **与 LLM 的关系**：ChatGPT 能秒回你消息，靠的就是这些优化
+- **附加演示** `kv_cache_numpy_demo.py`：纯 NumPy 手写的 KV Cache 最小对照版（无缓存整段重算 vs 有缓存逐 token，验证结果一致 + 投影次数 O(n²) vs O(n) + 显存估算），配合 `papers/kv-cache/` 的 MQA / GQA / PagedAttention / FlashAttention 一起看
 
 ## 学习方式
 

@@ -57,6 +57,7 @@ llm-learning/
 │   ├── 03_quantization.py                # 模型量化 (INT8/INT4)
 │   ├── 04_rlhf.py                        # RLHF / DPO 人类偏好对齐
 │   ├── 05_inference_optimization.py      # KV Cache、采样策略、投机解码
+│   ├── kv_cache_numpy_demo.py            # 纯 NumPy 最小 KV Cache 对照演示
 │   └── README.md
 │
 ├── phase4-deepseek-reasoning/        # 第四阶段：DeepSeek 与推理优化
@@ -74,6 +75,7 @@ llm-learning/
 │   ├── core-transformers/                # Transformer / GPT / BERT / InstructGPT 主线论文
 │   ├── attention-extensions/             # 位置编码、Self-Attention、线性注意力延伸论文
 │   ├── efficient-transformers/           # 高效 Transformer 与长上下文论文
+│   ├── kv-cache/                         # KV Cache 推理优化（MQA/GQA/PagedAttention/FlashAttention）
 │   ├── scaling-laws/                     # 规模定律与 compute-optimal 训练论文（配第二阶段第 6 课）
 │   ├── vision-transformers/              # Vision Transformer 论文
 │   ├── deepseek/                         # DeepSeek MoE / Coder / Math / V2 / V3 / R1
