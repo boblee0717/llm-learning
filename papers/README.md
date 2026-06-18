@@ -12,6 +12,7 @@
 - `deepseek/`: DeepSeek MoE、Coder、Math、V2/V3/R1 系列论文
 - `frontier-llms/`: Llama 3、Qwen2.5 等现代开源 LLM 技术报告
 - `efficient-training/`: QLoRA、DPO 等训练 / 微调 / 对齐论文
+- `agents/`: 工具调用型 LLM agent、上下文工程 / 记忆等方向论文
 - `notes/`: 论文精读笔记
 
 ## 现代前沿补充
@@ -187,6 +188,14 @@
   - **链接**: [transformer-circuits.pub/2024/emotions](https://transformer-circuits.pub/2024/emotions/index.html)
   - **配合笔记**: [harness-engineering-li-hongyi.md](../harness-engineering-li-hongyi.md)
   - **一句话**: 在电路/特征视角下讨论 LLM 中的「情绪」概念如何形成与起作用，并与交互方式（含对 Agent 的责备方式）对模型行为的影响相关联——可与「Harness 与反馈设计」对照阅读。
+
+### 10. Decision-Aware Memory Cards: CICL（2026）
+- **状态**: 未读
+- **文件**: [Decision-Aware_Memory_Cards_CICL_2026.pdf](agents/Decision-Aware_Memory_Cards_CICL_2026.pdf)
+- **来源**: [arxiv.org/abs/2606.08151](https://arxiv.org/abs/2606.08151)、[代码 GitHub](https://github.com/stephen-guan-researcher/CICL)
+- **作者**: Xinyu Guan, Qianyang Zhao, Yuming Deng
+- **配合课程**: agent 架构 / 上下文工程方向，可与 Harness #7/#8 对照阅读
+- **一句话**: 工具调用型 agent 真正需要的不是更长上下文，而是「行动时刻的决策相关证据」；提出 Counterfactual-Inspired Context Layer (CICL)，构建实例上下文图、按「对下一步动作的预期影响」而非语义相似度给候选证据打分排序，再压缩成带类型的 memory cards——在 SWE-bench Verified 上把检索 hit@1 从 0.58 提到 0.78，并在压缩模式下每条 query 平均省下约 45 个 token。
 
 ## 阅读技巧
 
