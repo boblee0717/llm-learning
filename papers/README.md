@@ -7,6 +7,7 @@
 - `core-transformers/`: Transformer、GPT、BERT、InstructGPT 等主线论文
 - `attention-extensions/`: 位置编码、Self-Attention 表达能力、线性注意力等延伸论文
 - `efficient-transformers/`: 高效 Transformer 与长上下文 benchmark / survey
+- `kv-cache/`: KV Cache 推理优化（MQA / GQA / PagedAttention / FlashAttention）
 - `scaling-laws/`: 规模定律与 compute-optimal 训练论文
 - `vision-transformers/`: Vision Transformer 方向论文
 - `deepseek/`: DeepSeek MoE、Coder、Math、V2/V3/R1 系列论文
@@ -196,6 +197,42 @@
 - **作者**: Xinyu Guan, Qianyang Zhao, Yuming Deng
 - **配合课程**: agent 架构 / 上下文工程方向，可与 Harness #7/#8 对照阅读
 - **一句话**: 工具调用型 agent 真正需要的不是更长上下文，而是「行动时刻的决策相关证据」；提出 Counterfactual-Inspired Context Layer (CICL)，构建实例上下文图、按「对下一步动作的预期影响」而非语义相似度给候选证据打分排序，再压缩成带类型的 memory cards——在 SWE-bench Verified 上把检索 hit@1 从 0.58 提到 0.78，并在压缩模式下每条 query 平均省下约 45 个 token。
+
+### 11. KV Cache 推理优化（2019-2023）
+
+> 主题：自回归推理时，把历史 token 的 Key / Value 缓存下来避免重复计算，是 LLM 推理提速的核心。这条线索从「砍注意力头共享 KV」一路压到「低维潜向量」，再到「系统层显存管理」。
+>
+> 建议读法：先理解标准 KV Cache 的动机（用显存换算力，单步注意力从 O(n²) 降到 O(n)），再按 MQA → GQA → PagedAttention → FlashAttention 顺序读，最后回到 [`deepseek/DeepSeek-V2`](deepseek/DeepSeek-V2_Strong_Economical_Efficient_MoE_2024.pdf) 的 MLA，串成「KV Cache 怎么越压越小」的主线。
+>
+> 配合课程：第三阶段「推理优化」；与 [`attention-extensions/Transformers are RNNs`](attention-extensions/Transformers_are_RNNs_Fast_Autoregressive_Transformers_with_Linear_Attention_2020.pdf)（线性注意力 = 用固定大小状态替代无限增长的 KV Cache）对照阅读。
+
+- **Fast Transformer Decoding: One Write-Head is All You Need**（MQA, 2019）
+  - **状态**: 未读
+  - **文件**: [Fast_Transformer_Decoding_MQA_2019.pdf](kv-cache/Fast_Transformer_Decoding_MQA_2019.pdf)
+  - **来源**: [arxiv.org/abs/1911.02150](https://arxiv.org/abs/1911.02150)
+  - **作者**: Noam Shazeer (Google)
+  - **一句话**: 提出 Multi-Query Attention (MQA)，所有注意力头共享同一份 K、V，大幅缩小 KV Cache，是 KV Cache 压缩的鼻祖级方案。
+
+- **GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints**（GQA, 2023）
+  - **状态**: 未读
+  - **文件**: [GQA_Training_Generalized_Multi_Query_Transformer_2023.pdf](kv-cache/GQA_Training_Generalized_Multi_Query_Transformer_2023.pdf)
+  - **来源**: [arxiv.org/abs/2305.13245](https://arxiv.org/abs/2305.13245)
+  - **作者**: Joshua Ainslie, James Lee-Thorp, Santiago Ontañón, et al. (Google)
+  - **一句话**: MHA 与 MQA 的折中，把注意力头分组、每组共享一份 K、V，在质量和 KV Cache 大小间取平衡；Llama 2/3 等主流模型采用。
+
+- **Efficient Memory Management for Large Language Model Serving with PagedAttention**（vLLM, 2023）
+  - **状态**: 未读
+  - **文件**: [PagedAttention_vLLM_Efficient_Memory_Management_2023.pdf](kv-cache/PagedAttention_vLLM_Efficient_Memory_Management_2023.pdf)
+  - **来源**: [arxiv.org/abs/2309.06180](https://arxiv.org/abs/2309.06180)
+  - **作者**: Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, et al. (UC Berkeley)
+  - **一句话**: 从系统视角优化 KV Cache：像操作系统分页一样分块管理显存，消除碎片、支持共享，大幅提升推理吞吐；vLLM 的核心论文，做推理服务必读。
+
+- **FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness**（2022）
+  - **状态**: 未读
+  - **文件**: [FlashAttention_Fast_and_Memory_Efficient_Exact_Attention_2022.pdf](kv-cache/FlashAttention_Fast_and_Memory_Efficient_Exact_Attention_2022.pdf)
+  - **来源**: [arxiv.org/abs/2205.14135](https://arxiv.org/abs/2205.14135)
+  - **作者**: Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, Christopher Ré (Stanford)
+  - **一句话**: 严格说是优化注意力的 IO / 访存（用 tiling 在 SRAM 里算 attention，不落地巨大的注意力矩阵），但与 KV Cache、推理访存瓶颈强相关，常与上面三篇一起读。
 
 ## 阅读技巧
 
