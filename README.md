@@ -81,6 +81,7 @@ llm-learning/
 │   ├── deepseek/                         # DeepSeek MoE / Coder / Math / V2 / V3 / R1
 │   ├── frontier-llms/                    # Llama 3、Qwen2.5 等现代开源 LLM 技术报告
 │   ├── efficient-training/               # QLoRA、DPO 等训练 / 微调 / 对齐论文
+│   ├── foundations/                      # 跨学科思想源头论文（如 Anderson《More Is Different》/ 涌现）
 │   ├── frontier-ai-2024-2025.md          # 现代前沿论文清单，含训练 / 视频材料
 │   ├── notes/                            # 论文精读笔记（含 scaling_laws_kaplan_2020.md / chinchilla_compute_optimal_2022.md）
 │   └── README.md                         # 论文阅读顺序与建议
@@ -250,6 +251,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | Scaling Laws for Neural Language Models | 2020 | GPT-3 的理论背景：loss 随 N/D/C 呈幂律下降，外推可计算 |
 | Chinchilla（Training Compute-Optimal LLMs） | 2022 | 修正 Kaplan：N 和 D 应按 1:20 同步扩，70B + 1.4T 打败 280B + 300B |
 | An Empirical Model of Large-Batch Training | 2018 | critical batch size 与 gradient noise scale 的源头：batch 多大才不浪费 compute，Kaplan §5.3 引用 |
+| More Is Different（Anderson, *Science*） | 1972 | 「涌现 / emergence」思想源头：还原论 ≠ 构成论，规模累积引发质变——scaling laws 量变之外的互补线 |
 | InstructGPT | 2022 | RLHF 落地，让模型遵循人类指令 |
 | DeepSeek / 现代开源 LLM 论文清单 | 2023-2025 | MoE、MLA、代码/数学数据、推理型 RL、QLoRA、DPO |
 | Harness engineering（OpenAI） | 2026 | Agent 为先：人设计环境与反馈回路，Codex 产出代码与工程资产 |

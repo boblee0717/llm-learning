@@ -406,6 +406,8 @@ x_i W = token_embedding_i W + position_encoding_i W
    - 不用读完整篇——前面两节 + 图 1 + Table 3 是 80% 的信息量
    - 延伸阅读（可选，想搞透 Kaplan §5.3 的 critical batch size）：`An Empirical Model of Large-Batch Training (McCandlish et al., 2018)` → 抓 critical batch size `B_crit` 与 gradient noise scale `B_noise` 两个概念即可
      - 对应精读笔记：[`papers/notes/large_batch_training_mccandlish_2018.md`](../papers/notes/large_batch_training_mccandlish_2018.md)，与第三阶段第 1 课 Part 5（梯度累积）配合看
+   - 思想源头（可选，正文不到 4 页，建立「量变 vs 质变」直觉）：`More Is Different (Anderson, 1972, Science)` → 抓「还原论 ≠ 构成论」与「规模累积引发涌现」两点即可
+     - 对应精读笔记：[`papers/notes/more_is_different_anderson_1972.md`](../papers/notes/more_is_different_anderson_1972.md)，是「涌现 / emergence」的源头，和 Kaplan 的「平滑量变」互补
 3. **③ 跑代码**：运行 `06_scaling_laws.py`，重点看 4 个 Part 的输出
    - Part 1：打印 Kaplan 三条幂律的公式与指数
    - Part 2：画 `L(N)` / `L(D)` / `L(C)` 三条幂律曲线
@@ -430,6 +432,7 @@ x_i W = token_embedding_i W + position_encoding_i W
 3. **Chinchilla 的 1:20 是「训练 compute-optimal」，不是「推理 cost-optimal」**——一旦考虑模型要推理几亿次，最优解会偏向更小的模型 + 更多的 token（Llama 3-8B 训了 15T tokens 就是这个逻辑）
 4. **Kaplan 当年的错主要来自 LR schedule**——小模型没让 cosine 衰减到底，loss 看起来比真实差，导致拟合时低估了 D 的重要性
 5. **GPT-3 175B 在 Chinchilla 视角下是「严重欠训」**——同样 compute 训一个 ≈70B 模型用 ≈1.4T tokens，性能更好；这就是为什么 OpenAI 之后再没出更大的 dense 模型
+6. **Scaling laws 描述「量变」，但「质变」才是做大的终极动机**——loss 是平滑幂律下降（可外推、可预测），可某些能力（in-context learning、推理）却像「相变」一样在某个规模阈值突然出现。这正是 Anderson 1972《More Is Different》的「涌现」精神（见 [`papers/notes/more_is_different_anderson_1972.md`](../papers/notes/more_is_different_anderson_1972.md)）：More Is Different，数量本身会带来质的不同
 
 ---
 

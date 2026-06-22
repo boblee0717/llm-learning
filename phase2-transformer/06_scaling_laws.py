@@ -363,6 +363,10 @@ print("""
   4. GPT-3 在 Chinchilla 视角下严重欠训；Chinchilla 70B 用同 compute 打败 Gopher 280B
   5. Chinchilla 1:20 是「训练 optimal」，不是「推理 optimal」
      —— 工业界（Llama 3 / DeepSeek-V3）实际跑到 1:200 ~ 1:2000，因为推理 cost 重要
+  6. 以上都是「量变」：loss 随规模平滑下降、可外推。但做大的终极动机是「质变」——
+     某些能力会像「相变」一样在某个规模阈值突然涌现（emergence）。
+     这正是 Anderson 1972《More Is Different》的精神：More Is Different，数量本身带来质的不同。
+     （思想源头精读：papers/notes/more_is_different_anderson_1972.md）
 
   下一步：
   - phase4 第 1 课会用这套框架解 DeepSeek-V3 的 671B-total / 37B-active

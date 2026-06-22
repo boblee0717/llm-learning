@@ -14,6 +14,7 @@
 - `frontier-llms/`: Llama 3、Qwen2.5 等现代开源 LLM 技术报告
 - `efficient-training/`: QLoRA、DPO 等训练 / 微调 / 对齐论文
 - `agents/`: 工具调用型 LLM agent、上下文工程 / 记忆等方向论文
+- `foundations/`: 跨学科「思想源头」论文（如涌现 / emergence）
 - `notes/`: 论文精读笔记
 
 ## 现代前沿补充
@@ -158,6 +159,19 @@
   - **配套笔记**: [large_batch_training_mccandlish_2018.md](notes/large_batch_training_mccandlish_2018.md)
   - **建议读法**: 抓两个概念即可——critical batch size `B_crit`（步数 vs 样本数双曲线的拐点）与 gradient noise scale `B_noise`（可测、能预测 `B_crit`）。配合第三阶段第 1 课 Part 5 梯度累积一起看。
   - **一句话**: Kaplan scaling laws §5.3 critical batch size 的源头论文。同一作者班底先把「batch size 该多大」这条轴量化清楚：batch 增大能省步数但收益递减，拐点 `B_crit ≈ B_noise`，且 `B_noise` 随训练推进 / 任务难度增大——正是 GPT-3 把 batch 从 0.5M warmup 到 3.2M tokens 的理论依据。
+
+#### Scaling Law 的思想源头（跨学科）
+
+> 不是深度学习论文，而是「涌现 / emergence」概念的源头。读完 Kaplan 的「平滑量变」后看它，理解「规模累积可能引发质变」这条互补线索。
+
+- **More Is Different** (Anderson, 1972)
+  - **状态**: 选读（思想背景，已下载）
+  - **文件**: [More_Is_Different_Anderson_1972.pdf](foundations/More_Is_Different_Anderson_1972.pdf)
+  - **来源**: *Science*, Vol. 177, No. 4047, pp. 393–396（1972 年 8 月 4 日）；副标题 *Broken symmetry and the nature of the hierarchical structure of science*
+  - **作者**: Philip W. Anderson（贝尔实验室 / 剑桥卡文迪许，1977 年诺贝尔物理学奖得主）
+  - **配套笔记**: [more_is_different_anderson_1972.md](notes/more_is_different_anderson_1972.md)
+  - **建议读法**: 正文不到 4 页，抓两点即可——① 还原论（接受）≠ 构成论（反对）；② 每上升一个复杂度层级会涌现新规律，「整体非常不同于部分之和」。读完对照笔记里「量变（Kaplan）↔ 质变（Anderson）」一节。
+  - **一句话**: 「涌现（emergence）」的思想源头。Anderson 反对极端还原论：即便知道全部微观定律，也无法据此重建宇宙——大量粒子聚集会在每个复杂度层级涌现出全新性质。这正是 Kaplan 等人借用的精神：LLM 的 loss 是平滑量变，但规模累积到一定程度可能涌现出全新能力。
 
 ### 6. InstructGPT (2022)
 - **文件**: [InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf](core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf)
