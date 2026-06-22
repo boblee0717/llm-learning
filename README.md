@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（SGD→Momentum→RMSprop→Adam→AdamW + Adafactor/显存代价，三件套已搭好待填），第二阶段第 5 课（从零搭建 GPT，首次进入 PyTorch）已完成——主课跑通 + 自写练习（12 个 TODO，含主课全部练习题）全部亲手填完并校验通过，迷你 GPT 从零搭通；下一步第 6 课（Scaling Law）。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（SGD→Momentum→RMSprop→Adam→AdamW + Adafactor/显存代价，三件套已搭好待填），第二阶段第 5 课（从零搭建 GPT，首次进入 PyTorch）已完成——主课跑通 + 自写练习（12 个 TODO，含主课全部练习题）全部亲手填完并校验通过，迷你 GPT 从零搭通；第 6 课（Scaling Law）进行中——已基本读完 Kaplan 2020 论文，待补 Chinchilla + 主课脚本收尾。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 

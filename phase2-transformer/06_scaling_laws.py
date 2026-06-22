@@ -27,6 +27,11 @@
   4. 把工业模型放在 N-D 平面上对比
 """
 
+import os
+import sys
+
+sys.stdout.reconfigure(encoding="utf-8")  # Windows / PowerShell 下避免中文输出乱码或 GBK 报错
+
 import numpy as np
 import matplotlib
 
@@ -34,6 +39,9 @@ matplotlib.use("Agg")  # 无显示环境下也能跑通，图存到本地 PNG
 import matplotlib.pyplot as plt
 
 np.random.seed(42)
+
+# 把图存到脚本自身所在目录，这样无论从仓库根目录还是 phase2-transformer/ 里跑都不会找不到路径
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 # ============================================================
@@ -143,7 +151,7 @@ axes[2].legend(loc="upper right", fontsize=8)
 
 plt.suptitle("Kaplan 2020: three power laws (straight lines on log-log)", fontsize=12)
 plt.tight_layout()
-out_path = "phase2-transformer/scaling_laws_part2.png"
+out_path = os.path.join(SCRIPT_DIR, "scaling_laws_part2.png")
 plt.savefig(out_path, dpi=120, bbox_inches="tight")
 print(f"  三条幂律图已保存到 {out_path}")
 print("  关键观察：log-log 图上是直线 = 幂律。斜率 = 指数 α。")
@@ -296,7 +304,7 @@ ax.text(
 )
 
 plt.tight_layout()
-out_path = "phase2-transformer/scaling_laws_part4.png"
+out_path = os.path.join(SCRIPT_DIR, "scaling_laws_part4.png")
 plt.savefig(out_path, dpi=120, bbox_inches="tight")
 print(f"  N-D 平面图已保存到 {out_path}")
 plt.close(fig)

@@ -395,7 +395,7 @@ x_i W = token_embedding_i W + position_encoding_i W
 **按顺序做**
 
 1. **① 看视频**（20-30 min）：
-   - 主：[Andrej Karpathy - Intro to Large Language Models（1h）](https://www.youtube.com/watch?v=zjkBMFhNj_g) → `21:00-26:00` 那 5 分钟，Karpathy 用一页 slide 把 Scaling Law 讲到「为什么 OpenAI 敢花几亿美金训 GPT-4」
+   - 主：[Andrej Karpathy - Intro to Large Language Models（1h）](https://www.youtube.com/watch?v=zjkBMFhNj_g) → `25:43-27:43`（章节 "LLM Scaling Laws"）那 2 分钟，Karpathy 用一页 slide 把 Scaling Law 讲到「为什么 OpenAI 敢花几亿美金训 GPT-4」（注：`21:05-25:43` 那段是模型对比 / RLHF / 排行榜，不是 Scaling Law）
    - 备：[Jordan Hoffmann - Chinchilla（DeepMind talk）](https://www.youtube.com/watch?v=PZXN7jTL960)（30 min，论文一作亲讲）
    - 关键词：power law、compute-optimal、N/D/C
 2. **② 读论文**（30-40 min）：
