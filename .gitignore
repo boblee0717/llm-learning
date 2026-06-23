@@ -16,3 +16,7 @@ phase2-transformer/scaling_laws_part4.png
 # Obsidian
 .obsidian/
 papers/.obsidian/
+
+# pytorch-essentials 运行产物
+pytorch-essentials/lr_schedule.png
+pytorch-essentials/*.pt

@@ -1,0 +1,7 @@
+# PyTorch 专项训练依赖
+# 全部脚本 CPU 即可跑通（已在 torch 2.12.0+cpu / Python 3.14 验证）。
+# GPU 用户可按官网指引装对应 CUDA 版的 torch，其余不变。
+
+torch>=2.2
+numpy>=1.24
+matplotlib>=3.7
