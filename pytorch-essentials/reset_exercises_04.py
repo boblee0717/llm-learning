@@ -34,53 +34,53 @@ def replace_block(text, start_marker, end_marker, replacement, label, search_fro
 BLANK_BLOCKS = [
     (
         None,
-        "def manual_cross_entropy(logits, target):",
-        "_logits = torch.tensor([[2.0, 0.5, 0.1]",
-        "def manual_cross_entropy(logits, target):\n"
-        "    # TODO-1: 用 log_softmax + 按 target 取值 + 取负求平均，返回标量交叉熵\n"
+        "def cross_entropy_manual(logits, target):",
+        "_logits = torch.tensor(",
+        "def cross_entropy_manual(logits, target):\n"
+        "    # TODO-1: 返回标量交叉熵损失\n"
         "    return None\n"
         "\n\n",
-        "TODO-1 manual_cross_entropy",
+        "TODO-1 cross_entropy_manual",
     ),
     (
         None,
-        "def train_step(model, x, y, opt):",
-        "torch.manual_seed(0)",
-        "def train_step(model, x, y, opt):\n"
-        "    # TODO-2: 实现训练五步曲，返回 loss.item()\n"
+        "def warmup_cosine_lr(step, warmup_steps, total_steps, min_ratio=0.1):",
+        "_warm, _total = 100, 1000",
+        "def warmup_cosine_lr(step, warmup_steps, total_steps, min_ratio=0.1):\n"
+        "    # TODO-2: 返回该 step 的 lr 倍率（float）\n"
         "    return None\n"
         "\n\n",
-        "TODO-2 train_step",
+        "TODO-2 warmup_cosine_lr",
     ),
     (
         None,
-        "def build_param_groups(model):",
-        "class _TinyNet(nn.Module):",
-        "def build_param_groups(model):\n"
-        "    # TODO-3: 返回 [decay_group(wd=0.1), no_decay_group(wd=0.0)]\n"
+        "def build_param_groups(model, wd):",
+        "_net = nn.Sequential(nn.Linear(8, 16)",
+        "def build_param_groups(model, wd):\n"
+        "    # TODO-3: 返回 [decay_group, no_decay_group]\n"
         "    return None\n"
         "\n\n",
         "TODO-3 build_param_groups",
     ),
     (
         None,
-        "def lr_lambda(step, warmup, total, min_ratio=0.1):",
-        "_warmup, _total = 100, 1000",
-        "def lr_lambda(step, warmup, total, min_ratio=0.1):\n"
-        "    # TODO-4: warmup 线性 + cosine 衰减，返回倍率（float）\n"
+        "def train_one_step(model, x, y, opt, loss_fn):",
+        "torch.manual_seed(1)",
+        "def train_one_step(model, x, y, opt, loss_fn):\n"
+        "    # TODO-4: 执行一次训练 step，返回 loss（float）\n"
         "    return None\n"
         "\n\n",
-        "TODO-4 lr_lambda",
+        "TODO-4 train_one_step",
     ),
     (
         None,
-        "def fit_one(model, xs, ys, steps):",
-        "torch.manual_seed(1)",
-        "def fit_one(model, xs, ys, steps):\n"
-        "    # TODO-5: AdamW + LambdaLR 跑完整训练，返回最终 loss(float)\n"
+        "def train_loop(model, x, y, base_lr, warmup, total, loss_fn):",
+        "torch.manual_seed(2)",
+        "def train_loop(model, x, y, base_lr, warmup, total, loss_fn):\n"
+        "    # TODO-5: 跑 total 步训练，返回最终 loss（float）\n"
         "    return None\n"
         "\n\n",
-        "TODO-5 fit_one",
+        "TODO-5 train_loop",
     ),
 ]
 

@@ -33,58 +33,54 @@ def replace_block(text, start_marker, end_marker, replacement, label, search_fro
 
 BLANK_BLOCKS = [
     (
-        None,
+        "class LMDataset(Dataset):",
         "    def __len__(self):",
-        "_data = torch.arange(0, 50)",
+        "    def __getitem__(self, i):",
         "    def __len__(self):\n"
-        "        # TODO-1a: 返回样本总数（= len(data) - block_size）\n"
+        "        # TODO-1: 返回可取的样本数\n"
         "        return None\n"
-        "\n"
-        "    def __getitem__(self, i):\n"
-        "        # TODO-1b: 返回第 i 个样本 (x, y)，y 是 x 右移一位\n"
-        "        return None\n"
-        "\n\n",
-        "TODO-1 SeqDataset",
+        "\n",
+        "TODO-1 LMDataset.__len__",
     ),
     (
-        None,
-        "def make_loader(dataset, batch_size):",
-        "_loader = make_loader(_ds",
-        "def make_loader(dataset, batch_size):\n"
-        "    # TODO-2: 返回配置好的 DataLoader（shuffle=True, drop_last=True, num_workers=0）\n"
-        "    return None\n"
+        "class LMDataset(Dataset):",
+        "    def __getitem__(self, i):",
+        "_data = torch.arange(100, dtype=torch.long)",
+        "    def __getitem__(self, i):\n"
+        "        # TODO-2: 返回第 i 条样本 (x, y)，y 是 x 右移一位\n"
+        "        return None\n"
         "\n\n",
-        "TODO-2 make_loader",
+        "TODO-2 LMDataset.__getitem__",
     ),
     (
         None,
         "def pad_collate(batch, pad_value=0):",
-        "_var = [torch.tensor([1, 2, 3])",
+        "_seqs = [torch.arange(3)",
         "def pad_collate(batch, pad_value=0):\n"
-        "    # TODO-3: pad 到本 batch 最大长度，返回 (padded, lengths)\n"
+        "    # TODO-3: 返回 (padded, mask)\n"
         "    return None\n"
         "\n\n",
         "TODO-3 pad_collate",
     ),
     (
         None,
-        "def split_train_val(dataset, val_ratio, seed):",
-        "_res4 = split_train_val(_ds",
-        "def split_train_val(dataset, val_ratio, seed):\n"
-        "    # TODO-4: 用 random_split 返回 (train, val)，generator 用 seed 固定\n"
+        "def make_loaders(ds, val_ratio, batch_size):",
+        "_res2 = make_loaders(_ds",
+        "def make_loaders(ds, val_ratio, batch_size):\n"
+        "    # TODO-4: 返回 (train_loader, val_loader)\n"
         "    return None\n"
         "\n\n",
-        "TODO-4 split_train_val",
+        "TODO-4 make_loaders",
     ),
     (
         None,
-        "def manual_get_batch(data, batch_size, block_size, generator=None):",
-        "_g = torch.Generator().manual_seed(0)",
-        "def manual_get_batch(data, batch_size, block_size, generator=None):\n"
-        "    # TODO-5: 随机采样一个 batch，返回 (x, y)，y 是 x 右移一位\n"
+        "def count_samples(loader):",
+        "_cnt = count_samples(_train_loader)",
+        "def count_samples(loader):\n"
+        "    # TODO-5: 返回遍历一个 epoch 喂过的样本总数\n"
         "    return None\n"
         "\n\n",
-        "TODO-5 manual_get_batch",
+        "TODO-5 count_samples",
     ),
 ]
 
