@@ -15,6 +15,7 @@
 - `frontier-llms/`: Llama 3、Qwen2.5 等现代开源 LLM 技术报告
 - `efficient-training/`: QLoRA、DPO 等训练 / 微调 / 对齐论文
 - `agents/`: 工具调用型 LLM agent、上下文工程 / 记忆等方向论文
+- `retrieval-augmented/`: 检索增强（RAG / REALM / RETRO）—— 推理时外接知识库的方向
 - `foundations/`: 跨学科「思想源头」论文（如涌现 / emergence）
 - `notes/`: 论文精读笔记
 
@@ -249,7 +250,38 @@
   - **作者**: Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, Christopher Ré (Stanford)
   - **一句话**: 严格说是优化注意力的 IO / 访存（用 tiling 在 SRAM 里算 attention，不落地巨大的注意力矩阵），但与 KV Cache、推理访存瓶颈强相关，常与上面三篇一起读。
 
-### 12. 分布式训练 / 显存切分（2020）
+### 12. 检索增强生成 / RAG（2020-2021）
+
+> 主题：除了把知识「压」进模型参数，还能在预训练 / 生成时**外接一个知识库**，按需检索证据再生成。这条线解决「知识更新、可溯源、长尾事实」等参数化模型的痛点，是后来一切 RAG 系统的源头。
+>
+> 建议读法：按 REALM → RAG → RETRO 顺序，正好是「检索进预训练 → 检索进生成 → 检索 scale 到万亿 token」。先抓三个共性问题——检索什么（chunk / passage）、怎么检索（dense retriever / 近邻）、检索到的内容如何喂给模型（拼接 / cross-attention）。
+>
+> 配合课程：第三 / 第四阶段延伸阅读（推理服务 + 知识增强方向），与 DeepSeek 的「稀疏架构 + KV 压缩」并列，作为「参数化知识 vs 非参数化知识」的互补视角；也对应第五阶段第 5 课「RAG 与上下文工程」。
+>
+> 配套精读骨架：[retrieval_augmented_rag_notes.md](notes/retrieval_augmented_rag_notes.md)（三篇合一的待填笔记，带「检索什么 / 怎么检索 / 怎么喂给模型」三个共性问题与对照表）。
+
+- **REALM: Retrieval-Augmented Language Model Pre-Training**（Guu et al., 2020）
+  - **状态**: 未读
+  - **文件**: [REALM_Retrieval_Augmented_Language_Model_PreTraining_2020.pdf](retrieval-augmented/REALM_Retrieval_Augmented_Language_Model_PreTraining_2020.pdf)
+  - **来源**: [arxiv.org/abs/2002.08909](https://arxiv.org/abs/2002.08909)
+  - **作者**: Kelvin Guu, Kenton Lee, Zora Tung, Panupong Pasupat, Ming-Wei Chang (Google)
+  - **一句话**: 第一个把「检索器」端到端做进**预训练**的工作——用掩码语言建模的信号反向学习一个 neural knowledge retriever，让模型在预训练阶段就学会从知识库里取证据，再用证据预测被掩码的内容。
+
+- **RAG: Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks**（Lewis et al., 2020）
+  - **状态**: 未读
+  - **文件**: [RAG_Retrieval_Augmented_Generation_for_Knowledge_Intensive_NLP_2020.pdf](retrieval-augmented/RAG_Retrieval_Augmented_Generation_for_Knowledge_Intensive_NLP_2020.pdf)
+  - **来源**: [arxiv.org/abs/2005.11401](https://arxiv.org/abs/2005.11401)
+  - **作者**: Patrick Lewis, Ethan Perez, Aleksandra Piktus, et al. (Facebook AI Research / UCL)
+  - **一句话**: 「RAG」这个名字的出处。把 DPR 稠密检索器和 BART seq2seq 生成器组合，**生成时**取回 Top-K 文档当条件来生成答案，在开放域问答等知识密集型任务上刷新 SOTA，是后续所有 RAG 系统的范式之作。
+
+- **RETRO: Improving Language Models by Retrieving from Trillions of Tokens**（Borgeaud et al., 2021）
+  - **状态**: 未读
+  - **文件**: [RETRO_Improving_Language_Models_by_Retrieving_from_Trillions_of_Tokens_2021.pdf](retrieval-augmented/RETRO_Improving_Language_Models_by_Retrieving_from_Trillions_of_Tokens_2021.pdf)
+  - **来源**: [arxiv.org/abs/2112.04426](https://arxiv.org/abs/2112.04426)
+  - **作者**: Sebastian Borgeaud, Arthur Mensch, Jordan Hoffmann, et al. (DeepMind)
+  - **一句话**: 把检索增强 scale 到万亿 token 级别的知识库，用 chunked cross-attention 把检索到的近邻 chunk 融进解码，让 7.5B 的 RETRO 在部分指标上逼近 25× 大的 GPT-3 / Jurassic-1——证明「检索」可以部分替代「堆参数」。
+
+### 13. 分布式训练 / 显存切分（2020）
 
 > 主题：单卡放不下大模型时，如何把训练状态沿多张卡切开。这条线索把第一阶段第 4 课算过的「每参数 ~16 字节显存账」从**单卡视角**推到**集群视角**——既然优化器状态（m+v）最吃显存，那就沿 N 张数据并行卡把它切成 1/N。
 >

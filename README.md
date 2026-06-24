@@ -82,6 +82,7 @@ llm-learning/
 │   ├── deepseek/                         # DeepSeek MoE / Coder / Math / V2 / V3 / R1
 │   ├── frontier-llms/                    # Llama 3、Qwen2.5 等现代开源 LLM 技术报告
 │   ├── efficient-training/               # QLoRA、DPO 等训练 / 微调 / 对齐论文
+│   ├── retrieval-augmented/              # 检索增强 RAG（REALM / RAG / RETRO）
 │   ├── foundations/                      # 跨学科思想源头论文（如 Anderson《More Is Different》/ 涌现）
 │   ├── frontier-ai-2024-2025.md          # 现代前沿论文清单，含训练 / 视频材料
 │   ├── notes/                            # 论文精读笔记（含 scaling_laws_kaplan_2020.md / chinchilla_compute_optimal_2022.md）
@@ -256,6 +257,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | InstructGPT | 2022 | RLHF 落地，让模型遵循人类指令 |
 | ZeRO（Rajbhandari et al.） | 2020 | 分布式训练显存切分：把优化器状态/梯度/参数沿 N 卡切成 1/N，训得起万亿参数；FSDP 的鼻祖 |
 | DeepSeek / 现代开源 LLM 论文清单 | 2023-2025 | MoE、MLA、代码/数学数据、推理型 RL、QLoRA、DPO |
+| 检索增强 RAG 三件套（REALM / RAG / RETRO） | 2020-2021 | 知识不必全压进参数，可在预训练/生成时从外部知识库检索——RAG 系统的源头 |
 | Harness engineering（OpenAI） | 2026 | Agent 为先：人设计环境与反馈回路，Codex 产出代码与工程资产 |
 | Harness Engineering Is Cybernetics（George Zhang，X 原文） | 2026 | 将 Harness 置于控制论史：反馈回路在架构层闭合时的工程含义 |
 
