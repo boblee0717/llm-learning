@@ -76,6 +76,7 @@ llm-learning/
 │   ├── attention-extensions/             # 位置编码、Self-Attention、线性注意力延伸论文
 │   ├── efficient-transformers/           # 高效 Transformer 与长上下文论文
 │   ├── kv-cache/                         # KV Cache 推理优化（MQA/GQA/PagedAttention/FlashAttention）
+│   ├── distributed-training/             # 分布式训练与显存切分（ZeRO / FSDP）
 │   ├── scaling-laws/                     # 规模定律与 compute-optimal 训练论文（配第二阶段第 6 课）
 │   ├── vision-transformers/              # Vision Transformer 论文
 │   ├── deepseek/                         # DeepSeek MoE / Coder / Math / V2 / V3 / R1
@@ -253,6 +254,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | An Empirical Model of Large-Batch Training | 2018 | critical batch size 与 gradient noise scale 的源头：batch 多大才不浪费 compute，Kaplan §5.3 引用 |
 | More Is Different（Anderson, *Science*） | 1972 | 「涌现 / emergence」思想源头：还原论 ≠ 构成论，规模累积引发质变——scaling laws 量变之外的互补线 |
 | InstructGPT | 2022 | RLHF 落地，让模型遵循人类指令 |
+| ZeRO（Rajbhandari et al.） | 2020 | 分布式训练显存切分：把优化器状态/梯度/参数沿 N 卡切成 1/N，训得起万亿参数；FSDP 的鼻祖 |
 | DeepSeek / 现代开源 LLM 论文清单 | 2023-2025 | MoE、MLA、代码/数学数据、推理型 RL、QLoRA、DPO |
 | Harness engineering（OpenAI） | 2026 | Agent 为先：人设计环境与反馈回路，Codex 产出代码与工程资产 |
 | Harness Engineering Is Cybernetics（George Zhang，X 原文） | 2026 | 将 Harness 置于控制论史：反馈回路在架构层闭合时的工程含义 |

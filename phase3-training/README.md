@@ -31,6 +31,7 @@ pip install -r requirements.txt
 | 第 4 课 | `04_rlhf.py` | 奖励模型、PPO、DPO | 让模型变得"有用且安全" |
 | 第 5 课 | `05_inference_optimization.py` | KV Cache、采样策略、投机解码 | 让推理速度快 10 倍 |
 | 第 5 课·附 | `kv_cache_numpy_demo.py` | 纯 NumPy 最小 KV Cache 对照演示 | 剥掉框架看懂「缓存复用」 |
+| 第 6 课（待补） | 分布式训练专题 | 数据/张量/流水并行、ZeRO、FSDP | 单卡放不下时怎么沿多卡切分训练 |
 
 ## 每课详细大纲
 
@@ -80,6 +81,17 @@ pip install -r requirements.txt
 - 投机解码（Speculative Decoding）：用小模型加速大模型
 - **与 LLM 的关系**：ChatGPT 能秒回你消息，靠的就是这些优化
 - **附加演示** `kv_cache_numpy_demo.py`：纯 NumPy 手写的 KV Cache 最小对照版（无缓存整段重算 vs 有缓存逐 token，验证结果一致 + 投影次数 O(n²) vs O(n) + 显存估算），配合 `papers/kv-cache/` 的 MQA / GQA / PagedAttention / FlashAttention 一起看
+
+### 第 6 课：分布式训练专题（待补）
+
+> 前面 1-5 课都是**单卡训练技巧**（AMP、梯度累积、LoRA、量化）。这一课补上「多卡 / 集群训练」这块空白，把第一阶段第 4 课算过的「每参数 ~16 字节显存账」从单卡推到集群。
+
+- 三种并行：数据并行（DP）、张量并行（TP）、流水并行（PP）各切什么、各自的通信代价
+- **ZeRO（Zero Redundancy Optimizer）**：数据并行下每张卡都冗余存一份优化器状态/梯度/参数，ZeRO-1/2/3 依次把这三部分沿 N 张卡切成 1/N
+- FSDP（PyTorch 原生的 ZeRO 等价实现）
+- **配套论文**: [ZeRO (Rajbhandari et al., 2020)](../papers/distributed-training/ZeRO_Memory_Optimizations_Toward_Training_Trillion_Parameter_Models_2020.pdf)，见 [papers/README.md 第 12 节](../papers/README.md)
+- **与 LLM 的关系**：万亿参数模型、7B/70B 全参训练为什么必须多卡，靠的就是这些切分策略
+- **读法提示**：ZeRO 是系统/分布式工程，不适合像 Attention 那样从零手搓，定位成「概念精读 + 看图」即可
 
 ## 学习方式
 

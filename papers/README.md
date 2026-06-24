@@ -8,6 +8,7 @@
 - `attention-extensions/`: 位置编码、Self-Attention 表达能力、线性注意力等延伸论文
 - `efficient-transformers/`: 高效 Transformer 与长上下文 benchmark / survey
 - `kv-cache/`: KV Cache 推理优化（MQA / GQA / PagedAttention / FlashAttention）
+- `distributed-training/`: 分布式训练与显存切分（ZeRO / FSDP 等多卡训练）
 - `scaling-laws/`: 规模定律与 compute-optimal 训练论文
 - `vision-transformers/`: Vision Transformer 方向论文
 - `deepseek/`: DeepSeek MoE、Coder、Math、V2/V3/R1 系列论文
@@ -247,6 +248,22 @@
   - **来源**: [arxiv.org/abs/2205.14135](https://arxiv.org/abs/2205.14135)
   - **作者**: Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, Christopher Ré (Stanford)
   - **一句话**: 严格说是优化注意力的 IO / 访存（用 tiling 在 SRAM 里算 attention，不落地巨大的注意力矩阵），但与 KV Cache、推理访存瓶颈强相关，常与上面三篇一起读。
+
+### 12. 分布式训练 / 显存切分（2020）
+
+> 主题：单卡放不下大模型时，如何把训练状态沿多张卡切开。这条线索把第一阶段第 4 课算过的「每参数 ~16 字节显存账」从**单卡视角**推到**集群视角**——既然优化器状态（m+v）最吃显存，那就沿 N 张数据并行卡把它切成 1/N。
+>
+> 建议读法：定位成**概念精读 + 看图**，不必抠通信实现细节（all-gather / reduce-scatter 等）。重点看三段切分（ZeRO-1 优化器状态 → ZeRO-2 +梯度 → ZeRO-3 +参数）的示意图与显存对比表。读完回头看 `llm-interview-questions.md` 里的 ZeRO-1/2/3 对照表，把「背结论」变成「懂原理」。
+>
+> 配合课程：第三阶段「分布式训练」专题（待补）；与第一阶段 [第 4 课优化器显存账](../phase1-foundations/04_optimizers.py) 和 [pytorch-essentials 显存估算器](../pytorch-essentials/07_debug_profile_memory.py) 对照阅读。
+
+- **ZeRO: Memory Optimizations Toward Training Trillion Parameter Models**（Rajbhandari et al., 2020）
+  - **状态**: 未读
+  - **文件**: [ZeRO_Memory_Optimizations_Toward_Training_Trillion_Parameter_Models_2020.pdf](distributed-training/ZeRO_Memory_Optimizations_Toward_Training_Trillion_Parameter_Models_2020.pdf)
+  - **来源**: [arxiv.org/abs/1910.02054](https://arxiv.org/abs/1910.02054)（发表于 SC20）
+  - **作者**: Samyam Rajbhandari, Jeff Rasley, Olatunji Ruwase, Yuxiong He (Microsoft)
+  - **建议读法**: 抓三点即可——① 训练显存都花在哪（参数 / 梯度 / 优化器状态 / 激活）；② ZeRO-1/2/3 分别切掉哪部分冗余、单卡省多少（÷N）；③ 它与传统数据并行（DP）/ 模型并行（TP/PP）的关系。PyTorch 的 FSDP 本质就是 ZeRO 的等价实现。
+  - **一句话**: 微软 DeepSpeed 里 ZeRO 的奠基论文。核心思想是把数据并行下每张卡都冗余存一份的「优化器状态 / 梯度 / 参数」沿 N 张卡切分，让单卡只存 1/N，从而把万亿参数级模型训得起来——是理解现代大模型「怎么真的训出来」绕不开的入口。
 
 ## 阅读技巧
 
