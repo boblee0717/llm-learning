@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（SGD→Momentum→RMSprop→Adam→AdamW + Adafactor/显存代价，三件套已搭好待填），第二阶段第 5 课（从零搭建 GPT，首次进入 PyTorch）已完成——主课跑通 + 自写练习（12 个 TODO，含主课全部练习题）全部亲手填完并校验通过，迷你 GPT 从零搭通；第 6 课（Scaling Law）进行中——已基本读完 Kaplan 2020 论文，待补 Chinchilla + 主课脚本收尾。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（SGD→Momentum→RMSprop→Adam→AdamW + Adafactor/显存代价，三件套已搭好待填），第二阶段第 5 课（从零搭建 GPT，首次进入 PyTorch）已完成——主课跑通 + 自写练习（12 个 TODO，含主课全部练习题）全部亲手填完并校验通过，迷你 GPT 从零搭通；第 6 课（Scaling Law）已完成——按理解类定位跑通主课、看懂两张图、记住 `C≈6ND`/Chinchilla 1:20/inference-aware scaling 等核心结论。第二阶段 6 课全部完成，下一步进入第三阶段。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -105,8 +105,8 @@ llm-learning/
 第 0 阶段 (4课, 按需)        第一阶段 (4课)            第二阶段 (6课)             第三阶段 (5课)             第四阶段 (8课)
 矩阵运算补强            →  NumPy/梯度/网络/优化器  →  Attention/Transformer/GPT/Scaling Law  →  LoRA/量化/RLHF/推理优化  →  DeepSeek/推理优化
    形状与反向                  基础数学                   核心架构                                    工业实践
-   🚧 第 1 课进行中            ✅ 已完成三课，新增第4课优化器  ✅ 第 5 课已完成（GPT/PyTorch）           待学习                    后续进阶
-                                                        自写练习 12 个 TODO 全部填完；下一步第 6 课
+   🚧 第 1 课进行中            ✅ 已完成三课，新增第4课优化器  ✅ 6 课全部完成（GPT/Scaling Law）        待学习                    后续进阶
+                                                        下一步进入第三阶段
 
                                           ┈┈┈→  第五阶段 (10课)：Agent 架构与 Agent 基础设施
                                                  Agent Loop/Tool/规划/记忆/RAG + Runtime/沙箱/并发缓存/观测/Multi-Agent
@@ -180,7 +180,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 > 详见 [phase1-foundations/README.md](phase1-foundations/README.md)
 
-### 第二阶段：Transformer 架构（第 1～5 课已完成，下一步第 6 课；第 6 课已搭好待学）
+### 第二阶段：Transformer 架构（6 课全部完成）
 
 | 课程 | 主课文件 | 自写练习 | 核心内容 |
 |------|----------|----------|----------|
