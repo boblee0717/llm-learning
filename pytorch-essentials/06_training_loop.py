@@ -238,7 +238,18 @@ print(f"累积了 {accum_steps} 个 micro-batch 的梯度后，step 一次")
 opt.step()
 opt.zero_grad()
 print("→ 等效 batch_size = micro_batch × accum_steps，显存只占一个 micro-batch")
-print("   （对照 papers/notes 的 critical batch size：目标是凑到 B_crit，不是越大越好）")
+print("""
+   batch 到底该凑多大？—— critical batch size（临界批量）
+   来自 McCandlish et al. 2018《An Empirical Model of Large-Batch Training》
+   （arXiv:1812.06162，也是 Kaplan scaling laws §5.3 引用的源头）：
+   - 增大 batch 能减少达到目标 loss 所需的「步数」，但收益递减
+   - 拐点叫 B_crit，约等于可测量的 gradient noise scale B_noise
+   - 比 B_crit 小 → 浪费时间（步数多）；比 B_crit 大 → 浪费 compute（样本多）
+   - B_noise 随训练推进 / 任务难度增大 → 后期才适合用更大 batch
+     （正是 GPT-3 把 batch 从 0.5M warmup 到 3.2M tokens 的依据）
+   → 梯度累积的目标是「凑到 B_crit 附近」，不是越大越好
+   精读：papers/notes/large_batch_training_mccandlish_2018.md
+""")
 
 
 # ============================================================

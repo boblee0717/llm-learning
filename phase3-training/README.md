@@ -4,10 +4,9 @@
 
 ## 前置要求
 
-完成第二阶段的全部课程，理解：
-- Transformer 完整架构
-- 自注意力与多头注意力
-- GPT 的训练与文本生成
+完成第二阶段 + **PyTorch 专项（桥梁课）**，理解：
+- Transformer 完整架构、自注意力与多头注意力、GPT 的训练与文本生成
+- **完整训练流程**（DataLoader / 五步曲 / AMP / 梯度累积 / checkpoint）——这部分已在 [`pytorch-essentials/`](../pytorch-essentials/) 第 4/5/6/8 课学过，phase3 不再重复
 
 ## 环境准备
 
@@ -19,33 +18,69 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-## 课程结构
+## 课程结构（分层 + 时间盒）
 
-按顺序学习，每课约 60-120 分钟：
+> ⚠️ **phase3 换挡说明**：phase0-2 是数学/Transformer 基本功，"全程 NumPy 从零手搓"是对的；但 phase3 是**工程/应用**课，性质变了。不是每课都值得"从零手搓 + 三件套"。下表按 ROI 给每课定了**学法档位 + 完成标准 + 建议天数**——到点就过，不追求每课 100%。
 
-| 课程 | 文件 | 核心内容 | 关键概念 |
-|------|------|----------|----------|
-| 第 1 课 | `01_training_pipeline.py` | DataLoader、训练循环、验证、模型保存 | 工业级训练流程的完整实现 |
-| 第 2 课 | `02_lora.py` | 低秩分解、LoRA 层、参数冻结 | 用 0.1% 的参数微调大模型 |
-| 第 3 课 | `03_quantization.py` | FP32→FP16→INT8→INT4 量化 | 让大模型跑在消费级显卡上 |
-| 第 4 课 | `04_rlhf.py` | 奖励模型、PPO、DPO | 让模型变得"有用且安全" |
-| 第 5 课 | `05_inference_optimization.py` | KV Cache、采样策略、投机解码 | 让推理速度快 10 倍 |
-| 第 5 课·附 | `kv_cache_numpy_demo.py` | 纯 NumPy 最小 KV Cache 对照演示 | 剥掉框架看懂「缓存复用」 |
-| 第 6 课（待补） | 分布式训练专题 | 数据/张量/流水并行、ZeRO、FSDP | 单卡放不下时怎么沿多卡切分训练 |
+**三档学法：**
+- 🔨 **手搓**：值得亲手写代码 / 填 self_write 留白（phase3 只有 LoRA 和量化核心两处）
+- ⚡ **跑通**：跑主课看现象 + 能改参数，不做 self_write 留白
+- 📖 **精读**：概念 + 看图 + 笔记，**禁止从零手搓**（强行实现性价比极低）
+
+> 🗑️ **原「训练流程」课已删除**（DataLoader / 五步曲 / AMP / 梯度累积 / LR 调度 / checkpoint / 整合）——这些已被后补的 **PyTorch 专项第 4/5/6/8 课**逐一覆盖，留着是纯重复。要复习训练流程直接看 [`pytorch-essentials/06_training_loop.py`](../pytorch-essentials/06_training_loop.py) 和 [`08_capstone_train.py`](../pytorch-essentials/08_capstone_train.py)。删课后文件已重命名为 `01_lora.py`…`04_inference_optimization.py`，phase3 从 LoRA 干净开始。
+
+| 课程 | 文件 | 档位 | 完成标准（done） | 建议 |
+|------|------|------|------------------|------|
+| 第 1 课 LoRA | `01_lora.py` | 🔨 **手搓（重点）** | 亲手写出 `W+BA` 层 + 跑出"0.1% 参数微调有效"现象 + 试不同 rank | **2 天** |
+| 第 2 课 量化 | `02_quantization.py` | 🔨 手搓核心 | 亲手写对称/非对称量化映射（~20 行）+ 看 INT8/INT4 精度损失现象 | **2 天** |
+| 第 3 课 RLHF | `03_rlhf.py` | 📖 精读（防陷阱） | 画出 SFT→RM→PPO 数据流 + 亲手推一遍 DPO loss。**禁止从零搓 PPO**——读懂、能改参数即可 | **2 天** |
+| 第 4 课 推理优化 | `04_inference_optimization.py` | ⚡ 跑通+已有 demo | KV Cache 概念吃透（已有 `kv_cache_numpy_demo.py`）+ 采样策略跑一遍 + 投机解码看懂思想 | 1 天 |
+| 第 4 课·附 | `kv_cache_numpy_demo.py` | ⚡ 已完成 | 纯 NumPy 最小 KV Cache 对照演示，配合上面第 4 课一起看 | — |
+| 第 5 课 分布式（待补） | 分布式训练专题 | 📖 精读+看图 | DP/TP/PP 各切什么 + ZeRO-1/2/3 切哪三样。**不手搓，看图** | 1 天 |
+
+**合计约 1.5-2 周**（含缓冲）。删掉重复的训练流程课后，省下的力气全投到"真正填完 LoRA/量化的 self_write + 跑实验看现象"上。
+
+> 📌 **配套论文是 just-in-time，不是先囤一书架。** 学到第 4 课需要 KV Cache 论文才翻 `papers/kv-cache/`，学到第 5 课需要 ZeRO 才翻 `papers/distributed-training/`。当前那批"待精读"论文是 backlog，别让它造成"还有一堆没读"的焦虑。
+
+## 整体学习规划
+
+### 哪些课要 self_write 留白（亲手填）
+
+不是每课都配「三件套」。phase3 的 self_write 只给真正值得手写、且**没在别处写过**的内容：
+
+| 课 | self_write？ | TODO 设计 | 理由 |
+|----|:---:|------|------|
+| 第 1 课 LoRA | ✅ **要** | `LoRALinear.forward`（W·x + BA·x·α/r）、`apply_lora` 冻结逻辑、`merge_lora` 的转置对齐，约 5 个 TODO | LoRA 核心就这几十行、面试必问，亲手写一遍收益最高 |
+| 第 2 课 量化 | ✅ **要** | 对称/非对称 quant+dequant、`per_channel_quantize`、STE 伪量化 `backward`，约 6 个 TODO | 量化映射公式必须亲手推一遍，scale/zero_point 容易想当然 |
+| 第 3 课 RLHF | ⚠️ **只 1 个（可选）** | 仅 `dpo_loss` 一个函数 | DPO loss 值得亲手推（它替代了整个 PPO）；**PPO/RM 不手搓**，读懂即可 |
+| 第 4 课 推理 | ❌ **不要** | — | top-k/top-p 你已在 **phase2 第 5 课**亲手写过、KV Cache 已有 `kv_cache_numpy_demo.py`，再写是重复 |
+| 第 5 课 分布式 | ❌ **不要** | — | 系统/分布式工程，概念 + 看图，不适合手搓 |
+
+> **phase3 用「两件套」（主课 + self_write），不做 reset 脚本** —— 砍掉这层纯设施开销，正合效率原则。需要二刷就 `git checkout` 还原留白文件即可。
+>
+> 已建好的 self_write（留白待填）：[`01_lora_self_write.py`](01_lora_self_write.py)（5 TODO）、[`02_quantization_self_write.py`](02_quantization_self_write.py)（6 TODO）、[`03_rlhf_self_write.py`](03_rlhf_self_write.py)（仅 `dpo_loss` 1 TODO）。每个都自带 `require_*` 即时校验，全填对会跑一段小训练/估算收尾。第 4/5 课无 self_write。
+
+### 推进节奏（约 8-9 天）
+
+| 阶段 | 任务 | 产出 |
+|------|------|------|
+| **Day 1-2** | 第 1 课 LoRA：精读主课 → 填 self_write → 跑「0.1% 参数微调有效」+ 试 rank=1/4/8/16 | 手写的 `LoRALinear`，能解释 α/r 缩放与 merge 为何无推理开销 |
+| **Day 3-4** | 第 2 课 量化：精读主课 → 填 self_write → 看 INT8/INT4/INT2 误差与压缩比 | 手写的对称/非对称/逐通道量化，能解释 zero_point 何时有用 |
+| **Day 5** | 第 3 课 RLHF：读主课 + 画 SFT→RM→PPO 数据流 + 亲手推 `dpo_loss` | 一张对齐流程图 + DPO loss 推导，能讲清「为什么 DPO 不需要 RM」 |
+| **Day 6** | 第 4 课 推理：跑主课看采样策略差异 + KV Cache 加速 + 投机解码思想 | 能解释 greedy/temp/top-k/top-p 区别、KV Cache 为何 decode 不需 causal mask |
+| **Day 7** | 第 5 课 分布式：读 ZeRO 论文（概念+看图）+ 画 DP/TP/PP + ZeRO-1/2/3 切分图 | 一张「优化器状态/梯度/参数沿 N 卡切 1/N」的图 |
+| **Day 8-9** | 缓冲 / 复盘：补没填完的 TODO、串讲整阶段、更新 learning-progress | phase3 收尾 |
+
+### 每课的「关闭」标准
+
+一课只有同时满足才算关闭、才开下一课（呼应「先关线再开线」）：
+1. 主课 `python3 0X_xxx.py` 能 `exit 0` 跑通、现象看懂；
+2. 🔨 课的 self_write 全部 TODO 填完、内置校验通过；📖/⚡ 课完成对应的「画图 / 推导 / 改参数实验」；
+3. 在 `learning-progress.md` 写一条进展（踩了什么坑、关键领悟）。
 
 ## 每课详细大纲
 
-### 第 1 课：完整训练流程
-
-- 数据集准备与 DataLoader
-- 训练循环的五步曲：forward → loss → backward → step → zero_grad
-- 验证集评估与早停（Early Stopping）
-- 混合精度训练（AMP）：用 FP16 加速训练
-- 梯度累积：用小显存模拟大 batch
-- 模型保存与加载（checkpoint）
-- **与 LLM 的关系**：这就是预训练 GPT 时的完整流程
-
-### 第 2 课：LoRA 微调
+### 第 1 课：LoRA 微调
 
 - 全参数微调的问题：175B 参数的 GPT-3 你存都存不下
 - 低秩分解的数学原理：W + ΔW ≈ W + BA
@@ -54,7 +89,7 @@ pip install -r requirements.txt
 - rank 的选择对效果的影响
 - **与 LLM 的关系**：几乎所有开源模型微调都在用 LoRA
 
-### 第 3 课：模型量化
+### 第 2 课：模型量化
 
 - 浮点数回顾：FP32、FP16、BF16 的区别
 - 量化的原理：把浮点数映射到整数
@@ -63,7 +98,7 @@ pip install -r requirements.txt
 - 量化对模型精度的影响
 - **与 LLM 的关系**：4-bit 量化让 70B 模型跑在单张 24GB 显卡上
 
-### 第 4 课：RLHF 人类偏好对齐
+### 第 3 课：RLHF 人类偏好对齐
 
 - 为什么预训练后的模型不好用？——"能力"vs"对齐"
 - SFT（监督微调）：教模型学会对话格式
@@ -72,7 +107,7 @@ pip install -r requirements.txt
 - DPO：不需要奖励模型的更简洁方法
 - **与 LLM 的关系**：ChatGPT = GPT + SFT + RLHF
 
-### 第 5 课：推理优化
+### 第 4 课：推理优化
 
 - 自回归生成的瓶颈：每次只生成一个 token
 - KV Cache：避免重复计算，加速 10 倍
@@ -82,9 +117,9 @@ pip install -r requirements.txt
 - **与 LLM 的关系**：ChatGPT 能秒回你消息，靠的就是这些优化
 - **附加演示** `kv_cache_numpy_demo.py`：纯 NumPy 手写的 KV Cache 最小对照版（无缓存整段重算 vs 有缓存逐 token，验证结果一致 + 投影次数 O(n²) vs O(n) + 显存估算），配合 `papers/kv-cache/` 的 MQA / GQA / PagedAttention / FlashAttention 一起看
 
-### 第 6 课：分布式训练专题（待补）
+### 第 5 课：分布式训练专题（待补）
 
-> 前面 1-5 课都是**单卡训练技巧**（AMP、梯度累积、LoRA、量化）。这一课补上「多卡 / 集群训练」这块空白，把第一阶段第 4 课算过的「每参数 ~16 字节显存账」从单卡推到集群。
+> 前面 1-4 课都是**单卡训练技巧**（LoRA、量化、推理优化）。这一课补上「多卡 / 集群训练」这块空白，把第一阶段第 4 课算过的「每参数 ~16 字节显存账」从单卡推到集群。
 
 - 三种并行：数据并行（DP）、张量并行（TP）、流水并行（PP）各切什么、各自的通信代价
 - **ZeRO（Zero Redundancy Optimizer）**：数据并行下每张卡都冗余存一份优化器状态/梯度/参数，ZeRO-1/2/3 依次把这三部分沿 N 张卡切成 1/N
@@ -93,12 +128,18 @@ pip install -r requirements.txt
 - **与 LLM 的关系**：万亿参数模型、7B/70B 全参训练为什么必须多卡，靠的就是这些切分策略
 - **读法提示**：ZeRO 是系统/分布式工程，不适合像 Attention 那样从零手搓，定位成「概念精读 + 看图」即可
 
-## 学习方式
+## 学习方式（效率四规则）
 
-1. **先理解概念**：每课开头有详细的原理讲解
-2. **跑代码看效果**：观察量化前后精度变化、LoRA 微调效果等
-3. **对比实验**：改参数（rank、量化位数、学习率），观察影响
-4. **读源码**：课后去看 HuggingFace PEFT、bitsandbytes 的实现
+1. **先关线，再开线**：进 phase3 前先把欠的 TODO 收尾，别再新增论文/专题。一次只开一条线，不并行挂多课。
+2. **区分"建设"和"学习"**：搭脚手架/reset/README 同步交给 AI，**你本人的时间只投在"亲手填 self_write + 跑实验看现象"**。设施再完美，不填 TODO = 没学。
+3. **按档位投力气**：🔨 的课（LoRA / 量化）做完整 self_write；RLHF 只手写 `dpo_loss` 一个；⚡（推理）和分布式只跑主课 + 画图/记笔记，不做留白练习。
+4. **每课守时间盒**：到建议天数就过，每课定义里的 done 标准达成即算完成，不追求 100%。
+
+**具体动作：**
+- **先理解概念**：每课开头有详细的原理讲解
+- **跑代码看效果**：观察量化前后精度变化、LoRA 微调效果等
+- **对比实验**：改参数（rank、量化位数、学习率），观察影响
+- **读源码（选学）**：有余力再去看 HuggingFace PEFT、bitsandbytes 的实现
 
 ## 完成后你将理解
 

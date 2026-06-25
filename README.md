@@ -51,12 +51,11 @@ llm-learning/
 │   ├── reset_exercises_0X.py             # 每课配套重置脚本（01–05，二刷用）
 │   └── README.md
 │
-├── phase3-training/                 # 第三阶段：训练与微调
-│   ├── 01_training_pipeline.py           # DataLoader、AMP、梯度累积
-│   ├── 02_lora.py                        # LoRA 低秩微调
-│   ├── 03_quantization.py                # 模型量化 (INT8/INT4)
-│   ├── 04_rlhf.py                        # RLHF / DPO 人类偏好对齐
-│   ├── 05_inference_optimization.py      # KV Cache、采样策略、投机解码
+├── phase3-training/                 # 第三阶段：训练与微调（训练流程已并入 PyTorch 专项）
+│   ├── 01_lora.py                        # LoRA 低秩微调
+│   ├── 02_quantization.py                # 模型量化 (INT8/INT4)
+│   ├── 03_rlhf.py                        # RLHF / DPO 人类偏好对齐
+│   ├── 04_inference_optimization.py      # KV Cache、采样策略、投机解码
 │   ├── kv_cache_numpy_demo.py            # 纯 NumPy 最小 KV Cache 对照演示
 │   └── README.md
 │
@@ -195,13 +194,15 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 ### 第三阶段：训练与微调
 
+> 原「训练流程」课已删除（并入 `pytorch-essentials/` 第 4/5/6/8 课），其余课已重命名为 01-04。
+
 | 课程 | 文件 | 核心内容 |
 |------|------|----------|
-| 第 1 课 | `01_training_pipeline.py` | DataLoader、AMP、梯度累积、Checkpoint |
-| 第 2 课 | `02_lora.py` | LoRA 低秩微调 |
-| 第 3 课 | `03_quantization.py` | 模型量化 (INT8/INT4) |
-| 第 4 课 | `04_rlhf.py` | RLHF / DPO 人类偏好对齐 |
-| 第 5 课 | `05_inference_optimization.py` | KV Cache、采样策略、投机解码 |
+| 第 1 课 | `01_lora.py` | LoRA 低秩微调 |
+| 第 2 课 | `02_quantization.py` | 模型量化 (INT8/INT4) |
+| 第 3 课 | `03_rlhf.py` | RLHF / DPO 人类偏好对齐 |
+| 第 4 课 | `04_inference_optimization.py` | KV Cache、采样策略、投机解码 |
+| 第 5 课（待补） | 分布式训练专题 | DP/TP/PP、ZeRO、FSDP |
 
 > 详见 [phase3-training/README.md](phase3-training/README.md)
 
