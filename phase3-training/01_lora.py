@@ -99,17 +99,29 @@ class LoRALinear(nn.Module):
     def __init__(self, original_linear, rank=4, alpha=1.0):
         super().__init__()
         self.original = original_linear
+        # 冻结原始权重 W：LoRA 的核心思想是不动原模型、只学一个低秩的 ΔW。
+        # 冻结后反向传播不再为巨大的 W 保存梯度和优化器状态，显存大幅下降。
         self.original.weight.requires_grad = False
         if self.original.bias is not None:
+            # bias 同样冻结、不参与微调。原因：① bias 只有 d 个参数，相比 W 的 d² 个
+            # 微不足道，对适配新任务几乎没影响；② 保持 bias 不变，原模型行为更稳定。
+            # 它仍会原样参与前向（在 self.original(x) 里），只是不被训练。
             self.original.bias.requires_grad = False
 
         in_features = original_linear.in_features
         out_features = original_linear.out_features
         self.rank = rank
         self.alpha = alpha
+        # alpha 是 LoRA 的“强度旋钮”，和 rank 一起决定旁路输出的缩放系数。
+        # 除以 rank 的作用：rank 变大时旁路输出（r 项相加）天然变大，÷rank 把幅度
+        # 拉回稳定量级，这样换不同 rank 做实验时不必重新调学习率。
+        # 真正决定强度的是 alpha/rank 这个比值（常见经验：alpha ≈ 2×rank）。
         self.scaling = alpha / rank
 
         self.lora_A = nn.Parameter(torch.randn(in_features, rank) * 0.01)
+        # B 初始化为 0：训练第一步时 A@B = 0，旁路输出为 0，挂了 LoRA 的模型输出
+        # 与原模型完全一致，保证从原模型的良好状态平滑出发，不会一上来就破坏预训练能力。
+        # A 用随机小值而非也置零，是为了打破对称性，否则 A、B 梯度互相为 0 永远学不动。
         self.lora_B = nn.Parameter(torch.zeros(rank, out_features))
 
     def forward(self, x):
