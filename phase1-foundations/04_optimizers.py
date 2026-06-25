@@ -265,7 +265,7 @@ AdamW 的做法：把权重衰减从梯度里"解耦"出来，直接作用在参
   w = w - lr * ( m_hat / (sqrt(v_hat) + eps) + weight_decay * w )
                 └── Adam 的自适应更新 ──┘   └── 独立的、不被缩放的衰减 ──┘
 
-这就是 phase3-training/01_training_pipeline.py 里
+这就是 pytorch-essentials/06_training_loop.py 里
   torch.optim.AdamW(model.parameters(), lr=3e-4, weight_decay=0.01)
 背后真正在做的事——现在你能解释那行黑盒了。
 """)

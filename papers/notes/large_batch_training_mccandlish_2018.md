@@ -3,7 +3,7 @@
 > 论文 PDF：[`papers/scaling-laws/An_Empirical_Model_of_Large_Batch_Training_2018.pdf`](../scaling-laws/An_Empirical_Model_of_Large_Batch_Training_2018.pdf)
 > 来源：[arxiv.org/abs/1812.06162](https://arxiv.org/abs/1812.06162)、[OpenAI blog](https://openai.com/index/how-ai-training-scales/)
 > 作者：Sam McCandlish, Jared Kaplan, Dario Amodei, and the OpenAI Dota Team（OpenAI, 2018 年 12 月）
-> 配套课程：第二阶段第 6 课 [`phase2-transformer/06_scaling_laws.py`](../../phase2-transformer/06_scaling_laws.py)、第三阶段第 1 课 [`phase3-training/01_training_pipeline.py`](../../phase3-training/01_training_pipeline.py) 的 Part 5（梯度累积 / 大 batch）
+> 配套课程：第二阶段第 6 课 [`phase2-transformer/06_scaling_laws.py`](../../phase2-transformer/06_scaling_laws.py)、PyTorch 专项第 6 课 [`pytorch-essentials/06_training_loop.py`](../../pytorch-essentials/06_training_loop.py) 的 Part 7（梯度累积 / 大 batch）
 
 这是 Kaplan scaling laws 笔记 [`scaling_laws_kaplan_2020.md`](./scaling_laws_kaplan_2020.md) §5.3 反复引用的「源头论文」——**critical batch size（临界批量大小）**和 **gradient noise scale（梯度噪声尺度）**这两个概念都来自这里。同一作者班底（McCandlish、Kaplan、Amodei）两年后写了 scaling laws，可以把这篇当成「scaling laws 之前，OpenAI 先把 batch size 这条轴搞清楚」。
 
@@ -141,7 +141,7 @@ $$
 - Part 3 的 `C ≈ 6ND` 隐含假设「batch size 调在 `B_crit`」——否则 compute 利用率（MFU）不对
 - 与 Kaplan 笔记 §5.3 的 critical batch size 段落直接呼应
 
-### 第三阶段第 1 课 `01_training_pipeline.py` Part 5（梯度累积）
+### PyTorch 专项第 6 课 `pytorch-essentials/06_training_loop.py` Part 7（梯度累积）
 
 ```text
 batch_size=16, accumulation_steps=4  ≡  等效 batch_size=64
@@ -158,4 +158,4 @@ batch_size=16, accumulation_steps=4  ≡  等效 batch_size=64
 - [ ] 能口述「步数 vs 样本数」双曲线和 `B_crit = E_min / S_min`
 - [ ] 说清 `B_noise` 的信噪比直觉（信号 `|G|²` vs 噪声 `tr(Σ)`）
 - [ ] 把「`B_noise` 随训练变大」和 GPT-3「batch 0.5M→3.2M warmup」对上
-- [ ] 回到 `01_training_pipeline.py` Part 5，理解梯度累积凑大 batch 的上限就是 `B_crit`
+- [ ] 回到 `pytorch-essentials/06_training_loop.py` Part 7，理解梯度累积凑大 batch 的上限就是 `B_crit`

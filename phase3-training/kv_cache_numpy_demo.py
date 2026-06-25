@@ -3,7 +3,7 @@
 KV Cache 最小演示（纯 NumPy 手写）
 ======================================================
 
-这是 `05_inference_optimization.py`（PyTorch 版第 5 课）的轻量对照版。
+这是 `04_inference_optimization.py`（PyTorch 版第 4 课）的轻量对照版。
 目的：剥掉框架，用最少的代码把「KV Cache 到底省了什么」看透。
 
 一句话回顾：

@@ -198,7 +198,7 @@
 
 - [DeepSeek-V2](https://arxiv.org/abs/2405.04434)
 - 本地 PDF：[DeepSeek-V2](../papers/deepseek/DeepSeek-V2_Strong_Economical_Efficient_MoE_2024.pdf)
-- 复习代码：[phase3-training/05_inference_optimization.py](../phase3-training/05_inference_optimization.py)
+- 复习代码：[phase3-training/04_inference_optimization.py](../phase3-training/04_inference_optimization.py)
 
 **动手任务**
 
@@ -283,14 +283,14 @@
 
 - [Fast Inference from Transformers via Speculative Decoding](https://arxiv.org/abs/2211.17192)
 - [DeepSeek-V3 Technical Report](https://arxiv.org/abs/2412.19437)
-- 复习代码：[phase3-training/05_inference_optimization.py](../phase3-training/05_inference_optimization.py)
+- 复习代码：[phase3-training/04_inference_optimization.py](../phase3-training/04_inference_optimization.py)
 
 **动手任务**
 
 - 解释为什么 speculative decoding 能做到「加速但不改输出分布」。
 - 思考：为什么 draft model 太弱或太慢都会让加速失败？
 - 如果框架支持 speculative decoding，固定目标模型，换不同 draft 配置记录接受率、tokens/s、质量变化。
-- 如果暂时不支持，就用第三阶段 `05_inference_optimization.py` 的投机解码演示复盘，并补一张「draft -> verify -> accept/reject」流程图。
+- 如果暂时不支持，就用第三阶段 `04_inference_optimization.py` 的投机解码演示复盘，并补一张「draft -> verify -> accept/reject」流程图。
 
 ### 第 7 课：DeepSeekMath / R1 与推理能力后训练
 

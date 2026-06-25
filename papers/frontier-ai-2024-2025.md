@@ -86,7 +86,7 @@
 - **状态**: 未读
 - **文件**: [QLoRA_Efficient_Finetuning_of_Quantized_LLMs_2023.pdf](efficient-training/QLoRA_Efficient_Finetuning_of_Quantized_LLMs_2023.pdf)
 - **来源**: [arxiv.org/abs/2305.14314](https://arxiv.org/abs/2305.14314)、[GitHub](https://github.com/artidoro/qlora)、[Hugging Face PEFT LoRA 文档](https://huggingface.co/docs/peft/developer_guides/lora)
-- **建议读法**: 先读 NF4、double quantization、paged optimizers，再回到 `phase3-training/02_lora.py` 和 `03_quantization.py`。
+- **建议读法**: 先读 NF4、double quantization、paged optimizers，再回到 `phase3-training/01_lora.py` 和 `02_quantization.py`。
 - **一句话**: 把 LoRA 和 4-bit 量化连起来，是个人显卡微调大模型时最值得掌握的论文之一。
 
 ## 10. Direct Preference Optimization: Your Language Model is Secretly a Reward Model (2023)
@@ -94,7 +94,7 @@
 - **状态**: 未读
 - **文件**: [Direct_Preference_Optimization_2023.pdf](efficient-training/Direct_Preference_Optimization_2023.pdf)
 - **来源**: [arxiv.org/abs/2305.18290](https://arxiv.org/abs/2305.18290)、[Hugging Face TRL DPO Trainer](https://huggingface.co/docs/trl/dpo_trainer)
-- **建议读法**: 先理解它想绕开 PPO/RLHF 的哪几个复杂环节，再对照 `phase3-training/04_rlhf.py`。
+- **建议读法**: 先理解它想绕开 PPO/RLHF 的哪几个复杂环节，再对照 `phase3-training/03_rlhf.py`。
 - **一句话**: DPO 是偏好对齐路线里非常实用的一步：用偏好对直接优化语言模型，工程上比完整 RLHF 更轻。
 
 ## 配套训练 / 视频材料
@@ -102,8 +102,8 @@
 - **DeepSeek-R1 复现练习**: [Hugging Face Open-R1](https://github.com/huggingface/open-r1)；适合读完 DeepSeekMath 和 DeepSeek-R1 后看数据生成、SFT、GRPO/RL 的复现路线。
 - **后训练总览视频课**: [Fine-tuning & RL for LLMs: Intro to Post-training](https://www.deeplearning.ai/courses/fine-tuning-and-reinforcement-learning-for-llms-intro-to-post-training/)；适合把 SFT、偏好优化、RL 和生产反馈闭环串起来。
 - **RLHF 视频课**: [Reinforcement Learning From Human Feedback](https://www.deeplearning.ai/courses/reinforcement-learning-from-human-feedback)；适合配合 InstructGPT、DPO、DeepSeek-R1 阅读。
-- **量化视频课**: [Quantization in Depth](https://www.deeplearning.ai/courses/quantization-in-depth/)；适合配合 QLoRA 和 `phase3-training/03_quantization.py`。
-- **LoRA/QLoRA 实操文档**: [Hugging Face PEFT LoRA](https://huggingface.co/docs/peft/developer_guides/lora)；适合从本项目的 `phase3-training/02_lora.py` 过渡到真实模型微调。
+- **量化视频课**: [Quantization in Depth](https://www.deeplearning.ai/courses/quantization-in-depth/)；适合配合 QLoRA 和 `phase3-training/02_quantization.py`。
+- **LoRA/QLoRA 实操文档**: [Hugging Face PEFT LoRA](https://huggingface.co/docs/peft/developer_guides/lora)；适合从本项目的 `phase3-training/01_lora.py` 过渡到真实模型微调。
 
 ## 一个轻量学习节奏
 
