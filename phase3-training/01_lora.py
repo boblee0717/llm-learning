@@ -307,8 +307,15 @@ optimizer_lora = torch.optim.AdamW(
     [p for p in model.parameters() if p.requires_grad], lr=1e-3
 )
 
-for epoch in range(10):
+# 1 个 epoch = 把整个 new_loader（新任务数据集）完整过一遍。
+# 这里跑 100 个 epoch：因为 LoRA 只有约 2% 的参数可训练，而且新任务（递减）
+# 和预训练学到的（递增）方向相反，起点 loss 很高，需要更多轮才能把 loss 压下来。
+# 对比预训练（全参数）几个 epoch 就降到接近 0，这里收敛明显更慢——这正是
+# 「用极少参数换取可接受效果」的代价，也让 LoRA 的适配过程看得更清楚。
+for epoch in range(100):
     total_loss = 0
+    # 内层循环遍历所有 batch：前向算 logits → 算 loss → 反向求梯度 →
+    # optimizer 只更新 LoRA 的 A/B（原权重已冻结）→ 清空梯度。
     for x, y in new_loader:
         logits = model(x)
         loss = F.cross_entropy(logits.view(-1, vocab_size), y.view(-1))
@@ -316,8 +323,10 @@ for epoch in range(10):
         optimizer_lora.step()
         optimizer_lora.zero_grad()
         total_loss += loss.item()
+    # 该 epoch 内所有 batch 的平均 loss，越小说明对新任务预测越准。
     avg_loss = total_loss / len(new_loader)
-    if epoch in [0, 4, 9]:
+    # 只在这几个节点打印，方便观察 loss 随训练推进的下降趋势。
+    if epoch in [0, 4, 9, 20, 50, 99]:
         print(f"  Epoch {epoch+1}: loss={avg_loss:.4f}")
 
 print("\n→ LoRA 用很少的参数就能适配新任务！")
@@ -341,7 +350,10 @@ rank 越小 → 参数越少 → 可能不够用
   - rank=64+:   复杂任务（新能力学习）
 """)
 
-for rank in [1, 4, 8, 16]:
+# 注意：本 toy 模型 d_model=64，所以 rank=64 已经等于满秩，LoRA 参数甚至比原
+# Linear 还大，已失去「低秩」意义——这里列出来只为观察参数随 rank 增长的趋势，
+# 并非推荐设置。真实模型 d 动辄几千，rank 通常取 4~64 才是真正的低秩。
+for rank in [1, 4, 8, 16, 32, 64]:
     model_test = MiniGPTForLoRA(vocab_size=vocab_size, n_layers=2, seq_len=seq_len)
     lora_p = apply_lora(model_test, rank=rank)
     trainable = sum(p.numel() for p in model_test.parameters() if p.requires_grad)
@@ -373,19 +385,34 @@ def merge_lora(model):
             with torch.no_grad():
                 delta_w = (module.lora_A @ module.lora_B) * module.scaling
                 module.original.weight.data += delta_w.T
+                # 关键：合并后必须把旁路关掉。ΔW 已经写进 original.weight，
+                # 如果不清零 lora_B，forward 里 (x@A@B) 会再算一遍 ΔW，
+                # 导致输出变成 W+2ΔW。把 B 清零后旁路恒为 0，前向等价于纯 Linear。
+                module.lora_B.data.zero_()
             merged += 1
     return merged
 
 
 model_merge = MiniGPTForLoRA(vocab_size=vocab_size, n_layers=2, seq_len=seq_len)
 apply_lora(model_merge, rank=4)
+# 制造非零 LoRA 权重（模拟训练后的状态），否则 ΔW=0，合并前后输出本来就一样
+with torch.no_grad():
+    for m in model_merge.modules():
+        if isinstance(m, LoRALinear):
+            m.lora_B.copy_(torch.randn_like(m.lora_B) * 0.1)
 
 x_test = torch.randint(0, vocab_size, (1, seq_len))
 with torch.no_grad():
     out_before = model_merge(x_test)
 
 n_merged = merge_lora(model_merge)
+
+with torch.no_grad():
+    out_after = model_merge(x_test)
+# 合并只是数学等价改写，合并前后整模型输出应逐元素一致（这正是练习 3 要验证的）
+same = torch.allclose(out_before, out_after, atol=1e-5)
 print(f"已合并 {n_merged} 个 LoRA 层")
+print(f"合并前后输出一致: {same}（合并是等价改写，且旁路已关闭）")
 print("合并后模型可以像普通模型一样保存和推理，没有额外开销")
 print()
 

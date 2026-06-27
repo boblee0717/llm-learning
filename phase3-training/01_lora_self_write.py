@@ -5,7 +5,7 @@
 
 用法：
 1. 运行：python3 01_lora_self_write.py
-2. 按 TODO-1 到 TODO-5 顺序补全实现
+2. 按 TODO-1 到 TODO-6 顺序补全实现
 3. 每补完一个 TODO 就运行一次，依靠 require_xxx 校验即时纠错
 
 目标（对照主课 01_lora.py）：
@@ -14,6 +14,7 @@
 - 实现 apply_lora 的冻结逻辑：只训练 LoRA、冻结其余一切
 - 实现 merge_lora：把低秩增量合并回原始权重（注意 (out,in) 的转置对齐）
 - 手算 LoRA 参数量与压缩比
+- 端到端验证合并的正确性：合并前后整模型输出必须完全一致（含「旁路要失效」的坑）
 
 关键直觉：微调时权重变化量 ΔW 往往是低秩的，可以用两个小矩阵 B·A 近似。
 """
@@ -292,8 +293,47 @@ for step in range(60):
         first = loss.item()
     last = loss.item()
 print(f"LoRA 微调：loss {first:.3f} → {last:.3f}（只训练了少量 LoRA 参数）")
-
 print()
+
+
+# ============================================================
+section("TODO-6（练习3）：合并前后『整模型』输出必须完全一致")
+# ============================================================
+# TODO-4 只验证了单个 q_proj 层；这里做端到端验证，也是检验「合并后旁路要失效」
+# 这个坑：merge_lora 已把 ΔW 写进原始权重，如果忘了把 lora_B 清零，forward 里
+# 旁路会再算一遍 ΔW → 输出多加一份 → 结果错误。所以正确合并后整模型输出应不变。
+#
+# TODO-6：补全下面三步——
+#   a) 合并前：用 lm6 在 x6 上推理，存到 out_before（记得 torch.no_grad）
+#   b) 调 merge_lora(lm6) 执行合并，把返回值存到 n_merged6
+#   c) 合并后：再用 lm6 在 x6 上推理，存到 out_after（同样 no_grad）
+
+torch.manual_seed(7)
+lm6 = TinyLM()
+_lp6 = apply_lora(lm6, rank=4, alpha=8.0, target_modules=("q_proj", "v_proj"))
+# 模拟训练后的非零 LoRA 权重（否则 ΔW=0，合不合并都一样，验证没有意义）
+with torch.no_grad():
+    for p in _lp6:
+        p.copy_(torch.randn_like(p) * 0.1)
+x6 = torch.randint(0, vocab, (1, seqlen))
+
+out_before = None  # TODO-6a: 合并前的整模型输出
+n_merged6 = None   # TODO-6b: merge_lora(lm6) 的返回值
+out_after = None   # TODO-6c: 合并后的整模型输出
+
+require_not_none("TODO-6 out_before", out_before)
+require_not_none("TODO-6 out_after", out_after)
+# 必须真的调用了 merge_lora：TinyLM 只给 q_proj、v_proj 加了 LoRA → 合并 2 层。
+# 这一条防止「直接令 out_after = out_before」蒙混过关。
+require_not_none("TODO-6 n_merged6", n_merged6)
+require_true("TODO-6 确实合并了 2 个 LoRA 层", n_merged6 == 2,
+             "TinyLM 的 block 只有 q_proj+v_proj 被加了 LoRA")
+# 核心断言：合并只是把 W·x+(BA)·x 改写成 (W+BA)·x，数学等价，输出必须逐元素一致。
+# 若没清零 lora_B，out_after 会多加一份 ΔW，这个断言就会失败。
+require_close("TODO-6 合并前后整模型输出一致", out_after, out_before, atol=1e-5)
+print("TODO-6 OK：整模型合并前后输出逐元素一致 —— 合并正确且旁路已失效（推理零开销）")
+print()
+
 print("=" * 60)
 print("全部通过！你已亲手实现 LoRA 的核心：低秩旁路 / 冻结 / 合并。")
 print("=" * 60)
