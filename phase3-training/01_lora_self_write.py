@@ -94,9 +94,12 @@ class LoRALinear(nn.Module):
         out_features = original_linear.out_features
 
         # TODO-1: 冻结 original、设 scaling、建 lora_A / lora_B
-        self.scaling = None
-        self.lora_A = None
-        self.lora_B = None
+        self.original.weight.requires_grad = False
+        if self.original.bias is not None:
+            self.original.bias.requires_grad = False
+        self.scaling = self.alpha / self.rank
+        self.lora_A = nn.Parameter(torch.randn(in_features, rank) * 0.01)
+        self.lora_B = nn.Parameter(torch.zeros(rank, out_features))
 
     def forward(self, x):
         # TODO-2: return 原始输出 + (x @ A @ B) * scaling
