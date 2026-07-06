@@ -96,6 +96,11 @@ def symmetric_quantize(x, num_bits=8):
     abs_max = x.abs().max()
     scale = abs_max / qmax
 
+    # round 与 to(int8) 分工不同，缺一不可：
+    #   round：就近取整（把误差压到最多半个 scale）。x/scale 是浮点，round 后仍是浮点
+    #          （如 31.75→32.）——它只改「值」，不改类型/存储。
+    #   to(int8)：只改类型/存储（float32 4 字节 → int8 1 字节），量化省空间靠这一步。
+    #   若只 to(int8) 不 round，会直接截断朝 0（31.75→31），误差更大且有偏。
     x_quantized = torch.clamp(torch.round(x / scale), qmin, qmax).to(torch.int8)
     return x_quantized, scale
 
