@@ -274,7 +274,7 @@ section("TODO-5：手算 LoRA 参数量与压缩比")
 
 def lora_param_count(in_features, out_features, rank):
     # TODO-5: return in_features*rank + rank*out_features
-    return None
+    return in_features * rank + rank * out_features
 
 
 _n = lora_param_count(4096, 4096, 8)
@@ -357,9 +357,9 @@ x6 = torch.randint(0, vocab, (1, seqlen))
 _q6 = lm6.block.q_proj
 _weight6_before = _q6.original.weight.data.clone()
 
-out_before = None  # TODO-6a: 合并前的整模型输出
-n_merged6 = None   # TODO-6b: merge_lora(lm6) 的返回值
-out_after = None   # TODO-6c: 合并后的整模型输出
+with torch.no_grad(): out_before = lm6(x6)  # TODO-6a: 合并前的整模型输出
+n_merged6 = merge_lora(lm6)   # TODO-6b: merge_lora(lm6) 的返回值
+with torch.no_grad(): out_after = lm6(x6)   # TODO-6c: 合并后的整模型输出
 
 require_not_none("TODO-6 out_before", out_before)
 require_not_none("TODO-6 out_after", out_after)

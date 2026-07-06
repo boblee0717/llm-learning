@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA 进行中**——`01_lora_self_write.py` 已完成 TODO-1~4（低秩旁路/冻结/merge），TODO-5/6 待填。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA self_write 已全部完成（6/6 TODO）**——脚本端到端通过，含迷你 LM 微调与整模型 merge 验证；主课 `01_lora.py` 待精读 + rank 实验。下一步：第 2 课量化。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -53,6 +53,7 @@ llm-learning/
 │
 ├── phase3-training/                 # 第三阶段：训练与微调（训练流程已并入 PyTorch 专项）
 │   ├── 01_lora.py                        # LoRA 低秩微调
+│   ├── 01_lora_self_write.py             # ↳ 自写练习（6 个 TODO，✅ 已完成）
 │   ├── 02_quantization.py                # 模型量化 (INT8/INT4)
 │   ├── 03_rlhf.py                        # RLHF / DPO 人类偏好对齐
 │   ├── 04_inference_optimization.py      # KV Cache、采样策略、投机解码
@@ -104,8 +105,7 @@ llm-learning/
 第 0 阶段 (4课, 按需)        第一阶段 (4课)            第二阶段 (6课)             第三阶段 (5课)             第四阶段 (8课)
 矩阵运算补强            →  NumPy/梯度/网络/优化器  →  Attention/Transformer/GPT/Scaling Law  →  LoRA/量化/RLHF/推理优化  →  DeepSeek/推理优化
    形状与反向                  基础数学                   核心架构                                    工业实践
-   🚧 第 1 课进行中            ✅ 已完成三课，新增第4课优化器  ✅ 6 课全部完成（GPT/Scaling Law）        待学习                    后续进阶
-                                                        下一步进入第三阶段
+   🚧 第 1 课进行中            ✅ 已完成三课，新增第4课优化器  ✅ 6 课全部完成（GPT/Scaling Law）        ✅ LoRA self_write  🚧主课    后续进阶
 
                                           ┈┈┈→  第五阶段 (10课)：Agent 架构与 Agent 基础设施
                                                  Agent Loop/Tool/规划/记忆/RAG + Runtime/沙箱/并发缓存/观测/Multi-Agent
@@ -198,7 +198,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 | 课程 | 文件 | 核心内容 |
 |------|------|----------|
-| 第 1 课 | `01_lora.py` | LoRA 低秩微调 |
+| 第 1 课 | `01_lora.py` | LoRA 低秩微调（self_write ✅，主课待精读） |
 | 第 2 课 | `02_quantization.py` | 模型量化 (INT8/INT4) |
 | 第 3 课 | `03_rlhf.py` | RLHF / DPO 人类偏好对齐 |
 | 第 4 课 | `04_inference_optimization.py` | KV Cache、采样策略、投机解码 |
