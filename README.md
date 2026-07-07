@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA self_write 已全部完成（6/6 TODO）**；**第 2 课量化推进中**——已吃透浮点格式对比（FP16 换精度/BF16 换范围）、对称量化（scale=max|x|/qmax、round 就近取整+to(int8) 省存储、对称范围 [-127,127]）、非对称量化（zero_point 平移铺满 [0,255]）、逐通道量化（每行独立 scale、广播对齐）。下一步：填量化 self_write TODO-1~4。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA self_write 已全部完成（6/6 TODO）**；**第 2 课量化推进中**——已吃透对称/非对称/逐通道量化，以及 Part 5 完整模型量化（`QuantizedLinear` + `register_buffer` + `quantize_model` PTQ 推理）和 Part 7 QAT/STE（梯度直通）。下一步：填量化 self_write TODO-1~4。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
