@@ -80,13 +80,17 @@ section("TODO-1 / TODO-2：对称量化与反量化")
 
 def symmetric_quantize(x, num_bits=8):
     qmax = 2 ** (num_bits - 1) - 1
+    qmin = -qmax
     # TODO-1: 算 scale、量化、clamp、转 int8，返回 (q, scale)
-    return None, None
+    scale = x.abs().max()/qmax
+    q = torch.clamp(torch.round(x / scale), qmin, qmax).to(torch.int8)
+    return q, scale
 
 
 def symmetric_dequantize(q, scale):
     # TODO-2: 反量化
-    return None
+    dq = q.float() * scale
+    return dq
 
 
 _x = torch.tensor([[-1.0, 0.0, 0.5, 2.0], [0.25, -0.75, 1.5, -2.0]])
@@ -124,7 +128,10 @@ def asymmetric_quantize(x, num_bits=8):
     qmax = 2 ** num_bits - 1
     x_min, x_max = x.min(), x.max()
     # TODO-3: 算 scale、zero_point，量化，返回 (q, scale, zero_point)
-    return None, None, None
+    scale = (x_max - x_min) / qmax
+    zero_point = torch.round(-x_min/scale)
+    q = torch.clamp(torch.round(x/scale) + zero_point, 0, qmax).to(torch.uint8)
+    return q, scale, zero_point
 
 
 def asymmetric_dequantize(q, scale, zero_point):
@@ -164,7 +171,10 @@ section("TODO-4：逐通道量化（每行独立 scale）")
 def per_channel_quantize(weight, num_bits=8):
     qmax = 2 ** (num_bits - 1) - 1
     # TODO-4
-    return None, None
+    abs_max = weight.abs().max(dim=1, keepdim=True)[0]
+    scales = abs_max / qmax
+    q = torch.clamp(torch.round(weight/scales), -qmax, qmax).to(torch.int8)
+    return q, scales.squeeze()
 
 
 _w = torch.randn(4, 8)
@@ -205,7 +215,7 @@ class FakeQuantize(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         # TODO-5: STE，返回 (grad_output, None)
-        return None
+        return grad_output, None
 
 
 _xq = torch.randn(5, requires_grad=True)
@@ -227,7 +237,7 @@ section("TODO-6：手算不同位数的存储字节数")
 
 def quantized_bytes(numel, num_bits):
     # TODO-6
-    return None
+    return int(numel * num_bits / 8)
 
 
 require_true("TODO-6 FP32 = numel*4", quantized_bytes(1_000_000, 32) == 4_000_000)

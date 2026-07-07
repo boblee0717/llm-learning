@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA self_write 已全部完成（6/6 TODO）**；**第 2 课量化推进中**——已吃透对称/非对称/逐通道量化，以及 Part 5 完整模型量化（`QuantizedLinear` + `register_buffer` + `quantize_model` PTQ 推理）和 Part 7 QAT/STE（梯度直通）。下一步：填量化 self_write TODO-1~4。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。下一步：第 3 课 RLHF。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
