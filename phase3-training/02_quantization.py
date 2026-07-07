@@ -156,8 +156,13 @@ def asymmetric_quantize(x, num_bits=8):
 
     x_min, x_max = x.min(), x.max()
     scale = (x_max - x_min) / (qmax - qmin)
+    # zero_point = 浮点 0 落在整数轴上的位置，用来把 [x_min, x_max] 平移铺满 [0, qmax]。
     zero_point = torch.round(-x_min / scale).clamp(qmin, qmax).to(torch.int32)
 
+    # 内层加 zero_point 会不会让 x_min 端变成负数？不会：
+    #   x_min 处 = round(x_min/scale) + round(-x_min/scale)，两边用同一个 |a|=|x_min/scale|，
+    #   round 就近取整对称，正负抵消 → 恒为 0，理论上不会为负。
+    #   即便浮点误差导致越界，外层 clamp(_, 0, qmax) 再兜底一道。
     x_quantized = torch.clamp(
         torch.round(x / scale) + zero_point, qmin, qmax
     ).to(torch.uint8)
@@ -221,6 +226,8 @@ q_per_tensor, s_tensor = symmetric_quantize(weight)
 q_per_channel, s_channel = per_channel_quantize(weight)
 
 err_per_tensor = (weight - symmetric_dequantize(q_per_tensor, s_tensor)).abs().mean()
+# 逐通道反量化：s_channel 是 (N,)，unsqueeze(1) 变回 (N,1)，才能和 q (N,C) 广播，
+# 让每行乘回自己的 scale（对应量化时每行用自己 scale 除）。存扁平、用时恢复形状。
 dq_per_channel = q_per_channel.float() * s_channel.unsqueeze(1)
 err_per_channel = (weight - dq_per_channel).abs().mean()
 
