@@ -313,34 +313,50 @@ reward_model_simple = RewardModel(TinyLM(vocab_size=vocab_size, seq_len=seq_len)
 
 optimizer_ppo = torch.optim.AdamW(policy.parameters(), lr=1e-4)
 
-print("PPO 训练循环（简化演示）:")
+print("PPO 训练循环（两阶段：采样一次 → 内层多轮更新）:")
+ppo_epochs = 4  # 每批数据反复更新几次；正是它让 old 和 new 拉开差距、让 clip 起作用
 for step in range(5):
+    # ---------- 阶段 1：采样（用旧策略跑一批，拍快照后全部冻结） ----------
     prompts = torch.randint(0, vocab_size, (16, seq_len))
     targets = torch.randint(0, vocab_size, (16, seq_len))
 
     with torch.no_grad():
-        old_log_probs = policy.get_log_probs(prompts, targets).detach()
-        rewards = reward_model_simple(targets).detach()
+        # 两个「参照物」要分清，它们约束的尺度完全不同：
+        #   old_log_probs —— 每个 step 的「滚动起点」：本批采样时刻 policy 的快照。
+        #                     它随训练逐步刷新（Step2 的 old 就是 Step1 更新后的 policy），
+        #                     只是相对参照，作用是 PPO 的 ratio 分母 + clip，管「单批别迈太大」。
+        #   ref_log_probs —— 全程固定的「原点/大本营」：最初 SFT 模型，永不更新（见上方 ref_policy）。
+        #                     作用是 KL 惩罚，管「训练累积下来别偏离原模型太远」。
+        # 即使每批相对 old 只挪一小步，累加起来仍可能离 ref 越来越远，所以两者缺一不可。
+        # 三者都在 no_grad 块内，产出的张量天生 requires_grad=False，无需再 .detach()
+        old_log_probs = policy.get_log_probs(prompts, targets)     # 滚动起点，ratio 的固定分母
+        rewards = reward_model_simple(targets)                     # 奖励模型只当裁判，不训练
+        ref_log_probs = ref_policy.get_log_probs(prompts, targets)  # 固定原点，用于 KL 惩罚
 
+    # advantage：奖励减去批均值当基线，天然有正有负（好回答放大、差回答缩小）
     advantages = rewards - rewards.mean()
     advantages = advantages.unsqueeze(1).expand_as(old_log_probs)
 
-    new_log_probs = policy.get_log_probs(prompts, targets)
-    ppo_loss = compute_ppo_loss(new_log_probs, old_log_probs, advantages)
+    # ---------- 阶段 2：在【同一批数据】上更新 ppo_epochs 次 ----------
+    for epoch in range(ppo_epochs):
+        # policy 每轮都被更新，所以 new_log_probs 会逐渐偏离冻结的 old_log_probs
+        new_log_probs = policy.get_log_probs(prompts, targets)
+        ppo_loss = compute_ppo_loss(new_log_probs, old_log_probs, advantages)
 
+        kl_loss = kl_penalty(new_log_probs, ref_log_probs)
+        total_loss = ppo_loss + kl_loss
+
+        total_loss.backward()
+        optimizer_ppo.step()          # 更新在这里发生：下一轮 new≠old，ratio 不再恒为 1
+        optimizer_ppo.zero_grad()
+
+    # 监控 ratio 偏离 1 的程度，用来直观确认 clip 确实在起作用
     with torch.no_grad():
-        ref_log_probs = ref_policy.get_log_probs(prompts, targets)
-    kl_loss = kl_penalty(new_log_probs, ref_log_probs)
-
-    total_loss = ppo_loss + kl_loss
-
-    total_loss.backward()
-    optimizer_ppo.step()
-    optimizer_ppo.zero_grad()
-
+        ratio_now = torch.exp(policy.get_log_probs(prompts, targets) - old_log_probs)
     print(f"  Step {step+1}: ppo_loss={ppo_loss.item():.4f}, "
           f"kl_loss={kl_loss.item():.4f}, "
-          f"avg_reward={rewards.mean().item():.4f}")
+          f"avg_reward={rewards.mean().item():.4f}, "
+          f"ratio[min/max]={ratio_now.min().item():.3f}/{ratio_now.max().item():.3f}")
 
 print()
 
@@ -375,6 +391,15 @@ DPO 损失函数：
 """)
 
 
+# 为什么 DPO 这个损失 work？——它不是启发式，而是 RLHF 目标的精确等价重写：
+#   1. RLHF 目标 max E[r] - β·KL(π‖π_ref) 有闭式最优解：
+#        π*(y|x) ∝ π_ref(y|x)·exp(r(x,y)/β)
+#   2. 反解出奖励（核心一招）：r(x,y) = β·log(π/π_ref) + β·logZ(x)
+#      → 奖励可用「策略/参考模型的 log 比值」表示，于是不必再单独训练奖励模型（隐式奖励）。
+#   3. 代入 Bradley-Terry 偏好模型 σ(r_w - r_l)：做差时两个 β·logZ(x) 抵消，
+#      那个算不动的配分函数 Z(x) 消失 → 甩掉采样/RL，只剩普通监督式二分类损失。
+#   直觉：让「好回答相对 ref 的概率」高于「坏回答相对 ref 的概率」；
+#   梯度自带难度加权——已排对的样本梯度≈0，排反的样本梯度最大，训练又稳又高效。
 def dpo_loss(
     policy_model, ref_model,
     chosen_x, chosen_y,
