@@ -66,7 +66,7 @@ pip install -r requirements.txt
 |------|------|------|
 | **Day 1-2** | 第 1 课 LoRA：精读主课 → 填 self_write → 跑「0.1% 参数微调有效」+ 试 rank=1/4/8/16 | 手写的 `LoRALinear`，能解释 α/r 缩放与 merge 为何无推理开销 |
 | **Day 3-4** | 第 2 课 量化：精读主课 → 填 self_write → 看 INT8/INT4/INT2 误差与压缩比 | 手写的对称/非对称/逐通道量化，能解释 zero_point 何时有用 |
-| **Day 5** | 第 3 课 RLHF：读主课 + 画 SFT→RM→PPO 数据流 + 亲手推 `dpo_loss` | 一张对齐流程图 + DPO loss 推导，能讲清「为什么 DPO 不需要 RM」 |
+| **Day 5** | 第 3 课 RLHF：Part 1–4 读主课 + 画 SFT→RM→PPO 数据流；Part 5 跑通 `dpo_loss` → 填 self_write TODO-1 → 读 DPO 论文 §3–4 与代码对照 | 一张对齐流程图 + DPO loss 推导，能讲清「为什么 DPO 不需要 RM」 |
 | **Day 6** | 第 4 课 推理：跑主课看采样策略差异 + KV Cache 加速 + 投机解码思想 | 能解释 greedy/temp/top-k/top-p 区别、KV Cache 为何 decode 不需 causal mask |
 | **Day 7** | 第 5 课 分布式：读 ZeRO 论文（概念+看图）+ 画 DP/TP/PP + ZeRO-1/2/3 切分图 | 一张「优化器状态/梯度/参数沿 N 卡切 1/N」的图 |
 | **Day 8-9** | 缓冲 / 复盘：补没填完的 TODO、串讲整阶段、更新 learning-progress | phase3 收尾 |
@@ -106,6 +106,21 @@ pip install -r requirements.txt
 - PPO 强化学习：用奖励信号优化生成策略
 - DPO：不需要奖励模型的更简洁方法
 - **与 LLM 的关系**：ChatGPT = GPT + SFT + RLHF
+
+**配套论文（仓库已有 PDF）：**
+
+| 论文 | 文件 | 本课对应 | 建议读法 |
+|------|------|---------|---------|
+| InstructGPT (2022) | [`papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf`](../papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf) | Part 2–4（SFT → RM → PPO） | Section 3 (Methods) + Figure 2 |
+| DPO (2023) | [`papers/efficient-training/Direct_Preference_Optimization_2023.pdf`](../papers/efficient-training/Direct_Preference_Optimization_2023.pdf) | Part 5 + self_write | Section 3–4（推导 + loss 公式） |
+
+**DPO 推荐学习顺序（代码先行，论文对照）：**
+
+1. **跑通主课 Part 5**：`python3 03_rlhf.py`，重点看懂 `dpo_loss` 里 `chosen_rewards = β·(log π - log π_ref)` 与 `-log σ(Δ_chosen - Δ_rejected)` 的含义
+2. **填 self_write**：[`03_rlhf_self_write.py`](03_rlhf_self_write.py) TODO-1（只手写 DPO loss 外壳），`require_*` 校验通过
+3. **再读 DPO 论文 Section 3–4**：对照推导与 loss 公式，把论文符号逐项映射到代码里的 `policy_chosen` / `ref_chosen` 等四项 log 概率
+
+> Part 1–4 按同样思路：先过主课代码 + InstructGPT Figure 2，RM/PPO **读懂即可，禁止从零手搓**。
 
 ### 第 4 课：推理优化
 
@@ -154,6 +169,8 @@ pip install -r requirements.txt
 - [HuggingFace PEFT 文档](https://huggingface.co/docs/peft) - LoRA 等参数高效微调的官方实现
 - [Andrej Karpathy - Let's reproduce GPT-2](https://www.youtube.com/watch?v=l8pRSuU81PU) - 完整的训练实战
 - [李宏毅 - RLHF](https://www.youtube.com/watch?v=73kEe5bsLiQ) - 中文讲解 RLHF
+- [DPO 论文](https://arxiv.org/abs/2305.18290) - 偏好对齐的简化路线；仓库 PDF 见 `papers/efficient-training/`，配合第 3 课 Part 5
+- [Hugging Face TRL DPO Trainer](https://huggingface.co/docs/trl/dpo_trainer) - DPO 工程实现（读完 self_write 后可选）
 - [The Illustrated GPT-2](https://jalammar.github.io/illustrated-gpt2/) - 图解 GPT-2 的生成过程
 - [QLoRA 论文](https://arxiv.org/abs/2305.14314) - 量化 + LoRA 的结合
 

@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。下一步：第 3 课 RLHF。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 已开学**（主课 InstructGPT 论文指引 + 配套 RL 对齐必读论文已下载就位）。下一步：精读 `03_rlhf.py` Part 1–5，填 `03_rlhf_self_write.py` TODO-1（DPO loss）。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -81,7 +81,7 @@ llm-learning/
 │   ├── vision-transformers/              # Vision Transformer 论文
 │   ├── deepseek/                         # DeepSeek MoE / Coder / Math / V2 / V3 / R1
 │   ├── frontier-llms/                    # Llama 3、Qwen2.5 等现代开源 LLM 技术报告
-│   ├── efficient-training/               # QLoRA、DPO 等训练 / 微调 / 对齐论文
+│   ├── efficient-training/               # QLoRA、DPO、PPO、RLHF/RLAIF 等训练 / 微调 / 强化学习对齐论文
 │   ├── retrieval-augmented/              # 检索增强 RAG（REALM / RAG / RETRO）
 │   ├── foundations/                      # 跨学科思想源头论文（如 Anderson《More Is Different》/ 涌现）
 │   ├── frontier-ai-2024-2025.md          # 现代前沿论文清单，含训练 / 视频材料
@@ -256,6 +256,11 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | An Empirical Model of Large-Batch Training | 2018 | critical batch size 与 gradient noise scale 的源头：batch 多大才不浪费 compute，Kaplan §5.3 引用 |
 | More Is Different（Anderson, *Science*） | 1972 | 「涌现 / emergence」思想源头：还原论 ≠ 构成论，规模累积引发质变——scaling laws 量变之外的互补线 |
 | InstructGPT | 2022 | RLHF 落地，让模型遵循人类指令 |
+| PPO（Proximal Policy Optimization） | 2017 | RLHF 三段式里 RL 那一步的默认算法：clip 裁剪策略更新，稳又好实现 |
+| Deep RL from Human Preferences（Christiano） | 2017 | RLHF 思想源头：只用人类两两比较就能训出奖励模型，InstructGPT reward model 的前身 |
+| DPO（Direct Preference Optimization） | 2023 | 把 RLHF 简化成一个偏好分类损失，无需奖励模型和 PPO，当下最流行对齐法之一 |
+| Constitutional AI（RLAIF） | 2022 | 用一套「宪法」原则让模型自我批判，并用 AI 反馈替代人类标注做 RL 对齐 |
+| GRPO（在 DeepSeekMath 内） | 2024 | PPO 变体，去掉 value model，用组内相对得分当基线；DeepSeek-R1 推理型 RL 核心 |
 | ZeRO（Rajbhandari et al.） | 2020 | 分布式训练显存切分：把优化器状态/梯度/参数沿 N 卡切成 1/N，训得起万亿参数；FSDP 的鼻祖 |
 | DeepSeek / 现代开源 LLM 论文清单 | 2023-2025 | MoE、MLA、代码/数学数据、推理型 RL、QLoRA、DPO |
 | 检索增强 RAG 三件套（REALM / RAG / RETRO） | 2020-2021 | 知识不必全压进参数，可在预训练/生成时从外部知识库检索——RAG 系统的源头 |

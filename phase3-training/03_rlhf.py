@@ -3,9 +3,17 @@
 第 3 课：RLHF —— 让模型变得有用且安全
 ======================================================
 
+RLHF 全称：Reinforcement Learning from Human Feedback
+         （基于人类反馈的强化学习）
+
 核心问题：GPT 预训练后能写诗、能翻译，但也会胡说八道、输出有害内容。
          怎么让它变得"有用、诚实、无害"？
 答案：ChatGPT = GPT + SFT + RLHF
+
+配套论文（仓库已有 PDF，建议配合本课精读）：
+  papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf
+  → 重点读 Section 3 (Methods) + Figure 2（SFT → RM → PPO 全流程）
+  → 详见 papers/README.md §6；phase2 第 5 课⑦ 也有预习指引
 
 三个阶段：
   1. SFT (Supervised Fine-Tuning)
@@ -54,10 +62,17 @@ print("""
   对齐后的模型回答:
     ✓ "这是做蛋糕的步骤：1. 准备材料... 2. 混合..."（有帮助）
 
-对齐的三个标准 (来自 InstructGPT 论文):
+对齐的三个标准（HHH，来自 InstructGPT 论文）:
+  论文: Ouyang et al., "Training language models to follow instructions
+        with human feedback" (OpenAI, 2022)
+  文件: papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf
+
   1. Helpful (有用) — 回答用户的问题
   2. Honest (诚实) — 不编造信息
   3. Harmless (无害) — 不输出有害内容
+
+  → 这三个标准是 RLHF 对齐目标的来源；本课 Part 2-5 的 SFT/RM/PPO/DPO
+    就是 InstructGPT 论文 Figure 2 那条训练流水线的代码化演示。
 """)
 
 
@@ -183,7 +198,12 @@ class RewardModel(nn.Module):
         super().__init__()
         self.base = base_model
         d_model = base_model.head.in_features
+        # reward_head：任务输出头，把每个位置的 hidden → 1 个偏好分数
+        # 注意：此处的 head 是模型最外层的「输出头」(LM head)，
+        # 不是 Transformer 内部的 multi-head attention（见 TinyLM 里 num_heads=4 那个）
         self.reward_head = nn.Linear(d_model, 1)
+        # 把 TinyLM 的词表分类头 Linear(d_model, vocab_size) 换成直通层，
+        # 这样 base(x) 返回 hidden 而非 token logits，再交给 reward_head 打分
         self.base.head = nn.Identity()
 
     def forward(self, x):

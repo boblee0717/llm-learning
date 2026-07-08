@@ -13,7 +13,7 @@
 - `vision-transformers/`: Vision Transformer 方向论文
 - `deepseek/`: DeepSeek MoE、Coder、Math、V2/V3/R1 系列论文
 - `frontier-llms/`: Llama 3、Qwen2.5 等现代开源 LLM 技术报告
-- `efficient-training/`: QLoRA、DPO 等训练 / 微调 / 对齐论文
+- `efficient-training/`: QLoRA、DPO、PPO、RLHF / RLAIF 等训练 / 微调 / 强化学习对齐论文
 - `agents/`: 工具调用型 LLM agent、上下文工程 / 记忆等方向论文
 - `retrieval-augmented/`: 检索增强（RAG / REALM / RETRO）—— 推理时外接知识库的方向
 - `foundations/`: 跨学科「思想源头」论文（如涌现 / emergence）
@@ -180,6 +180,51 @@
 - **作者**: Ouyang et al. (OpenAI)
 - **重点章节**: Section 3 (Methods), Figure 2
 - **一句话**: RLHF 的落地实践，让模型学会遵循人类指令
+
+#### 强化学习对齐（RLHF / PPO / DPO / GRPO / RLAIF）必读
+
+> 主题：把「预训练完的语言模型」用强化学习对齐到「人类偏好」。这条主线从「用人类偏好训奖励模型」（Christiano）→「PPO 作为策略优化算法」（Schulman）→「InstructGPT 把两者拼成 RLHF 三段式」→「DPO 去掉显式奖励模型和 RL」→「GRPO 去掉 value model 用于推理型 RL」→「Constitutional AI 用 AI 反馈替代人类反馈」。
+>
+> 建议读法：先读 **PPO** 抓住「clip 裁剪 + 优势函数」这一个核心，再读 **Christiano** 理解「奖励模型从两两比较里学」，然后回看已读的 **InstructGPT**（SFT → RM → PPO 三段式全景），最后按需读 **DPO**（把 RLHF 变成一个分类损失）与 **Constitutional AI**（RLAIF）。GRPO 在 DeepSeekMath 里，配合第四阶段第 7 课看。
+>
+> 配合课程：第三阶段 [`03_rlhf.py`](../phase3-training/03_rlhf.py)（RLHF / DPO），第四阶段第 7 课（GRPO / R1 推理后训练）。
+
+- **Proximal Policy Optimization Algorithms**（PPO, Schulman et al., 2017）
+  - **状态**: 未读（RLHF 的默认优化算法）
+  - **文件**: [PPO_Proximal_Policy_Optimization_Algorithms_2017.pdf](efficient-training/PPO_Proximal_Policy_Optimization_Algorithms_2017.pdf)
+  - **来源**: [arxiv.org/abs/1707.06347](https://arxiv.org/abs/1707.06347)
+  - **作者**: John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, Oleg Klimov (OpenAI)
+  - **建议读法**: 只需抓住核心的 clipped surrogate objective（式 7）——用比率裁剪限制单步策略更新幅度，既稳定又好实现。这是 InstructGPT 里「PPO 那一步」用的算法。
+  - **一句话**: RLHF 三段式里 RL 那一步用的默认算法。通过对新旧策略概率比率做 clip 裁剪，在「更新够大」与「不跑偏」之间取平衡，兼具 TRPO 的稳定性与一阶方法的简单性。
+
+- **Deep Reinforcement Learning from Human Preferences**（Christiano et al., 2017）
+  - **状态**: 未读（RLHF 的思想源头）
+  - **文件**: [Deep_RL_from_Human_Preferences_2017.pdf](efficient-training/Deep_RL_from_Human_Preferences_2017.pdf)
+  - **来源**: [arxiv.org/abs/1706.03741](https://arxiv.org/abs/1706.03741)
+  - **作者**: Paul Christiano, Jan Leike, Tom Brown, Miljan Martic, Shane Legg, Dario Amodei (OpenAI / DeepMind)
+  - **建议读法**: 抓一条主线——人不给数值奖励，只在两段轨迹里选「哪个更好」，用这些两两比较拟合出一个奖励模型，再用它驱动 RL。这正是后来 InstructGPT reward model 的直接前身。
+  - **一句话**: 「从人类偏好学奖励」的开山之作，证明用少量人类两两比较标注就能训出复杂行为，奠定了 RLHF 的奖励建模范式。
+
+- **Direct Preference Optimization: Your Language Model is Secretly a Reward Model**（DPO, Rafailov et al., 2023）
+  - **状态**: 未读（RLHF 的简化替代）
+  - **文件**: [Direct_Preference_Optimization_2023.pdf](efficient-training/Direct_Preference_Optimization_2023.pdf)
+  - **来源**: [arxiv.org/abs/2305.18290](https://arxiv.org/abs/2305.18290)
+  - **作者**: Rafael Rafailov, Archit Sharma, Eric Mitchell, et al. (Stanford)
+  - **建议读法**: 重点理解「为什么可以绕过显式奖励模型和 PPO」——把 RLHF 的最优解析解代回，偏好优化直接变成一个二分类式的对数似然损失，训练像监督学习一样稳。
+  - **一句话**: 把 RLHF 从「训奖励模型 + PPO 强化学习」简化成一个直接在偏好数据上做的分类损失，无需采样、无需单独的 reward model，是当下最流行的对齐方法之一。
+
+- **Constitutional AI: Harmlessness from AI Feedback**（Anthropic, 2022）
+  - **状态**: 未读（RLAIF：用 AI 反馈替代人类反馈）
+  - **文件**: [Constitutional_AI_Harmlessness_from_AI_Feedback_2022.pdf](efficient-training/Constitutional_AI_Harmlessness_from_AI_Feedback_2022.pdf)
+  - **来源**: [arxiv.org/abs/2212.08073](https://arxiv.org/abs/2212.08073)
+  - **作者**: Yuntao Bai, Saurav Kadavath, Sandipan Kundu, et al. (Anthropic)
+  - **建议读法**: 抓两阶段——① 监督阶段让模型按一套「宪法」原则自我批评并修改回答；② RLAIF 阶段用模型自己产出的偏好（而非人类标注）训练奖励模型。理解「怎么把人从偏好标注里替换出去」。
+  - **一句话**: RLHF 的「AI 反馈」变体（RLAIF）。用一套书面原则（constitution）让模型自我批判、自我改写，再用 AI 生成的偏好替代人类标注来做 RL 对齐，大幅降低人工标注成本。
+
+- **GRPO**（在 DeepSeekMath 里）
+  - **文件**: [DeepSeekMath_Pushing_the_Limits_of_Mathematical_Reasoning_2024.pdf](deepseek/DeepSeekMath_Pushing_the_Limits_of_Mathematical_Reasoning_2024.pdf)
+  - **配合课程**: 第四阶段第 7 课（推理能力后训练）
+  - **一句话**: Group Relative Policy Optimization——PPO 的变体，去掉单独的 value/critic model，用同一组采样答案的组内相对得分当基线，是 DeepSeek-R1 推理型 RL 的核心算法。
 
 ### 7. 现代前沿论文：DeepSeek 与新一代开源 LLM (2023-2025)
 - **清单**: [frontier-ai-2024-2025.md](frontier-ai-2024-2025.md)
