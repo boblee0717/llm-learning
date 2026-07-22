@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 精读中**（Part 4 PPO 改成真两阶段结构、看懂 old/ref 两参照物；Part 5 DPO「为什么 work」推导已理解并写进注释）。下一步：填 `03_rlhf_self_write.py` TODO-1（DPO loss）。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 精读中**（7/22 复工温习：弄清 RM 训练里 loss↔optimizer 靠同一批 Parameter；吃透 PPO `ratio`/`exp`/`clamp` 圆心为 1）。下一步：填 `03_rlhf_self_write.py` TODO-1（DPO loss）。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 

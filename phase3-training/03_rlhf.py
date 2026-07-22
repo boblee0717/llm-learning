@@ -227,6 +227,8 @@ pref_loader = torch.utils.data.DataLoader(
     preference_data, batch_size=32, shuffle=True
 )
 
+# 优化器只「登记」要更新谁：拿到的是 reward_model 参数的引用（不是拷贝）。
+# 它并不认识 loss；后面能更新对，是因为 backward 写的 .grad 和它手里是同一批 Parameter。
 optimizer_rm = torch.optim.AdamW(reward_model.parameters(), lr=1e-3)
 
 print("奖励模型训练:")
@@ -235,13 +237,16 @@ for epoch in range(10):
     correct = 0
     total = 0
     for chosen, rejected in pref_loader:
+        # forward：输出 Tensor 经计算图连回模型内部的 Parameter（绳子已接上）
         r_chosen = reward_model(chosen)
         r_rejected = reward_model(rejected)
 
+        # 看起来只是算术，其实每一步都续上 grad_fn；loss 仍拖着连回 Parameter 的绳子。
+        # loss / optimizer 都不知道「模型名」，只认同一批 Parameter 对象。
         loss = -F.logsigmoid(r_chosen - r_rejected).mean()
 
-        loss.backward()
-        optimizer_rm.step()
+        loss.backward()       # 顺着绳子回拉 → 往这些 Parameter 的 .grad 写梯度
+        optimizer_rm.step()   # 读手里同一批参数的 .grad，改权重（真正更新模型）
         optimizer_rm.zero_grad()
 
         total_loss += loss.item()
@@ -283,9 +288,30 @@ PPO 损失函数：
 
 
 def compute_ppo_loss(log_probs, old_log_probs, advantages, clip_eps=0.2):
-    """简化版 PPO 损失"""
+    """简化版 PPO 损失（clipped surrogate）
+
+    ratio = π_new / π_old：新策略相对旧策略，把该动作抬高了还是压低了。
+      =1 没变；>1 更爱选；<1 更不爱选。
+
+    为何用 exp(logπ - logπ_old) 而不是直接 π_new/π_old：
+      模型通常只方便给出 log 概率（数值稳定：概率本身常是 1e-5 量级，连乘易下溢成 0）。
+      恒等式：π_new/π_old = exp(logπ_new - logπ_old)。在 log 空间做减法再 exp，
+      避免先把极小概率还原成 float 再相除；两路 logprob 相减也抵消了共同的尺度问题。
+
+    surr1 = ratio * A：未裁剪目标。A>0（好于基线）希望增大 ratio；A<0 希望减小。
+
+    surr2：clamp(ratio, 1-ε, 1+ε) 把 ratio 锁在 [0.8, 1.2]（ε=0.2）——
+      小于下限变下限、大于上限变上限、中间原样。这就是 Proximal「只在附近挪」。
+      「1」从哪来：ratio = π_new/π_old，策略完全没更新时 π_new=π_old → ratio 恒为 1。
+      所以信任域以「零变化」为圆心，允许相对偏离最多 ±ε（例如 ±20%），不是绝对概率裁到 1。
+
+    取 min(surr1, surr2) 用更保守的那个；再取负变成要 minimize 的 loss。
+    直觉（A>0）：ratio 已经很大时被 clip 住，再推高也拿不到更多奖励，梯度被掐掉。
+    """
+    # π_new/π_old = exp(logπ_new - logπ_old)：在 log 空间做比，再还原成倍率
     ratio = torch.exp(log_probs - old_log_probs)
     surr1 = ratio * advantages
+    # 1 =「相对 old 零变化」的圆心；[1-ε, 1+ε] = 允许偏离的相对幅度
     surr2 = torch.clamp(ratio, 1 - clip_eps, 1 + clip_eps) * advantages
     return -torch.min(surr1, surr2).mean()
 
