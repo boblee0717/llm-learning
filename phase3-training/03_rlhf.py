@@ -11,8 +11,13 @@ RLHF 全称：Reinforcement Learning from Human Feedback
 答案：ChatGPT = GPT + SFT + RLHF
 
 配套论文（仓库已有 PDF，建议配合本课精读）：
+  papers/efficient-training/Deep_RL_from_Human_Preferences_2017.pdf
+  → Figure 1 + Section 2.2.3：偏好比较怎样训练出奖励模型（源头，15 分钟）
+  papers/efficient-training/Learning_to_Summarize_from_Human_Feedback_2020.pdf
+  → Section 3.1 / Figure 2 / Section 3.4 / Section 4.3 Figure 5
+  → GPT 风格语言模型中的 RM → PPO + KL（直接前身，30 分钟）
   papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf
-  → 重点读 Section 3 (Methods) + Figure 2（SFT → RM → PPO 全流程）
+  → Section 3 (Methods) + Figure 2（扩展到广泛指令，15 分钟）
   → 详见 papers/README.md §6；phase2 第 5 课⑦ 也有预习指引
 
 三个阶段：

@@ -66,7 +66,7 @@ pip install -r requirements.txt
 |------|------|------|
 | **Day 1-2** | 第 1 课 LoRA：精读主课 → 填 self_write → 跑「0.1% 参数微调有效」+ 试 rank=1/4/8/16 | 手写的 `LoRALinear`，能解释 α/r 缩放与 merge 为何无推理开销 |
 | **Day 3-4** | 第 2 课 量化：精读主课 → 填 self_write → 看 INT8/INT4/INT2 误差与压缩比 | 手写的对称/非对称/逐通道量化，能解释 zero_point 何时有用 |
-| **Day 5** | 第 3 课 RLHF：Part 1–4 读主课 + 画 SFT→RM→PPO 数据流；Part 5 跑通 `dpo_loss` → 填 self_write TODO-1 → 读 DPO 论文 §3–4 与代码对照 | 一张对齐流程图 + DPO loss 推导，能讲清「为什么 DPO 不需要 RM」 |
+| **Day 5** | 第 3 课 RLHF：Part 1–4 读主课 + 用 60 分钟定点串读 Christiano → Stiennon → InstructGPT；Part 5 跑通 `dpo_loss` → 填 self_write TODO-1 → 读 DPO §3–4 | 一张「奖励模型源头→语言模型 RLHF→广泛指令→DPO」演进图 + DPO loss 推导 |
 | **Day 6** | 第 4 课 推理：跑主课看采样策略差异 + KV Cache 加速 + 投机解码思想 | 能解释 greedy/temp/top-k/top-p 区别、KV Cache 为何 decode 不需 causal mask |
 | **Day 7** | 第 5 课 分布式：读 ZeRO 论文（概念+看图）+ 画 DP/TP/PP + ZeRO-1/2/3 切分图 | 一张「优化器状态/梯度/参数沿 N 卡切 1/N」的图 |
 | **Day 8-9** | 缓冲 / 复盘：补没填完的 TODO、串讲整阶段、更新 learning-progress | phase3 收尾 |
@@ -111,8 +111,19 @@ pip install -r requirements.txt
 
 | 论文 | 文件 | 本课对应 | 建议读法 |
 |------|------|---------|---------|
+| Christiano et al. (2017) | [`papers/efficient-training/Deep_RL_from_Human_Preferences_2017.pdf`](../papers/efficient-training/Deep_RL_from_Human_Preferences_2017.pdf) | Part 3（偏好 → RM）思想源头 | Figure 1 + §2.2.3，定点读 15 分钟 |
+| Stiennon et al. (2020) | [`papers/efficient-training/Learning_to_Summarize_from_Human_Feedback_2020.pdf`](../papers/efficient-training/Learning_to_Summarize_from_Human_Feedback_2020.pdf) | Part 3–4（文本 RM → PPO + KL）直接前身 | §3.1 + Figure 2 + §3.4 + §4.3 Figure 5，精读 30 分钟 |
 | InstructGPT (2022) | [`papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf`](../papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf) | Part 2–4（SFT → RM → PPO） | Section 3 (Methods) + Figure 2 |
 | DPO (2023) | [`papers/efficient-training/Direct_Preference_Optimization_2023.pdf`](../papers/efficient-training/Direct_Preference_Optimization_2023.pdf) | Part 5 + self_write | Section 3–4（推导 + loss 公式） |
+
+**InstructGPT 这句引用怎么读（总计约 60 分钟）：**
+
+1. **Christiano 2017（15 分钟，源头）**：只看 Figure 1 + §2.2.3。回答：为什么人类只选 A/B，就能学出标量奖励？把偏好概率 `P(A≻B)=σ(r_A-r_B)` 对到主课 Part 3。
+2. **Stiennon 2020（30 分钟，最该补的桥梁）**：看 §3.1 / Figure 2 的三段式、§3.4 的 RM loss 与 `R=r-β·log(π_RL/π_SFT)`，最后看 §4.3 Figure 5 的 reward over-optimization。回答：Christiano 的方法怎样变成语言模型 RLHF？KL 为什么不是装饰？
+3. **InstructGPT 2022（15 分钟，扩展）**：回看 Figure 2 + §3。回答：相比单任务摘要，它怎样扩展为 broad class of written instructions？SFT、比较数据、PPO 各吃什么数据？
+4. **PPO 论文按需回查**：你已在 Part 4 吃透 ratio / clip，论文只定位 §3 式 (7)，不另开全文阅读线。
+
+> **不读范围**：Christiano 的 Atari / MuJoCo 实验细节、Stiennon 的数据集细节和附录都先跳过。目标是补齐方法演进，不是新增两篇全文债。
 
 **DPO 推荐学习顺序（代码先行，论文对照）：**
 

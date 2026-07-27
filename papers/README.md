@@ -183,9 +183,9 @@
 
 #### 强化学习对齐（RLHF / PPO / DPO / GRPO / RLAIF）必读
 
-> 主题：把「预训练完的语言模型」用强化学习对齐到「人类偏好」。这条主线从「用人类偏好训奖励模型」（Christiano）→「PPO 作为策略优化算法」（Schulman）→「InstructGPT 把两者拼成 RLHF 三段式」→「DPO 去掉显式奖励模型和 RL」→「GRPO 去掉 value model 用于推理型 RL」→「Constitutional AI 用 AI 反馈替代人类反馈」。
+> 主题：把「预训练完的语言模型」用强化学习对齐到「人类偏好」。当前课程主线从「用人类偏好训奖励模型」（Christiano）→「用更大模型与更高质量标注把它系统落到文本摘要」（Stiennon）→「InstructGPT 扩展到广泛指令遵循」→「DPO 去掉显式奖励模型和 RL」→「GRPO 去掉 value model 用于推理型 RL」→「Constitutional AI 用 AI 反馈替代人类反馈」。PPO（Schulman）是其中策略优化算法的支线。
 >
-> 建议读法：先读 **PPO** 抓住「clip 裁剪 + 优势函数」这一个核心，再读 **Christiano** 理解「奖励模型从两两比较里学」，然后回看已读的 **InstructGPT**（SFT → RM → PPO 三段式全景），最后按需读 **DPO**（把 RLHF 变成一个分类损失）与 **Constitutional AI**（RLAIF）。GRPO 在 DeepSeekMath 里，配合第四阶段第 7 课看。
+> 当前第 3 课采用 **60 分钟定点串读**，不做全文通读：Christiano Figure 1 + §2.2.3（15 分钟）→ Stiennon §3.1 / Figure 2 / §3.4 / §4.3 Figure 5（30 分钟）→ InstructGPT Figure 2 + §3（15 分钟）。PPO 只回查 §3 的式 (7)，随后回到 DPO self_write 与 DPO §3–4。这样正好看清「奖励模型源头 → 语言模型桥梁 → 广泛指令落地 → 直接偏好优化」。
 >
 > 配合课程：第三阶段 [`03_rlhf.py`](../phase3-training/03_rlhf.py)（RLHF / DPO），第四阶段第 7 课（GRPO / R1 推理后训练）。
 
@@ -202,8 +202,17 @@
   - **文件**: [Deep_RL_from_Human_Preferences_2017.pdf](efficient-training/Deep_RL_from_Human_Preferences_2017.pdf)
   - **来源**: [arxiv.org/abs/1706.03741](https://arxiv.org/abs/1706.03741)
   - **作者**: Paul Christiano, Jan Leike, Tom Brown, Miljan Martic, Shane Legg, Dario Amodei (OpenAI / DeepMind)
-  - **建议读法**: 抓一条主线——人不给数值奖励，只在两段轨迹里选「哪个更好」，用这些两两比较拟合出一个奖励模型，再用它驱动 RL。这正是后来 InstructGPT reward model 的直接前身。
+  - **建议读法**: **定点读，不全文精读**。看 Figure 1 的反馈闭环，再读 §2.2.3 的偏好概率模型：人不给数值奖励，只在两段轨迹里选「哪个更好」，用两两比较拟合奖励模型。这正是后来 InstructGPT reward model loss 的源头。
   - **一句话**: 「从人类偏好学奖励」的开山之作，证明用少量人类两两比较标注就能训出复杂行为，奠定了 RLHF 的奖励建模范式。
+
+- **Learning to Summarize from Human Feedback**（Stiennon et al., 2020）
+  - **状态**: **当前第 3 课必读（定点精读，约 30 分钟）**
+  - **文件**: [Learning_to_Summarize_from_Human_Feedback_2020.pdf](efficient-training/Learning_to_Summarize_from_Human_Feedback_2020.pdf)
+  - **来源**: [arxiv.org/abs/2009.01325](https://arxiv.org/abs/2009.01325)
+  - **作者**: Nisan Stiennon, Long Ouyang, Jeff Wu, Daniel Ziegler, Ryan Lowe, Chelsea Voss, Alec Radford, Dario Amodei, Paul Christiano (OpenAI)
+  - **建议读法**: 读 §3.1 + Figure 2 看「收集比较 → 训练 RM → PPO 优化策略」，读 §3.4 的 RM pairwise loss 与 `reward - β·KL(policy‖SFT)` 两个公式，再看 §4.3 Figure 5：RM 预测分继续升时，人类真实偏好反而会崩，直观看懂为什么必须用 KL 限制策略钻奖励模型漏洞。数据集细节与大段附录跳过。
+  - **一句话**: 从 Christiano 的 Atari / 机器人走到 InstructGPT 的关键桥梁——它用更大模型、高质量比较数据和系统分析展示了 GPT 风格文本生成中的「人类比较 → 奖励模型 → PPO + KL」为什么优于单纯 SFT。
+  - **历史定位**: 它不是第一篇语言模型 RLHF；更早的 [Ziegler et al. (2019)](https://arxiv.org/abs/1909.08593) 已把偏好学习用于四个自然语言任务。当前计划跳过 Ziegler，是因为与 Stiennon 方法重叠，而后者的数据质量、规模与 reward over-optimization 分析更适合本课。
 
 - **Direct Preference Optimization: Your Language Model is Secretly a Reward Model**（DPO, Rafailov et al., 2023）
   - **状态**: 未读（RLHF 的简化替代）

@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 精读中**（7/22 复工温习：弄清 RM 训练里 loss↔optimizer 靠同一批 Parameter；吃透 PPO `ratio`/`exp`/`clamp` 圆心为 1）。下一步：填 `03_rlhf_self_write.py` TODO-1（DPO loss）。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 精读中**（7/22 复工温习：弄清 RM 训练里 loss↔optimizer 靠同一批 Parameter；吃透 PPO `ratio`/`exp`/`clamp` 圆心为 1）。下一步：60 分钟定点串读 Christiano → Stiennon → InstructGPT，再填 `03_rlhf_self_write.py` TODO-1（DPO loss）并读 DPO §3–4。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -258,6 +258,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | InstructGPT | 2022 | RLHF 落地，让模型遵循人类指令 |
 | PPO（Proximal Policy Optimization） | 2017 | RLHF 三段式里 RL 那一步的默认算法：clip 裁剪策略更新，稳又好实现 |
 | Deep RL from Human Preferences（Christiano） | 2017 | RLHF 思想源头：只用人类两两比较就能训出奖励模型，InstructGPT reward model 的前身 |
+| Learning to Summarize from Human Feedback（Stiennon） | 2020 | 从机器人/Atari 偏好学习走到 LLM RLHF 的桥梁：文本比较 → 奖励模型 → PPO + KL |
 | DPO（Direct Preference Optimization） | 2023 | 把 RLHF 简化成一个偏好分类损失，无需奖励模型和 PPO，当下最流行对齐法之一 |
 | Constitutional AI（RLAIF） | 2022 | 用一套「宪法」原则让模型自我批判，并用 AI 反馈替代人类标注做 RL 对齐 |
 | GRPO（在 DeepSeekMath 内） | 2024 | PPO 变体，去掉 value model，用组内相对得分当基线；DeepSeek-R1 推理型 RL 核心 |
