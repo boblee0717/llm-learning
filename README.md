@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 精读中**（7/22 复工温习：弄清 RM 训练里 loss↔optimizer 靠同一批 Parameter；吃透 PPO `ratio`/`exp`/`clamp` 圆心为 1）。下一步：60 分钟定点串读 Christiano → Stiennon → InstructGPT，再填 `03_rlhf_self_write.py` TODO-1（DPO loss）并读 DPO §3–4。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 精读中**（7/22 复工温习：弄清 RM 训练里 loss↔optimizer 靠同一批 Parameter；吃透 PPO `ratio`/`exp`/`clamp` 圆心为 1）。下一步：按 [`alignment-reading-map.md`](papers/alignment-reading-map.md) 用 90 分钟串读 Christiano → Ziegler → Stiennon → InstructGPT，再填 `03_rlhf_self_write.py` TODO-1、读 DPO §3–4，随后用 FLAN / T0 对照 instruction tuning 与 RLHF。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -82,9 +82,12 @@ llm-learning/
 │   ├── deepseek/                         # DeepSeek MoE / Coder / Math / V2 / V3 / R1
 │   ├── frontier-llms/                    # Llama 3、Qwen2.5 等现代开源 LLM 技术报告
 │   ├── efficient-training/               # QLoRA、DPO、PPO、RLHF/RLAIF 等训练 / 微调 / 强化学习对齐论文
+│   ├── instruction-tuning/               # FLAN / T0 多任务指令微调与跨任务泛化
+│   ├── alignment/                        # 对齐目标、风险评估、隐私 / 公平性与行为修改
 │   ├── retrieval-augmented/              # 检索增强 RAG（REALM / RAG / RETRO）
 │   ├── foundations/                      # 跨学科思想源头论文（如 Anderson《More Is Different》/ 涌现）
 │   ├── frontier-ai-2024-2025.md          # 现代前沿论文清单，含训练 / 视频材料
+│   ├── alignment-reading-map.md           # InstructGPT Related Work 精选阅读路线
 │   ├── notes/                            # 论文精读笔记（含 scaling_laws_kaplan_2020.md / chinchilla_compute_optimal_2022.md）
 │   └── README.md                         # 论文阅读顺序与建议
 │
@@ -258,7 +261,11 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | InstructGPT | 2022 | RLHF 落地，让模型遵循人类指令 |
 | PPO（Proximal Policy Optimization） | 2017 | RLHF 三段式里 RL 那一步的默认算法：clip 裁剪策略更新，稳又好实现 |
 | Deep RL from Human Preferences（Christiano） | 2017 | RLHF 思想源头：只用人类两两比较就能训出奖励模型，InstructGPT reward model 的前身 |
+| Fine-Tuning Language Models from Human Preferences（Ziegler） | 2019 | 把偏好学习迁移到四类自然语言任务，连接 Christiano 与文本 RLHF，并暴露 reward hacking |
 | Learning to Summarize from Human Feedback（Stiennon） | 2020 | 从机器人/Atari 偏好学习走到 LLM RLHF 的桥梁：文本比较 → 奖励模型 → PPO + KL |
+| FLAN / T0 | 2021 | 多任务 instruction tuning 的两条主线：用自然语言指令 / prompt template 提升 held-out task 的 zero-shot 泛化 |
+| General Language Assistant（Askell） | 2021 | HHH 的直接来源；用通用语言助手比较 preference modeling 与 imitation learning |
+| Ethical and Social Risks of Harm from LMs（Weidinger） | 2021 | 将语言模型风险整理成六大领域、21 类风险，给对齐评测建立检查表 |
 | DPO（Direct Preference Optimization） | 2023 | 把 RLHF 简化成一个偏好分类损失，无需奖励模型和 PPO，当下最流行对齐法之一 |
 | Constitutional AI（RLAIF） | 2022 | 用一套「宪法」原则让模型自我批判，并用 AI 反馈替代人类标注做 RL 对齐 |
 | GRPO（在 DeepSeekMath 内） | 2024 | PPO 变体，去掉 value model，用组内相对得分当基线；DeepSeek-R1 推理型 RL 核心 |

@@ -12,13 +12,16 @@ RLHF 全称：Reinforcement Learning from Human Feedback
 
 配套论文（仓库已有 PDF，建议配合本课精读）：
   papers/efficient-training/Deep_RL_from_Human_Preferences_2017.pdf
-  → Figure 1 + Section 2.2.3：偏好比较怎样训练出奖励模型（源头，15 分钟）
+  → Figure 1 + Section 2.2.3：偏好比较怎样训练出奖励模型（源头，10 分钟）
+  papers/efficient-training/Fine_Tuning_Language_Models_from_Human_Preferences_2019.pdf
+  → Figure 1 + Section 2 + Section 4.3-4.4
+  → 偏好学习怎样迁移到自然语言，以及策略怎样利用标注捷径（20 分钟）
   papers/efficient-training/Learning_to_Summarize_from_Human_Feedback_2020.pdf
   → Section 3.1 / Figure 2 / Section 3.4 / Section 4.3 Figure 5
-  → GPT 风格语言模型中的 RM → PPO + KL（直接前身，30 分钟）
+  → GPT 风格语言模型中的 RM → PPO + KL（高质量桥梁，25 分钟）
   papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf
-  → Section 3 (Methods) + Figure 2（扩展到广泛指令，15 分钟）
-  → 详见 papers/README.md §6；phase2 第 5 课⑦ 也有预习指引
+  → Section 3 (Methods) + Figure 2（扩展到广泛指令，20 分钟）
+  → 完整路线见 papers/alignment-reading-map.md；phase2 第 5 课⑦ 也有预习指引
 
 三个阶段：
   1. SFT (Supervised Fine-Tuning)
@@ -40,10 +43,15 @@ RLHF 全称：Reinforcement Learning from Human Feedback
 运行方式：python3 03_rlhf.py
 """
 
+import math
+import sys
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import math
+
+
+sys.stdout.reconfigure(encoding="utf-8")
 
 
 # ============================================================
@@ -67,10 +75,11 @@ print("""
   对齐后的模型回答:
     ✓ "这是做蛋糕的步骤：1. 准备材料... 2. 混合..."（有帮助）
 
-对齐的三个标准（HHH，来自 InstructGPT 论文）:
-  论文: Ouyang et al., "Training language models to follow instructions
-        with human feedback" (OpenAI, 2022)
-  文件: papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf
+对齐的三个标准（HHH，源自 Askell et al. 2021，InstructGPT 沿用）:
+  直接来源: Askell et al., "A General Language Assistant as a Laboratory
+            for Alignment" (Anthropic, 2021)，Appendix E
+  文件: papers/alignment/A_General_Language_Assistant_as_a_Laboratory_for_Alignment_2021.pdf
+  落地论文: papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf
 
   1. Helpful (有用) — 回答用户的问题
   2. Honest (诚实) — 不编造信息

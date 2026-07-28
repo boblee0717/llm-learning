@@ -60,16 +60,17 @@ pip install -r requirements.txt
 >
 > 已建好的 self_write（留白待填）：[`01_lora_self_write.py`](01_lora_self_write.py)（5 TODO）、[`02_quantization_self_write.py`](02_quantization_self_write.py)（6 TODO）、[`03_rlhf_self_write.py`](03_rlhf_self_write.py)（仅 `dpo_loss` 1 TODO）。每个都自带 `require_*` 即时校验，全填对会跑一段小训练/估算收尾。第 4/5 课无 self_write。
 
-### 推进节奏（约 8-9 天）
+### 推进节奏（约 9 天）
 
 | 阶段 | 任务 | 产出 |
 |------|------|------|
 | **Day 1-2** | 第 1 课 LoRA：精读主课 → 填 self_write → 跑「0.1% 参数微调有效」+ 试 rank=1/4/8/16 | 手写的 `LoRALinear`，能解释 α/r 缩放与 merge 为何无推理开销 |
 | **Day 3-4** | 第 2 课 量化：精读主课 → 填 self_write → 看 INT8/INT4/INT2 误差与压缩比 | 手写的对称/非对称/逐通道量化，能解释 zero_point 何时有用 |
-| **Day 5** | 第 3 课 RLHF：Part 1–4 读主课 + 用 60 分钟定点串读 Christiano → Stiennon → InstructGPT；Part 5 跑通 `dpo_loss` → 填 self_write TODO-1 → 读 DPO §3–4 | 一张「奖励模型源头→语言模型 RLHF→广泛指令→DPO」演进图 + DPO loss 推导 |
-| **Day 6** | 第 4 课 推理：跑主课看采样策略差异 + KV Cache 加速 + 投机解码思想 | 能解释 greedy/temp/top-k/top-p 区别、KV Cache 为何 decode 不需 causal mask |
-| **Day 7** | 第 5 课 分布式：读 ZeRO 论文（概念+看图）+ 画 DP/TP/PP + ZeRO-1/2/3 切分图 | 一张「优化器状态/梯度/参数沿 N 卡切 1/N」的图 |
-| **Day 8-9** | 缓冲 / 复盘：补没填完的 TODO、串讲整阶段、更新 learning-progress | phase3 收尾 |
+| **Day 5** | 第 3 课 RLHF：Part 1–4 读主课 + 用 90 分钟定点串读 Christiano → Ziegler → Stiennon → InstructGPT | 一张「轨迹偏好→文本偏好→摘要 RLHF→广泛指令」演进图 |
+| **Day 6** | Part 5 跑通 `dpo_loss` → 填 self_write TODO-1 → 读 DPO §3–4；再用 45 分钟读 FLAN + T0，回答 instruction tuning 与 RLHF 的边界 | DPO loss 推导 + 一段不超过 100 字的边界说明 |
+| **Day 7** | 第 4 课 推理：跑主课看采样策略差异 + KV Cache 加速 + 投机解码思想 | 能解释 greedy/temp/top-k/top-p 区别、KV Cache 为何 decode 不需 causal mask |
+| **Day 8** | 第 5 课 分布式：读 ZeRO 论文（概念+看图）+ 画 DP/TP/PP + ZeRO-1/2/3 切分图 | 一张「优化器状态/梯度/参数沿 N 卡切 1/N」的图 |
+| **Day 9** | 缓冲 / 复盘：补没填完的 TODO、更新 learning-progress；有余力再开始 Askell / Weidinger 对齐与风险选读 | phase3 收尾；风险阅读不构成关闭阻塞项 |
 
 ### 每课的「关闭」标准
 
@@ -111,19 +112,27 @@ pip install -r requirements.txt
 
 | 论文 | 文件 | 本课对应 | 建议读法 |
 |------|------|---------|---------|
-| Christiano et al. (2017) | [`papers/efficient-training/Deep_RL_from_Human_Preferences_2017.pdf`](../papers/efficient-training/Deep_RL_from_Human_Preferences_2017.pdf) | Part 3（偏好 → RM）思想源头 | Figure 1 + §2.2.3，定点读 15 分钟 |
-| Stiennon et al. (2020) | [`papers/efficient-training/Learning_to_Summarize_from_Human_Feedback_2020.pdf`](../papers/efficient-training/Learning_to_Summarize_from_Human_Feedback_2020.pdf) | Part 3–4（文本 RM → PPO + KL）直接前身 | §3.1 + Figure 2 + §3.4 + §4.3 Figure 5，精读 30 分钟 |
-| InstructGPT (2022) | [`papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf`](../papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf) | Part 2–4（SFT → RM → PPO） | Section 3 (Methods) + Figure 2 |
+| Christiano et al. (2017) | [`papers/efficient-training/Deep_RL_from_Human_Preferences_2017.pdf`](../papers/efficient-training/Deep_RL_from_Human_Preferences_2017.pdf) | Part 3（偏好 → RM）思想源头 | Figure 1 + §2.2.3，定点读 10 分钟 |
+| Ziegler et al. (2019) | [`papers/efficient-training/Fine_Tuning_Language_Models_from_Human_Preferences_2019.pdf`](../papers/efficient-training/Fine_Tuning_Language_Models_from_Human_Preferences_2019.pdf) | 从轨迹偏好迁移到自然语言任务 | Figure 1 + §2 + §4.3–4.4，定点读 20 分钟 |
+| Stiennon et al. (2020) | [`papers/efficient-training/Learning_to_Summarize_from_Human_Feedback_2020.pdf`](../papers/efficient-training/Learning_to_Summarize_from_Human_Feedback_2020.pdf) | Part 3–4（文本 RM → PPO + KL）直接前身 | §3.1 + Figure 2 + §3.4 + §4.3 Figure 5，精读 25 分钟 |
+| InstructGPT (2022) | [`papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf`](../papers/core-transformers/InstructGPT_Training_LMs_to_Follow_Instructions_2022.pdf) | Part 2–4（SFT → RM → PPO） | Section 3 + Figure 2，定点读 20 分钟 |
 | DPO (2023) | [`papers/efficient-training/Direct_Preference_Optimization_2023.pdf`](../papers/efficient-training/Direct_Preference_Optimization_2023.pdf) | Part 5 + self_write | Section 3–4（推导 + loss 公式） |
 
-**InstructGPT 这句引用怎么读（总计约 60 分钟）：**
+**InstructGPT 的 RLHF 引用链怎么读（总计约 90 分钟）：**
 
-1. **Christiano 2017（15 分钟，源头）**：只看 Figure 1 + §2.2.3。回答：为什么人类只选 A/B，就能学出标量奖励？把偏好概率 `P(A≻B)=σ(r_A-r_B)` 对到主课 Part 3。
-2. **Stiennon 2020（30 分钟，最该补的桥梁）**：看 §3.1 / Figure 2 的三段式、§3.4 的 RM loss 与 `R=r-β·log(π_RL/π_SFT)`，最后看 §4.3 Figure 5 的 reward over-optimization。回答：Christiano 的方法怎样变成语言模型 RLHF？KL 为什么不是装饰？
-3. **InstructGPT 2022（15 分钟，扩展）**：回看 Figure 2 + §3。回答：相比单任务摘要，它怎样扩展为 broad class of written instructions？SFT、比较数据、PPO 各吃什么数据？
-4. **PPO 论文按需回查**：你已在 Part 4 吃透 ratio / clip，论文只定位 §3 式 (7)，不另开全文阅读线。
+1. **Christiano 2017（10 分钟，源头）**：只看 Figure 1 + §2.2.3。回答：为什么人类只选 A/B，就能学出标量奖励？把偏好概率 `P(A≻B)=σ(r_A-r_B)` 对到主课 Part 3。
+2. **Ziegler 2019（20 分钟，语言迁移）**：看 Figure 1 + §2，再读 §4.3–4.4 的模糊任务与 bug。回答：偏好学习怎样首次系统接到 LM？策略为什么会放大标注捷径和实现错误？
+3. **Stiennon 2020（25 分钟，高质量桥梁）**：看 §3.1 / Figure 2 的三段式、§3.4 的 RM loss 与 `R=r-β·log(π_RL/π_SFT)`，最后看 §4.3 Figure 5 的 reward over-optimization。回答：KL 为什么不是装饰？
+4. **InstructGPT 2022（20 分钟，扩展）**：回看 Figure 2 + §3。回答：相比单任务摘要，它怎样扩展为 broad class of written instructions？SFT、比较数据、PPO 各吃什么数据？
+5. **画图复盘（15 分钟）**：每篇只写「新增加的一步 / 新暴露的风险」。PPO 论文只按需回查 §3 式 (7)，不另开全文阅读线。
 
-> **不读范围**：Christiano 的 Atari / MuJoCo 实验细节、Stiennon 的数据集细节和附录都先跳过。目标是补齐方法演进，不是新增两篇全文债。
+> **不读范围**：Christiano 的 Atari / MuJoCo 实验细节、Ziegler / Stiennon 的数据集细节和附录都先跳过。目标是补齐方法演进，不是新增全文债。
+
+**DPO 之后再处理 related work 的另外两条线：**
+
+1. **Instruction tuning 对照（45 分钟）**：FLAN 25 分钟 + T0 主文 20 分钟，回答「多任务监督微调已经会遵循指令，RLHF 额外优化什么？」
+2. **对齐目标与风险（约 70 分钟，选读）**：Askell → Gabriel → Kenton → Weidinger；Carlini / Xu / PALMS 是隐私、干预副作用与 values-targeted 微调案例。
+3. **完整页码、PDF 与暂缓引用清单**：见 [`papers/alignment-reading-map.md`](../papers/alignment-reading-map.md)。这些风险材料不阻塞本课关闭，避免再次囤读。
 
 **DPO 推荐学习顺序（代码先行，论文对照）：**
 

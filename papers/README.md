@@ -14,6 +14,8 @@
 - `deepseek/`: DeepSeek MoE、Coder、Math、V2/V3/R1 系列论文
 - `frontier-llms/`: Llama 3、Qwen2.5 等现代开源 LLM 技术报告
 - `efficient-training/`: QLoRA、DPO、PPO、RLHF / RLAIF 等训练 / 微调 / 强化学习对齐论文
+- `instruction-tuning/`: FLAN、T0 等多任务指令微调与跨任务泛化论文
+- `alignment/`: 对齐目标、风险评估、隐私 / 公平性案例与行为修改论文
 - `agents/`: 工具调用型 LLM agent、上下文工程 / 记忆等方向论文
 - `retrieval-augmented/`: 检索增强（RAG / REALM / RETRO）—— 推理时外接知识库的方向
 - `foundations/`: 跨学科「思想源头」论文（如涌现 / emergence）
@@ -24,6 +26,7 @@
 如果你已经读完 GPT-3 / InstructGPT / Chinchilla，建议接着看：
 
 - [frontier-ai-2024-2025.md](frontier-ai-2024-2025.md): DeepSeek 与新一代开源 LLM 的 10 篇进阶论文，附训练 / 视频材料
+- [alignment-reading-map.md](alignment-reading-map.md): InstructGPT Related Work 精选路线，覆盖 RLHF、instruction tuning、对齐目标、风险与行为修改
 
 ## 阅读顺序
 
@@ -183,9 +186,9 @@
 
 #### 强化学习对齐（RLHF / PPO / DPO / GRPO / RLAIF）必读
 
-> 主题：把「预训练完的语言模型」用强化学习对齐到「人类偏好」。当前课程主线从「用人类偏好训奖励模型」（Christiano）→「用更大模型与更高质量标注把它系统落到文本摘要」（Stiennon）→「InstructGPT 扩展到广泛指令遵循」→「DPO 去掉显式奖励模型和 RL」→「GRPO 去掉 value model 用于推理型 RL」→「Constitutional AI 用 AI 反馈替代人类反馈」。PPO（Schulman）是其中策略优化算法的支线。
+> 主题：把「预训练完的语言模型」对齐到「人类偏好」。当前课程主线从「用人类偏好训奖励模型」（Christiano）→「首次系统迁移到自然语言任务」（Ziegler）→「更大模型与高质量标注的摘要 RLHF」（Stiennon）→「扩展到广泛指令遵循」（InstructGPT）→「去掉显式奖励模型和 RL」（DPO）。GRPO、Constitutional AI 与 PPO 分别是推理型 RL、RLAIF 和策略优化支线。
 >
-> 当前第 3 课采用 **60 分钟定点串读**，不做全文通读：Christiano Figure 1 + §2.2.3（15 分钟）→ Stiennon §3.1 / Figure 2 / §3.4 / §4.3 Figure 5（30 分钟）→ InstructGPT Figure 2 + §3（15 分钟）。PPO 只回查 §3 的式 (7)，随后回到 DPO self_write 与 DPO §3–4。这样正好看清「奖励模型源头 → 语言模型桥梁 → 广泛指令落地 → 直接偏好优化」。
+> 当前第 3 课采用 **90 分钟定点串读**，不做全文通读：Christiano 10 分钟 → Ziegler 20 分钟 → Stiennon 25 分钟 → InstructGPT 20 分钟 → 画演进图 15 分钟。随后立即回到 DPO self_write 与 DPO §3–4；完整章节、问题清单和 related work 取舍见 [精选阅读地图](alignment-reading-map.md)。
 >
 > 配合课程：第三阶段 [`03_rlhf.py`](../phase3-training/03_rlhf.py)（RLHF / DPO），第四阶段第 7 课（GRPO / R1 推理后训练）。
 
@@ -205,6 +208,13 @@
   - **建议读法**: **定点读，不全文精读**。看 Figure 1 的反馈闭环，再读 §2.2.3 的偏好概率模型：人不给数值奖励，只在两段轨迹里选「哪个更好」，用两两比较拟合奖励模型。这正是后来 InstructGPT reward model loss 的源头。
   - **一句话**: 「从人类偏好学奖励」的开山之作，证明用少量人类两两比较标注就能训出复杂行为，奠定了 RLHF 的奖励建模范式。
 
+- **Fine-Tuning Language Models from Human Preferences**（Ziegler et al., 2019）
+  - **状态**: **当前第 3 课必读（定点精读，约 20 分钟）**
+  - **文件**: [Fine_Tuning_Language_Models_from_Human_Preferences_2019.pdf](efficient-training/Fine_Tuning_Language_Models_from_Human_Preferences_2019.pdf)
+  - **来源**: [arxiv.org/abs/1909.08593](https://arxiv.org/abs/1909.08593)
+  - **建议读法**: 看 Figure 1 + §2（PDF pp. 2–4）理解偏好模型怎样接到语言模型，再读 §4.3–4.4（pp. 11–13）看模糊任务、标注捷径与实现 bug 怎样被策略利用。
+  - **一句话**: Christiano 到 Stiennon 之间不能省掉的语言模型迁移节点：它首次把人类偏好微调用到四类自然语言任务，也暴露了 reward hacking 在文本里的具体形态。
+
 - **Learning to Summarize from Human Feedback**（Stiennon et al., 2020）
   - **状态**: **当前第 3 课必读（定点精读，约 30 分钟）**
   - **文件**: [Learning_to_Summarize_from_Human_Feedback_2020.pdf](efficient-training/Learning_to_Summarize_from_Human_Feedback_2020.pdf)
@@ -212,7 +222,13 @@
   - **作者**: Nisan Stiennon, Long Ouyang, Jeff Wu, Daniel Ziegler, Ryan Lowe, Chelsea Voss, Alec Radford, Dario Amodei, Paul Christiano (OpenAI)
   - **建议读法**: 读 §3.1 + Figure 2 看「收集比较 → 训练 RM → PPO 优化策略」，读 §3.4 的 RM pairwise loss 与 `reward - β·KL(policy‖SFT)` 两个公式，再看 §4.3 Figure 5：RM 预测分继续升时，人类真实偏好反而会崩，直观看懂为什么必须用 KL 限制策略钻奖励模型漏洞。数据集细节与大段附录跳过。
   - **一句话**: 从 Christiano 的 Atari / 机器人走到 InstructGPT 的关键桥梁——它用更大模型、高质量比较数据和系统分析展示了 GPT 风格文本生成中的「人类比较 → 奖励模型 → PPO + KL」为什么优于单纯 SFT。
-  - **历史定位**: 它不是第一篇语言模型 RLHF；更早的 [Ziegler et al. (2019)](https://arxiv.org/abs/1909.08593) 已把偏好学习用于四个自然语言任务。当前计划跳过 Ziegler，是因为与 Stiennon 方法重叠，而后者的数据质量、规模与 reward over-optimization 分析更适合本课。
+
+- **Recursively Summarizing Books with Human Feedback**（Wu et al., 2021）
+  - **状态**: 选读（scalable oversight / 长任务监督）
+  - **文件**: [Recursively_Summarizing_Books_with_Human_Feedback_2021.pdf](efficient-training/Recursively_Summarizing_Books_with_Human_Feedback_2021.pdf)
+  - **来源**: [arxiv.org/abs/2109.10862](https://arxiv.org/abs/2109.10862)
+  - **建议读法**: Figure 1 + §2.1 / §2.4 + §6.1–6.2，约 25 分钟；看人无法直接可靠评价整本书摘要时，怎样递归拆成可监督子问题。
+  - **一句话**: 把人类反馈从「人能直接判断的短回答」推向长任务与可扩展监督。
 
 - **Direct Preference Optimization: Your Language Model is Secretly a Reward Model**（DPO, Rafailov et al., 2023）
   - **状态**: 未读（RLHF 的简化替代）
@@ -234,6 +250,19 @@
   - **文件**: [DeepSeekMath_Pushing_the_Limits_of_Mathematical_Reasoning_2024.pdf](deepseek/DeepSeekMath_Pushing_the_Limits_of_Mathematical_Reasoning_2024.pdf)
   - **配合课程**: 第四阶段第 7 课（推理能力后训练）
   - **一句话**: Group Relative Policy Optimization——PPO 的变体，去掉单独的 value/critic model，用同一组采样答案的组内相对得分当基线，是 DeepSeek-R1 推理型 RL 的核心算法。
+
+#### 指令微调、对齐目标与风险（InstructGPT Related Work 精选）
+
+> 不在这里堆叠所有引用。执行顺序、精读页码、暂缓清单和完成标准统一见 [InstructGPT Related Work 精选阅读地图](alignment-reading-map.md)。
+
+| 层级 | 论文 | 文件 | 当前用途 |
+|------|------|------|----------|
+| DPO 后必读 | FLAN（Wei et al., 2021） | [PDF](instruction-tuning/FLAN_Finetuned_Language_Models_Are_Zero_Shot_Learners_2021.pdf) | 理解多任务 instruction tuning 如何带来 held-out task 的 zero-shot 泛化 |
+| DPO 后必读 | T0（Sanh et al., 2021） | [PDF](instruction-tuning/T0_Multitask_Prompted_Training_Enables_Zero_Shot_Task_Generalization_2021.pdf) | 对照多 prompt template 的 prompted multitask training；只读主文 10 页 |
+| DPO 后必读 | Askell et al. (2021) | [PDF](alignment/A_General_Language_Assistant_as_a_Laboratory_for_Alignment_2021.pdf) | HHH 的直接来源；比较 preference modeling 与 imitation |
+| 定点选读 | Gabriel (2020) + Kenton et al. (2021) | [Values and Alignment](alignment/Artificial_Intelligence_Values_and_Alignment_2020.pdf) / [Language Agents](alignment/Alignment_of_Language_Agents_2021.pdf) | 区分 instructions / intentions / preferences / values，并识别 objective gaming |
+| 定点选读 | Weidinger et al. (2021) | [PDF](alignment/Ethical_and_Social_Risks_of_Harm_from_Language_Models_2021.pdf) | 用六大领域、21 类风险建立评测检查表 |
+| 案例 | Carlini / Xu / Solaiman & Dennison | [隐私提取](alignment/Extracting_Training_Data_from_Large_Language_Models_2021.pdf) / [detox 副作用](alignment/Detoxifying_Language_Models_Risks_Marginalizing_Minority_Voices_2021.pdf) / [PALMS](alignment/PALMS_Process_for_Adapting_Language_Models_to_Society_2021.pdf) | 各吃透一个隐私、公平性副作用与小数据行为修改案例 |
 
 ### 7. 现代前沿论文：DeepSeek 与新一代开源 LLM (2023-2025)
 - **清单**: [frontier-ai-2024-2025.md](frontier-ai-2024-2025.md)
