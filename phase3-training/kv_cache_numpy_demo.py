@@ -147,10 +147,11 @@ print("""
 """)
 
 P, G = 10, 50
-# 无缓存：生成第 i 个新 token（序列已有 P+i-1 个）时，重算全部 P+i 个 token 的 K、V
-no_cache_proj = sum(P + i for i in range(1, G + 1))
-# 有缓存：prefill 阶段 P 个，decode 阶段每步 1 个，共 P + G 次
-with_cache_proj = P + G
+# 无缓存：生成第 i 个新 token 时，输入已有 P+i-1 个 token，全部重新投影。
+no_cache_proj = sum(P + i for i in range(G))
+# 有缓存：prefill 投影 P 个；为生成后续 G-1 个 token，各再投影前一个新 token。
+# 最后生成的 token 不再送回模型，因为已经没有下一步。
+with_cache_proj = P + G - 1
 
 print(f"prompt 长度 P = {P}, 生成 token 数 G = {G}")
 print(f"  无缓存 K/V 投影总次数: {no_cache_proj:>6}  (∝ (P+G)^2，重复计算爆炸)")
@@ -167,23 +168,30 @@ section("Part 3: KV Cache 显存占用估算")
 
 print("""
 KV Cache 用显存换算力。每一层都要存 K 和 V 两份：
-  显存 = 2(K,V) × n_layers × n_heads × seq_len × head_dim × batch × bytes
+  显存 = 2(K,V) × n_layers × n_kv_heads × seq_len × head_dim × batch × bytes
+
+MHA 中 n_kv_heads = n_query_heads；GQA / MQA 让多个 Query head 共享更少的
+K/V head，因此一定要用 n_kv_heads 算，不能直接套 Query head 数。
 """)
 
 configs = [
-    # name, n_layers, n_heads, head_dim, seq_len
-    ("GPT-2 (124M)", 12, 12, 64, 1024),
-    ("LLaMA-7B", 32, 32, 128, 4096),
-    ("LLaMA-70B", 80, 64, 128, 4096),
+    # name, n_layers, n_query_heads, n_kv_heads, head_dim, seq_len
+    ("GPT-2 (MHA)", 12, 12, 12, 64, 1024),
+    ("LLaMA-2 7B (MHA)", 32, 32, 32, 128, 4096),
+    ("LLaMA-2 70B (GQA)", 80, 64, 8, 128, 4096),
 ]
 batch = 1
 bytes_per_elem = 2  # FP16
 
-for name, n_layers, n_heads, head_dim, seq_len in configs:
-    nbytes = 2 * n_layers * n_heads * seq_len * head_dim * batch * bytes_per_elem
+for name, n_layers, n_query_heads, n_kv_heads, head_dim, seq_len in configs:
+    nbytes = (
+        2 * n_layers * n_kv_heads * seq_len * head_dim * batch * bytes_per_elem
+    )
     gb = nbytes / (1024 ** 3)
-    print(f"  {name:14s}: seq_len={seq_len:>5}, batch=1 → {gb:6.2f} GB"
-          f"   (batch=32 → {gb * 32:6.1f} GB)")
+    print(
+        f"  {name:20s}: Q heads={n_query_heads:>2}, KV heads={n_kv_heads:>2}, "
+        f"seq={seq_len:>5} → {gb:5.2f} GB (batch=32 → {gb * 32:5.1f} GB)"
+    )
 
 print("""
 所以长上下文 / 大 batch 时 KV Cache 可能比模型权重还吃显存，催生了：

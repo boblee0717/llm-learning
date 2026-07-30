@@ -9,7 +9,7 @@
 - 第二阶段：第 5 课（从零搭建 GPT，首次进入 PyTorch）已完成；第 6 课（Scaling Law）已完成——按「理解类」定位（无 self_write 练习）跑通主课、看懂两张图、记住核心 takeaway
 - PyTorch 专项（phase2→phase3 桥梁课，8 课）：三件套全部搭好、8 课主课均跑通、8 个 reset 一致、留白文件可编译；TODO 全部留白待亲手填（详见 `pytorch-essentials/`）
 - 第三阶段：**第 1 课 LoRA self_write 已全部完成（6/6 TODO）**；**第 2 课量化 self_write 已全部完成（6/6 TODO）**——主课 Part 1-7 已精读。**第 3 课 RLHF 收尾中**：Part 1–5 已精读（Part 3 弄清 loss↔optimizer 靠同一批 Parameter 串联、Part 4 `compute_ppo_loss` 的 ratio/`exp`/`clamp` 圆心为 1、Part 5 DPO 两个减法与 sum/mean 不对称），**self_write TODO-1 `dpo_loss` 已完成（1/1，4 个校验全过）**。关课还差两件：画一张 SFT→RM→PPO 数据流图 + 读 DPO 论文 §3–4。之后再按 [`alignment-reading-map.md`](papers/alignment-reading-map.md) 走 Session A（Christiano → Ziegler → Stiennon → InstructGPT）与 Session B（FLAN / T0 对照 instruction tuning）；Session C 风险材料不阻塞本课关闭
-- **📚 论文 backlog（just-in-time，别先囤读，焦虑无意义）**：KV Cache 4 篇（`papers/kv-cache/`，phase3 第 5 课时读）、ZeRO（`papers/distributed-training/`，phase3 第 6 课时读）、RAG 三件套（`papers/retrieval-augmented/`，到 phase5 RAG 课再读）、More Is Different / 大批量训练（scaling 延伸，随缘）。这些都是「资料已就位、待精读」，不构成进度欠债
+- **📚 论文 backlog（just-in-time，别先囤读，焦虑无意义）**：KV Cache 4 篇（`papers/kv-cache/`，phase3 第 4 课时读）、ZeRO（`papers/distributed-training/`，phase3 第 5 课时读）、RAG 三件套（`papers/retrieval-augmented/`，到 phase5 RAG 课再读）、More Is Different / 大批量训练（scaling 延伸，随缘）。这些都是「资料已就位、待精读」，不构成进度欠债
 - 第四阶段（DeepSeek 与推理优化）：课程已搭建，待学习
 - 第五阶段（Agent 架构与 Agent 基础设施）：课程已搭建，面向 Agent infra 方向，待学习
 

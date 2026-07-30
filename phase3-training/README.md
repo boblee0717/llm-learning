@@ -145,11 +145,11 @@ pip install -r requirements.txt
 ### 第 4 课：推理优化
 
 - 自回归生成的瓶颈：每次只生成一个 token
-- KV Cache：避免重复计算，加速 10 倍
+- KV Cache：区分 prefill / decode，缓存 K、V，显著减少重复计算
 - 采样策略对比：贪心、Temperature、Top-K、Top-P
-- Beam Search vs Sampling
-- 投机解码（Speculative Decoding）：用小模型加速大模型
-- **与 LLM 的关系**：ChatGPT 能秒回你消息，靠的就是这些优化
+- Beam Search（扩展练习）vs Sampling
+- 投机解码（Speculative Decoding）：用 draft 猜多个 token，再由 target 并行验收
+- **与 LLM 的关系**：这些方法分别优化串行生成、采样行为和 KV Cache 显存/调度
 - **附加演示** `kv_cache_numpy_demo.py`：纯 NumPy 手写的 KV Cache 最小对照版（无缓存整段重算 vs 有缓存逐 token，验证结果一致 + 投影次数 O(n²) vs O(n) + 显存估算），配合 `papers/kv-cache/` 的 MQA / GQA / PagedAttention / FlashAttention 一起看
 
 ### 第 5 课：分布式训练专题（待补）
