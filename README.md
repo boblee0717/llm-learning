@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 精读中**（7/22 复工温习：弄清 RM 训练里 loss↔optimizer 靠同一批 Parameter；吃透 PPO `ratio`/`exp`/`clamp` 圆心为 1）。下一步：按 [`alignment-reading-map.md`](papers/alignment-reading-map.md) 用 90 分钟串读 Christiano → Ziegler → Stiennon → InstructGPT，再填 `03_rlhf_self_write.py` TODO-1、读 DPO §3–4，随后用 FLAN / T0 对照 instruction tuning 与 RLHF。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 收尾中**：主课 Part 1–5 已精读，**self_write TODO-1 `dpo_loss` 已完成（1/1，4 个校验全过）**——吃透「两个减法」（减 ref 消起跑线 / 两位移相减构造零和拉扯并让 `Z(x)` 抵消）与「token 维 sum、batch 维 mean」的不对称及其带来的 length bias。下一步：画 SFT→RM→PPO 数据流图 + 读 DPO §3–4 关课，随后按 [`alignment-reading-map.md`](papers/alignment-reading-map.md) 串读 Christiano → Ziegler → Stiennon → InstructGPT，再用 FLAN / T0 对照 instruction tuning 与 RLHF。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 

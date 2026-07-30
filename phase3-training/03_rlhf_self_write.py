@@ -79,7 +79,11 @@ section("TODO-1：手写 DPO loss")
 
 def dpo_loss(policy_chosen, policy_rejected, ref_chosen, ref_rejected, beta=0.1):
     # TODO-1
-    return None, None
+    chosen_reward = beta * (policy_chosen - ref_chosen) 
+    rejected_reward = beta * (policy_rejected - ref_rejected)
+    loss = -F.logsigmoid(chosen_reward - rejected_reward).mean()
+    acc = (chosen_reward > rejected_reward).float().mean()
+    return loss, acc
 
 
 # ---- 校验 1：策略 == 参考（训练刚开始）→ 两边 reward 都是 0 → loss = -log σ(0) = log 2 ----

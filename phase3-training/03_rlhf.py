@@ -440,6 +440,19 @@ DPO 损失函数：
 #      那个算不动的配分函数 Z(x) 消失 → 甩掉采样/RL，只剩普通监督式二分类损失。
 #   直觉：让「好回答相对 ref 的概率」高于「坏回答相对 ref 的概率」；
 #   梯度自带难度加权——已排对的样本梯度≈0，排反的样本梯度最大，训练又稳又高效。
+#
+# 公式里有【两个减法】，语义完全不同，容易混成一件事：
+#   减法一 logπ(y) - logπ_ref(y)（chosen / rejected 各自减）：消掉「起跑线」。
+#     绝对 logprob 里混着两样东西——句子的固有难度（长度、词频，跟好坏无关）
+#     和模型有多想说它（我们唯一关心的）。序列 logprob 是逐 token 累加负数，
+#     长回答天然更负，直接比大小会误判成「模型偏好那个敷衍的短回答」。
+#     而 π 与 π_ref 面对同一个句子、同样的固有难度，一减就抵消，只剩训练带来的净位移。
+#     类比：比两个学生谁进步大不能比期末绝对分（起点不同），要比「期末 - 期中」。
+#   减法二 chosen 位移 - rejected 位移：构造「零和拉扯」。
+#     ① 人类只给了「A 比 B 好」这一个 bit、没有绝对分数，能建模的只有差值（Bradley-Terry）；
+#     ② 若只抬 chosen，模型可以把所有回答一起抬高来作弊；相减后「整体同抬」margin 不变、
+#        loss 不动，想降 loss 就只能抬 chosen 或压 rejected —— 这正是对比学习的骨架；
+#     ③ 也正是这一减，让上面第 3 点的配分函数 Z(x) 抵消（它只依赖共享的 prompt）。
 def dpo_loss(
     policy_model, ref_model,
     chosen_x, chosen_y,
@@ -447,6 +460,11 @@ def dpo_loss(
     beta=0.1,
 ):
     """DPO 损失函数"""
+    # token 维【必须 sum，不能 mean】：log P(y|x) = Σ_t log p(y_t|x, y_<t) 是概率链式法则，
+    # 取平均后就不再是「这个序列的对数概率」，上面那套推导（闭式最优解、Z(x) 抵消）会整体失效。
+    # 代价：序列越长 logprob 越负、梯度尺度越大 → DPO 有 length bias（爱生成又长又啰嗦的回答）。
+    # 减 ref 只消掉了起点差异，消不掉这个；SimPO 等方法改用「除以长度」的 length-normalized
+    # logprob，就是故意打破这里的 sum 来治它。这与 off-policy 并列，是 DPO 两个公认局限。
     chosen_logps = policy_model.get_log_probs(chosen_x, chosen_y).sum(dim=1)
     rejected_logps = policy_model.get_log_probs(rejected_x, rejected_y).sum(dim=1)
 
@@ -457,7 +475,15 @@ def dpo_loss(
     chosen_rewards = beta * (chosen_logps - ref_chosen_logps)
     rejected_rewards = beta * (rejected_logps - ref_rejected_logps)
 
+    # batch 维用 mean 是【工程选择】，与 token 维的 sum 不对称，别混为一谈：
+    #   ① 四个输入都是 (batch,)，逐元素算完手上是 batch 个 loss，而 backward 只能对标量调用
+    #      （否则报 grad can be implicitly created only for scalar outputs），必须先归约；
+    #   ② 用 mean 而非 sum，是让梯度量级与 batch size 解耦——sum 相当于偷偷把 lr 乘了
+    #      batch_size，换 batch 就得重调 lr。同 nn.CrossEntropyLoss 默认 reduction='mean'。
+    #   （batch 里的样本是独立采样，取平均 = 用样本均值估计整个偏好分布上的期望损失。）
     loss = -F.logsigmoid(chosen_rewards - rejected_rewards).mean()
+    # 这里的 .float().mean() 只是统计「排对的比例」当训练指标，不参与 backward；
+    # .float() 是必须的——bool 张量不能直接 mean（Can only calculate the mean of floating types）。
     return loss, (chosen_rewards > rejected_rewards).float().mean()
 
 
