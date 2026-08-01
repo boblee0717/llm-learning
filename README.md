@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 收尾中**：主课 Part 1–5 已精读，**self_write TODO-1 `dpo_loss` 已完成（1/1，4 个校验全过）**——吃透「两个减法」（减 ref 消起跑线 / 两位移相减构造零和拉扯并让 `Z(x)` 抵消）与「token 维 sum、batch 维 mean」的不对称及其带来的 length bias。下一步：画 SFT→RM→PPO 数据流图 + 读 DPO §3–4 关课，随后按 [`alignment-reading-map.md`](papers/alignment-reading-map.md) 串读 Christiano → Ziegler → Stiennon → InstructGPT，再用 FLAN / T0 对照 instruction tuning 与 RLHF。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 收尾中**：主课 Part 1–5 已精读，**self_write TODO-1 `dpo_loss` 已完成（1/1，4 个校验全过）**——吃透「两个减法」（减 ref 消起跑线 / 两位移相减构造零和拉扯并让 `Z(x)` 抵消）与「token 维 sum、batch 维 mean」的不对称及其带来的 length bias。**第 4 课（推理优化）已开学**：Part 1–2 精读完——KV Cache 为何只缓存 K/V、拼接即「表尾追加一行」、对拍差 3e-7 源自浮点加法不满足结合律（数学精确 / 数值近似）、`W_o` 是「出口自由度」而非「头间通道」（OV / QK 电路 → 多头 = 满秩拆低秩 + 多套路由）、`view`/`transpose`/`contiguous` 的 stride 内幕、offset causal mask 与 `past_len` 形状反推的适用边界、`q_len==1` 退化成 GEMV 导致 decode 是内存带宽瓶颈（由此串起 batching / 投机解码 / 量化的动机）。下一步：第 4 课 Part 3 起（采样策略、投机解码）+ 按 backlog 读 KV Cache 4 篇；并尽快收掉第 3 课关课的两件事（画 SFT→RM→PPO 数据流图 + 读 DPO §3–4），随后按 [`alignment-reading-map.md`](papers/alignment-reading-map.md) 串读 Christiano → Ziegler → Stiennon → InstructGPT，再用 FLAN / T0 对照 instruction tuning 与 RLHF。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -108,7 +108,7 @@ llm-learning/
 第 0 阶段 (4课, 按需)        第一阶段 (4课)            第二阶段 (6课)             第三阶段 (5课)             第四阶段 (8课)
 矩阵运算补强            →  NumPy/梯度/网络/优化器  →  Attention/Transformer/GPT/Scaling Law  →  LoRA/量化/RLHF/推理优化  →  DeepSeek/推理优化
    形状与反向                  基础数学                   核心架构                                    工业实践
-   🚧 第 1 课进行中            ✅ 已完成三课，新增第4课优化器  ✅ 6 课全部完成（GPT/Scaling Law）        ✅ LoRA self_write  🚧主课    后续进阶
+   🚧 第 1 课进行中            ✅ 已完成三课，新增第4课优化器  ✅ 6 课全部完成（GPT/Scaling Law）        ✅ LoRA/量化 self_write 🚧 RLHF/推理课    后续进阶
 
                                           ┈┈┈→  第五阶段 (10课)：Agent 架构与 Agent 基础设施
                                                  Agent Loop/Tool/规划/记忆/RAG + Runtime/沙箱/并发缓存/观测/Multi-Agent
@@ -204,7 +204,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | 第 1 课 | `01_lora.py` | LoRA 低秩微调（self_write ✅，主课待精读） |
 | 第 2 课 | `02_quantization.py` | 模型量化 (INT8/INT4) |
 | 第 3 课 | `03_rlhf.py` | RLHF / DPO 人类偏好对齐 |
-| 第 4 课 | `04_inference_optimization.py` | KV Cache、采样策略、投机解码 |
+| 第 4 课 | `04_inference_optimization.py` | KV Cache、采样策略、投机解码（🚧 Part 1–2 已精读） |
 | 第 5 课（待补） | 分布式训练专题 | DP/TP/PP、ZeRO、FSDP |
 
 > 详见 [phase3-training/README.md](phase3-training/README.md)
