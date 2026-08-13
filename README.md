@@ -85,6 +85,7 @@ llm-learning/
 │   ├── efficient-training/               # QLoRA、DPO、PPO、RLHF/RLAIF 等训练 / 微调 / 强化学习对齐论文
 │   ├── instruction-tuning/               # FLAN / T0 多任务指令微调与跨任务泛化
 │   ├── alignment/                        # 对齐目标、风险评估、隐私 / 公平性与行为修改
+│   ├── agents/                           # Agent 记忆 / 上下文工程（CICL、Agent Memory 综述）
 │   ├── retrieval-augmented/              # 检索增强 RAG（REALM / RAG / RETRO）
 │   ├── foundations/                      # 跨学科思想源头论文（如 Anderson《More Is Different》/ 涌现）
 │   ├── frontier-ai-2024-2025.md          # 现代前沿论文清单，含训练 / 视频材料
@@ -275,6 +276,8 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 | 检索增强 RAG 三件套（REALM / RAG / RETRO） | 2020-2021 | 知识不必全压进参数，可在预训练/生成时从外部知识库检索——RAG 系统的源头 |
 | Harness engineering（OpenAI） | 2026 | Agent 为先：人设计环境与反馈回路，Codex 产出代码与工程资产 |
 | Harness Engineering Is Cybernetics（George Zhang，X 原文） | 2026 | 将 Harness 置于控制论史：反馈回路在架构层闭合时的工程含义 |
+| CICL（Decision-Aware Memory Cards） | 2026 | 工具调用型 agent 需要的是行动时刻的决策相关证据，不是更长上下文 |
+| Agent Memory 综述（Second Half） | 2026 | 把 agent memory 收成三维地图（存储介质 / 认知机制 / 服务对象），记忆是长程 agent 自我演化的底座 |
 
 > 详见 [papers/README.md](papers/README.md) 和 [papers/frontier-ai-2024-2025.md](papers/frontier-ai-2024-2025.md)（Harness 章节附 Anthropic *Emotion Concepts* 长文延伸阅读）
 

@@ -183,9 +183,11 @@ python3 phase5-agent-architecture/03_agent_runtime.py
 
 **材料**
 
+- [A Survey of Agent Memory in the Second Half](https://arxiv.org/abs/2602.06052)（本地 PDF：[papers/agents/A_Survey_of_Agent_Memory_in_the_Second_Half_2026.pdf](../papers/agents/A_Survey_of_Agent_Memory_in_the_Second_Half_2026.pdf)；定点读 Abstract + Figure 2 三维分类，60–90 分钟）
 - [MemGPT: Towards LLMs as Operating Systems](https://arxiv.org/abs/2310.08560)
 - [Generative Agents (斯坦福小镇)](https://arxiv.org/abs/2304.03442)
 - [LangGraph Memory 概念文档](https://langchain-ai.github.io/langgraph/concepts/memory/)
+- [CICL: Decision-Aware Memory Cards](https://arxiv.org/abs/2606.08151)（本地 PDF：[papers/agents/Decision-Aware_Memory_Cards_CICL_2026.pdf](../papers/agents/Decision-Aware_Memory_Cards_CICL_2026.pdf)；综述地图之后的具体切口：召回「对下一步动作有用」的证据）
 
 **动手任务**
 
@@ -363,9 +365,11 @@ python3 phase5-agent-architecture/03_agent_runtime.py
 
 | 优先级 | 材料 | 读法 |
 |--------|------|------|
+| 必读 | [Agent Memory 综述（Second Half）](https://arxiv.org/abs/2602.06052) | 定点读 Abstract + Figure 2：存储介质 / 认知机制 / 服务对象三维地图 |
 | 必读 | [MemGPT](https://arxiv.org/abs/2310.08560) | 把上下文当作分页内存来管理 |
 | 必读 | [Lost in the Middle](https://arxiv.org/abs/2307.03172) | 理解长上下文的注意力衰减 |
 | 必读 | [Anthropic - Effective Context Engineering](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents) | 上下文工程的工程实践 |
+| 选读 | [CICL](https://arxiv.org/abs/2606.08151) | 看「决策时刻该召回什么」，对照语义相似度检索 |
 | 选读 | [RAG 原始论文](https://arxiv.org/abs/2005.11401) | 检索增强的起点 |
 
 ### C. Agent 基础设施（infra 线）

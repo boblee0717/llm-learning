@@ -297,6 +297,7 @@
 - **作者**: Xinyu Guan, Qianyang Zhao, Yuming Deng
 - **配合课程**: agent 架构 / 上下文工程方向，可与 Harness #7/#8 对照阅读
 - **一句话**: 工具调用型 agent 真正需要的不是更长上下文，而是「行动时刻的决策相关证据」；提出 Counterfactual-Inspired Context Layer (CICL)，构建实例上下文图、按「对下一步动作的预期影响」而非语义相似度给候选证据打分排序，再压缩成带类型的 memory cards——在 SWE-bench Verified 上把检索 hit@1 从 0.58 提到 0.78，并在压缩模式下每条 query 平均省下约 45 个 token。
+- **对照阅读**: 先用下面的 Agent Memory 综述建立「记忆三维地图」，再读 CICL 看「决策时刻该召回什么」这一具体切口。
 
 ### 11. KV Cache 推理优化（2019-2023）
 
@@ -394,6 +395,23 @@
   - **建议读法**: 第一遍读 Estimation / Measurement，建立“数量级估算 → profile → microbenchmark”的顺序；第二遍读 Better memory representation / Avoid unnecessary work / Bulk operations，把 cache locality、分配次数、fast path、批量化映射到 KV Cache、PagedAttention 和 continuous batching；最后只挑 2–3 个代码案例看，不追内部 Google CL 细节。
   - **完成标准**: 写出一页中文笔记，回答五个问题——瓶颈是 compute 还是 memory bandwidth、每个请求/每个 token 重复做了什么、数据触碰多少 cache line、能否批量化或摊薄固定成本、优化收益如何用 benchmark 证明。
   - **一句话**: 它不直接教 LLM 算法，而是补上读 FlashAttention / PagedAttention 时最容易缺的性能工程视角：真正的提速通常来自少搬数据、少做工作、批量复用和用测量验证。
+
+### 15. Agent Memory 综述：下半场的自我演化与长程 Agent（2026）
+
+> 主题：AI「下半场」的瓶颈从刷 benchmark 转向长程、动态、用户相关任务里的真实效用。固定上下文窗口装不下持续累积的交互，记忆因此从被动仓库变成 agent 自我演化的底座——短期记忆决定当下感知/筛选/抽象什么，长期记忆把经验巩固成可复用的知识与技能。
+>
+> 建议读法：**定点读，不全文通读**（正文约 90 页，引用 200+ 篇）。先抓三维分类（存储介质 / 认知机制 / 服务对象），再按需下钻单 agent 操作、多 agent 路由和学习策略。时间盒 **60–90 分钟**。
+>
+> 配合课程：第五阶段第 4 课「记忆系统」；与 [CICL](agents/Decision-Aware_Memory_Cards_CICL_2026.pdf)（决策时刻召回什么）、RAG 三件套（参数化 vs 非参数化知识）、Harness #7/#8（反馈回路与 skill 外化）对照阅读。
+
+- **A Survey of Agent Memory in the Second Half: Towards Self-Evolving and Long-Horizon Agents**（Huang, Zhang, et al., 2026）
+  - **状态**: 未读（资料已就位，phase5 第 4 课时读）
+  - **文件**: [A_Survey_of_Agent_Memory_in_the_Second_Half_2026.pdf](agents/A_Survey_of_Agent_Memory_in_the_Second_Half_2026.pdf)
+  - **来源**: [arxiv.org/abs/2602.06052](https://arxiv.org/abs/2602.06052)
+  - **作者**: Wei-Chieh Huang, Weizhi Zhang, et al.（UIC / UIUC / Salesforce / Google / Meta 等）
+  - **建议读法**: 第一遍只读 Abstract + Figure 2 的三维 taxonomy，建立「存哪（internal weights/KV vs external 向量/文本/结构/分层）× 干什么（sensory / working / episodic / semantic / procedural）× 为谁服务（user-centric vs agent-centric）」；第二遍扫 §4–5，看记忆操作本身如何被 RL 训成可学习策略，以及 skill 如何通过 harness / context engineering 外化成可移植资产。评测清单与开放问题留到真做 memory 系统时再查。
+  - **完成标准**: 能用自己的话画出三维地图，并回答三个问题——当前上下文窗口装不下时该切哪一层记忆、写入/召回/遗忘分别解决什么、为什么「记忆管理」本身也开始被训练而不只是手写启发式。
+  - **一句话**: 把 2023–2025 年爆发的 agent memory 研究收成一张系统地图：记忆不只是外接知识库，而是长程 agent 持续积累经验、自我演化的基板。
 
 ## 阅读技巧
 
