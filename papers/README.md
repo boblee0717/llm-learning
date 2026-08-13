@@ -9,6 +9,7 @@
 - `efficient-transformers/`: 高效 Transformer 与长上下文 benchmark / survey
 - `kv-cache/`: KV Cache 推理优化（MQA / GQA / PagedAttention / FlashAttention）
 - `distributed-training/`: 分布式训练与显存切分（ZeRO / FSDP 等多卡训练）
+- `performance-engineering/`: 性能估算、测量、访存与热点优化的工程方法文章
 - `scaling-laws/`: 规模定律与 compute-optimal 训练论文
 - `vision-transformers/`: Vision Transformer 方向论文
 - `deepseek/`: DeepSeek MoE、Coder、Math、V2/V3/R1 系列论文
@@ -379,6 +380,20 @@
   - **作者**: Samyam Rajbhandari, Jeff Rasley, Olatunji Ruwase, Yuxiong He (Microsoft)
   - **建议读法**: 抓三点即可——① 训练显存都花在哪（参数 / 梯度 / 优化器状态 / 激活）；② ZeRO-1/2/3 分别切掉哪部分冗余、单卡省多少（÷N）；③ 它与传统数据并行（DP）/ 模型并行（TP/PP）的关系。PyTorch 的 FSDP 本质就是 ZeRO 的等价实现。
   - **一句话**: 微软 DeepSpeed 里 ZeRO 的奠基论文。核心思想是把数据并行下每张卡都冗余存一份的「优化器状态 / 梯度 / 参数」沿 N 张卡切分，让单卡只存 1/N，从而把万亿参数级模型训得起来——是理解现代大模型「怎么真的训出来」绕不开的入口。
+
+### 14. 性能工程方法（2023–2025）
+
+> 主题：先估算、再测量，从数据布局、访存、无效工作和批处理等角度理解性能，而不是把“优化”理解成零散的代码小技巧。文章聚焦单进程程序，不讲分布式系统或 ML 硬件调优；我们把它用作 LLM 推理优化前的通用方法课。
+>
+> 学习位置：第三阶段第 4 课 Part 3（采样策略 / 投机解码）之后，进入 MQA → GQA → PagedAttention → FlashAttention 专题之前。时间盒 **60–90 分钟**，只做定点精读，不全文逐句翻译。
+
+- **Performance Hints**（Jeff Dean & Sanjay Ghemawat，2023；2025 更新）
+  - **状态**: 未读（资料已就位）
+  - **文件**: [Performance_Hints_Jeff_Dean_Sanjay_Ghemawat_2025.md](performance-engineering/Performance_Hints_Jeff_Dean_Sanjay_Ghemawat_2025.md)
+  - **来源**: [Abseil 官方文章](https://abseil.io/fast/hints.html)、[归档来源与校验信息](performance-engineering/SOURCE.md)
+  - **建议读法**: 第一遍读 Estimation / Measurement，建立“数量级估算 → profile → microbenchmark”的顺序；第二遍读 Better memory representation / Avoid unnecessary work / Bulk operations，把 cache locality、分配次数、fast path、批量化映射到 KV Cache、PagedAttention 和 continuous batching；最后只挑 2–3 个代码案例看，不追内部 Google CL 细节。
+  - **完成标准**: 写出一页中文笔记，回答五个问题——瓶颈是 compute 还是 memory bandwidth、每个请求/每个 token 重复做了什么、数据触碰多少 cache line、能否批量化或摊薄固定成本、优化收益如何用 benchmark 证明。
+  - **一句话**: 它不直接教 LLM 算法，而是补上读 FlashAttention / PagedAttention 时最容易缺的性能工程视角：真正的提速通常来自少搬数据、少做工作、批量复用和用测量验证。
 
 ## 阅读技巧
 
