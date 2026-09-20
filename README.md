@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段第 1 课 LoRA + 第 2 课量化 self_write 均已全部完成（各 6/6 TODO）**；量化主课 Part 1-7 已精读。**第 3 课 RLHF 收尾中**：主课 Part 1–5 已精读，**self_write TODO-1 `dpo_loss` 已完成（1/1，4 个校验全过）**——吃透「两个减法」（减 ref 消起跑线 / 两位移相减构造零和拉扯并让 `Z(x)` 抵消）与「token 维 sum、batch 维 mean」的不对称及其带来的 length bias。**第 4 课（推理优化）已开学**：Part 1–2 精读完——KV Cache 为何只缓存 K/V、拼接即「表尾追加一行」、对拍差 3e-7 源自浮点加法不满足结合律（数学精确 / 数值近似）、`W_o` 是「出口自由度」而非「头间通道」（OV / QK 电路 → 多头 = 满秩拆低秩 + 多套路由）、`view`/`transpose`/`contiguous` 的 stride 内幕、offset causal mask 与 `past_len` 形状反推的适用边界、`q_len==1` 退化成 GEMV 导致 decode 是内存带宽瓶颈（由此串起 batching / 投机解码 / 量化的动机）。下一步：第 4 课 Part 3 起（采样策略、投机解码）→ 定点读《Performance Hints》建立估算 / 测量 / 访存方法 → 按 backlog 读 KV Cache 4 篇；并尽快收掉第 3 课关课的两件事（画 SFT→RM→PPO 数据流图 + 读 DPO §3–4），随后按 [`alignment-reading-map.md`](papers/alignment-reading-map.md) 串读 Christiano → Ziegler → Stiennon → InstructGPT，再用 FLAN / T0 对照 instruction tuning 与 RLHF。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段：2026-09 复工后发现 LoRA / 量化 / RLHF 遗忘严重，决定从头二刷——2026-09-21 起每晚 1 小时、共 13 晚**（LoRA 3 晚 → 量化 3 晚 → 缓冲 1 晚 → RLHF/DPO 3 晚 → 推理优化 3 晚），逐晚计划与每晚固定结构见 [learning-progress.md](learning-progress.md) 2026-09-20 条目。一刷快照：第 1 课 LoRA、第 2 课量化 self_write 各 6/6 TODO 已填过，第 3 课 RLHF `dpo_loss` 已填过（欠 SFT→RM→PPO 数据流图 + DPO §3–4），第 4 课 Part 1–2 已精读（KV Cache 原理、`W_o` 出口自由度、stride 内幕、offset causal mask、decode 带宽瓶颈）。13 晚之后：《Performance Hints》→ KV Cache 4 篇 → 第 5 课分布式（待补）；对齐论文链留 backlog。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
