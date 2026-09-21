@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段：2026-09 复工后发现 LoRA / 量化 / RLHF 遗忘严重，决定从头二刷——2026-09-21 起每晚 1 小时、共 13 晚**（LoRA 3 晚 → 量化 3 晚 → 缓冲 1 晚 → RLHF/DPO 3 晚 → 推理优化 3 晚），逐晚计划与每晚固定结构见 [learning-progress.md](learning-progress.md) 2026-09-20 条目。一刷快照：第 1 课 LoRA、第 2 课量化 self_write 各 6/6 TODO 已填过，第 3 课 RLHF `dpo_loss` 已填过（欠 SFT→RM→PPO 数据流图 + DPO §3–4），第 4 课 Part 1–2 已精读（KV Cache 原理、`W_o` 出口自由度、stride 内幕、offset causal mask、decode 带宽瓶颈）。13 晚之后：《Performance Hints》→ KV Cache 4 篇 → 第 5 课分布式（待补）；对齐论文链留 backlog。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段二刷：晚 1/13 已完成**（2026-09-21 精读 LoRA Part 1–3：目的、B 零初始化、`α/r` scaling）。共 13 晚（LoRA 3 晚 → 量化 3 晚 → 缓冲 1 晚 → RLHF/DPO 3 晚 → 推理优化 3 晚），下一晚重填 LoRA TODO-1~3。逐晚计划见 [learning-progress.md](learning-progress.md) 2026-09-20 条目。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
