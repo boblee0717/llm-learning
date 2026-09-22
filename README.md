@@ -4,7 +4,7 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段二刷：晚 2/13 概念已收口**（2026-09-21 续：`apply_lora` 全冻再解冻、默认 Q/V、merge 的 `.T`+清 B；TODO-1~3 顺延到下一晚）。共 13 晚（LoRA 3 晚 → 量化 3 晚 → 缓冲 1 晚 → RLHF/DPO 3 晚 → 推理优化 3 晚）。逐晚计划见 [learning-progress.md](learning-progress.md) 2026-09-20 条目。
+当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段二刷：第 1 课 LoRA 已关课**（2026-09-22 重填 TODO-1~6；`r` 线性涨参数，`d=4096,r=64` 仍是 32 倍压缩）。下一晚精读量化 Part 1–4。共 13 晚计划见 [learning-progress.md](learning-progress.md) 2026-09-20 条目。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -203,7 +203,7 @@ python3 phase1-foundations/reset_exercises_03.py   # 重置第 3 课
 
 | 课程 | 文件 | 核心内容 |
 |------|------|----------|
-| 第 1 课 | `01_lora.py` | LoRA 低秩微调（二刷晚 2 概念已收；self_write TODO-1~3 待下一晚重填） |
+| 第 1 课 | `01_lora.py` | LoRA 低秩微调（二刷已关课：self_write 6/6 重填） |
 | 第 2 课 | `02_quantization.py` | 模型量化 (INT8/INT4) |
 | 第 3 课 | `03_rlhf.py` | RLHF / DPO 人类偏好对齐 |
 | 第 4 课 | `04_inference_optimization.py` | KV Cache、采样策略、投机解码（🚧 Part 1–2 已精读） |
