@@ -80,17 +80,15 @@ section("TODO-1 / TODO-2：对称量化与反量化")
 
 def symmetric_quantize(x, num_bits=8):
     qmax = 2 ** (num_bits - 1) - 1
-    qmin = -qmax
     # TODO-1: 算 scale、量化、clamp、转 int8，返回 (q, scale)
-    scale = x.abs().max()/qmax
-    q = torch.clamp(torch.round(x / scale), qmin, qmax).to(torch.int8)
+    scale = x.abs().max() / qmax
+    q = torch.clamp(torch.round(x / scale), -qmax, qmax).to(torch.int8)
     return q, scale
 
 
 def symmetric_dequantize(q, scale):
     # TODO-2: 反量化
-    dq = q.float() * scale
-    return dq
+    return q.float() * scale
 
 
 _x = torch.tensor([[-1.0, 0.0, 0.5, 2.0], [0.25, -0.75, 1.5, -2.0]])
@@ -128,9 +126,11 @@ def asymmetric_quantize(x, num_bits=8):
     qmax = 2 ** num_bits - 1
     x_min, x_max = x.min(), x.max()
     # TODO-3: 算 scale、zero_point，量化，返回 (q, scale, zero_point)
+    x_min = x_min.clamp(max=0)
+    x_max = x_max.clamp(min=0)
     scale = (x_max - x_min) / qmax
-    zero_point = torch.round(-x_min/scale)
-    q = torch.clamp(torch.round(x/scale) + zero_point, 0, qmax).to(torch.uint8)
+    zero_point = torch.round(-x_min / scale).to(torch.int32)
+    q = torch.clamp(torch.round(x / scale) + zero_point, 0, qmax).to(torch.uint8)
     return q, scale, zero_point
 
 
@@ -173,8 +173,8 @@ def per_channel_quantize(weight, num_bits=8):
     # TODO-4
     abs_max = weight.abs().max(dim=1, keepdim=True)[0]
     scales = abs_max / qmax
-    q = torch.clamp(torch.round(weight/scales), -qmax, qmax).to(torch.int8)
-    return q, scales.squeeze()
+    q = torch.clamp(torch.round(weight / scales), -qmax, qmax).to(torch.int8)
+    return q, scales.squeeze(1)
 
 
 _w = torch.randn(4, 8)
@@ -215,7 +215,7 @@ class FakeQuantize(torch.autograd.Function):
     @staticmethod
     def backward(ctx, grad_output):
         # TODO-5: STE，返回 (grad_output, None)
-        return grad_output, None
+        return None
 
 
 _xq = torch.randn(5, requires_grad=True)
@@ -237,7 +237,7 @@ section("TODO-6：手算不同位数的存储字节数")
 
 def quantized_bytes(numel, num_bits):
     # TODO-6
-    return int(numel * num_bits / 8)
+    return None
 
 
 require_true("TODO-6 FP32 = numel*4", quantized_bytes(1_000_000, 32) == 4_000_000)
