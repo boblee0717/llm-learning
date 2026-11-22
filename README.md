@@ -4,7 +4,9 @@
 
 ## 我的学习进度
 
-当前状态：第 0 阶段第 1 课进行中，第一阶段三课已完成、新增第 4 课「优化器」（三件套已搭好待填），第二阶段 6 课全部完成。**第三阶段二刷：第 1 课 LoRA 已关课**（2026-09-22 重填 TODO-1~6）。**第 2 课量化进行中**：2026-09-22 读完 Part 1–2，2026-09-23 读完 Part 3–4（ReLU 非对称对比、逐通道）并重填 TODO-1~4，剩 Part 5–7 + TODO-5~6。共 13 晚计划见 [learning-progress.md](learning-progress.md) 2026-09-20 条目。
+> **定位更新（2026-11-22）**：当前唯一学习主线已切换至 `llm-systems-lab`（面向 DeepSeek 训推框架岗，循序渐进推进 vLLM / DeepInfer 源码与 GPU 性能实测）。**本仓库转为「按需参考 / 弹药库」模式**，不再作为第二条主线并行打卡；未填完的旧留白、9 月 13 晚二刷余项、`phase4` 重复路线与 `phase5` Agent 课已战略冻结。
+
+已完成底座：第一阶段前三课、第二阶段全部 6 课（含从零 GPT 与 Scaling Law）、**第三阶段第 1 课 LoRA（一刷 + 2026-09 二刷 6/6 TODO 关课）+ 第 2 课量化（一刷 6/6 TODO + 2026-09 二刷 Part 1–4 & TODO-1~4）+ 第 3 课 RLHF（Part 1–5 精读 + `dpo_loss` TODO）+ 第 4 课推理优化（Part 1–2 KV Cache 精读 + 真实 4060 GPU 附加实验 [`04_gpu_experiments.py`](phase3-training/04_gpu_experiments.py)）**。后续按需与 `llm-systems-lab` 联动复用：`04_inference_optimization.py` Part 3–5 对接投机解码、`04_gpu_experiments.py` 与 `papers/performance-engineering/`（《Performance Hints》）对接 Stage 4 家里 4060 实测、`papers/`（DeepSeek / KV Cache / ZeRO）与 `pytorch-essentials/`、`llm-interview-questions.md` 作为随查弹药库。
 
 详细推进记录见 [learning-progress.md](learning-progress.md)。
 
@@ -57,6 +59,7 @@ llm-learning/
 │   ├── 02_quantization.py                # 模型量化 (INT8/INT4)
 │   ├── 03_rlhf.py                        # RLHF / DPO 人类偏好对齐
 │   ├── 04_inference_optimization.py      # KV Cache、采样策略、投机解码
+│   ├── 04_gpu_experiments.py             # 真实 GPU(4060) 推理基准与显存峰值实验
 │   ├── kv_cache_numpy_demo.py            # 纯 NumPy 最小 KV Cache 对照演示
 │   └── README.md
 │

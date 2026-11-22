@@ -195,13 +195,19 @@ class CachedTransformerBlock(nn.Module):
 
         seq_len = K.size(2)
         q_len = Q.size(2)
+        # 判断依据是「这批 query 之间是否存在先后关系」这个几何事实，而不是「kv_cache 是否为 None」：
+        #   q_len == 1：K 里只有历史和自己，mask 恒为 True，跳过是纯优化而非逻辑需要
+        #   q_len  > 1：必须遮挡。除 prefill 外，投机解码一次验证多个草稿 token 时
+        #               也是 q_len>1 且带 cache——按 kv_cache is None 判断会漏掉这种情况，
+        #               让草稿 token 互相偷看到未来，静默算错且不报任何异常。
         if q_len > 1:
-            # 只创建 (q_len, seq_len) 的 offset causal mask。
-            # 单 token decode 时 cache 里只有过去和自己，不需要创建 L×L mask。
+            # offset causal mask 只需 (q_len, seq_len)：query 落在 [past_len, seq_len)，
+            # key 覆盖 [0, seq_len)，历史部分全可见，新来的这批之间才是下三角。
             past_len = seq_len - q_len
             query_positions = torch.arange(
                 past_len, seq_len, device=x.device
             ).unsqueeze(-1)
+            # 一个立成列 (q_len,1)、一个躺成行 (1,seq_len)，靠广播撑出二维 mask
             key_positions = torch.arange(seq_len, device=x.device).unsqueeze(0)
             causal_mask = key_positions <= query_positions
             scores = scores.masked_fill(
@@ -236,33 +242,45 @@ class CachedGPT(nn.Module):
                 f"位置范围 [{start_pos}, {start_pos + T}) 超过 "
                 f"max_seq_len={self.max_seq_len}"
             )
+        # cache 与层号死死绑定：每层有独立的 W_k/W_v，第 i 层的 K/V 拿给第 j 层用不会报错，
+        # 只会静默算错。层数多了会被忽略、少了才抛 IndexError，所以在入口显式拦一次。
         if kv_caches is not None and len(kv_caches) != len(self.blocks):
             raise ValueError(
                 f"kv_caches 有 {len(kv_caches)} 层，但模型有 {len(self.blocks)} 层"
             )
 
+        # decode 阶段每次只送 1 个 token，位置若固定从 0 开始，模型会当它是句首，
+        # 与 cache 里的历史 token 位置错乱，所以偏移必须由调用方记账传进来。
         pos = torch.arange(start_pos, start_pos + T, device=x.device).unsqueeze(0)
         h = self.token_emb(x) + self.pos_emb(pos)
 
+        # prefill(kv_caches=None, T>1) 和 decode(带 cache, T=1) 共用这一条路径，靠 T 自然分流。
+        # h 逐层串行传递，cache 则每层各取各还、互不交换。
         new_caches = []
         for i, block in enumerate(self.blocks):
             cache = kv_caches[i] if kv_caches is not None else None
             h, new_cache = block(h, cache)
             new_caches.append(new_cache)
 
+        # pre-norm 架构下残差流从头到尾没被归一化过，出口这里补一次
         h = self.ln_f(h)
+        # 教学版对所有位置都投影到 vocab_size；prefill 时只有末位 logits 会被采样用到，
+        # 生产实现只对最后一个位置过 head，省下的是 vocab 级别的矩阵乘。
         logits = self.head(h)
         return logits, new_caches
 
     @torch.no_grad()
     def generate_no_cache(self, prompt, max_new_tokens=20):
         """无缓存生成：每步重新计算全部"""
-        tokens = prompt.clone()
+        # 入口先拷一份，之后不必再操心内存归属：无论从哪条分支返回，
+        # 交出去的都不会是调用方传入的那个张量（否则调用方改结果会连带改 prompt）。
+        prompt = prompt.clone()
         if max_new_tokens <= 0:
-            return tokens
+            return prompt
 
+        tokens = prompt
         for _ in range(max_new_tokens):
-            logits, _ = self.forward(tokens)
+            logits, _ = self(tokens)
             next_token = logits[:, -1, :].argmax(dim=-1, keepdim=True)
             tokens = torch.cat([tokens, next_token], dim=1)
         return tokens
@@ -270,16 +288,18 @@ class CachedGPT(nn.Module):
     @torch.no_grad()
     def generate_with_cache(self, prompt, max_new_tokens=20):
         """有缓存生成：只计算新 token"""
+        # 与 generate_no_cache 同一套约定：入口先拷一份
+        prompt = prompt.clone()
         if max_new_tokens <= 0:
-            return prompt.clone()
+            return prompt
 
-        logits, caches = self.forward(prompt)
+        logits, caches = self(prompt)
         next_token = logits[:, -1, :].argmax(dim=-1, keepdim=True)
         tokens = [prompt, next_token]
         pos = prompt.size(1)
 
         for _ in range(max_new_tokens - 1):
-            logits, caches = self.forward(next_token, caches, start_pos=pos)
+            logits, caches = self(next_token, caches, start_pos=pos)
             next_token = logits[:, -1, :].argmax(dim=-1, keepdim=True)
             tokens.append(next_token)
             pos += 1
@@ -456,11 +476,13 @@ print("=" * 60)
 
 @torch.no_grad()
 def generate_with_strategy(model, prompt, max_new_tokens=30, strategy="greedy", **kwargs):
-    tokens = prompt.clone()
+    # 与 CachedGPT.generate_* 同一套约定：入口先拷一份
+    prompt = prompt.clone()
     if max_new_tokens <= 0:
-        return tokens
+        return prompt
 
-    logits, caches = model.forward(tokens)
+    tokens = prompt
+    logits, caches = model(tokens)
 
     for step in range(max_new_tokens):
         next_logits = logits[:, -1, :]
@@ -507,7 +529,7 @@ def generate_with_strategy(model, prompt, max_new_tokens=30, strategy="greedy", 
         tokens = torch.cat([tokens, next_token], dim=1)
         if step == max_new_tokens - 1:
             break
-        logits, caches = model.forward(next_token, caches, start_pos=tokens.size(1)-1)
+        logits, caches = model(next_token, caches, start_pos=tokens.size(1) - 1)
 
     return tokens
 
@@ -611,12 +633,15 @@ def speculative_decode(
     """
     if prompt.size(0) != 1:
         raise ValueError("教学版 speculative_decode 只支持 batch=1")
+
+    # 与 CachedGPT.generate_* 同一套约定：入口先拷一份
+    prompt = prompt.clone()
     if max_new_tokens <= 0:
-        return prompt.clone(), 0.0, 0
+        return prompt, 0.0, 0
     if num_speculative <= 0:
         raise ValueError("num_speculative 必须 > 0")
 
-    tokens = prompt.clone()
+    tokens = prompt
     accepted_count = 0
     total_drafted = 0
     target_calls = 0

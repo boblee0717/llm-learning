@@ -36,6 +36,7 @@ pip install -r requirements.txt
 | 第 3 课 RLHF | `03_rlhf.py` | 📖 精读（防陷阱） | 画出 SFT→RM→PPO 数据流 + 亲手推一遍 DPO loss。**禁止从零搓 PPO**——读懂、能改参数即可 | **2 天** |
 | 第 4 课 推理优化 | `04_inference_optimization.py` | ⚡ 跑通+已有 demo | KV Cache 概念吃透（已有 `kv_cache_numpy_demo.py`）+ 采样策略跑一遍 + 投机解码看懂思想 | 1 天 |
 | 第 4 课·附 | `kv_cache_numpy_demo.py` | ⚡ 已完成 | 纯 NumPy 最小 KV Cache 对照演示，配合上面第 4 课一起看 | — |
+| 第 4 课·GPU | `04_gpu_experiments.py` | ⚡ 4060 实测 | 真实 GPU 计时陷阱、launch-bound、序列长度曲线与峰值显存（可直接对接 `llm-systems-lab` Stage 4） | — |
 | 第 5 课 分布式（待补） | 分布式训练专题 | 📖 精读+看图 | DP/TP/PP 各切什么 + ZeRO-1/2/3 切哪三样。**不手搓，看图** | 1 天 |
 
 **合计约 1.5-2 周**（含缓冲）。删掉重复的训练流程课后，省下的力气全投到"真正填完 LoRA/量化的 self_write + 跑实验看现象"上。
