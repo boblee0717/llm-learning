@@ -85,6 +85,7 @@
 
 - **状态**: 未读
 - **文件**: [QLoRA_Efficient_Finetuning_of_Quantized_LLMs_2023.pdf](efficient-training/QLoRA_Efficient_Finetuning_of_Quantized_LLMs_2023.pdf)
+- **配套笔记**: [qlora_2023_sentence_by_sentence.md](notes/qlora_2023_sentence_by_sentence.md)（全文 388 句逐句讲解 + 离线小实验 + 疑点清单 + 自测题；2026-09-24 备好，正文待读）
 - **来源**: [arxiv.org/abs/2305.14314](https://arxiv.org/abs/2305.14314)、[GitHub](https://github.com/artidoro/qlora)、[Hugging Face PEFT LoRA 文档](https://huggingface.co/docs/peft/developer_guides/lora)
 - **建议读法**: 先读 NF4、double quantization、paged optimizers，再回到 `phase3-training/01_lora.py` 和 `02_quantization.py`。
 - **一句话**: 把 LoRA 和 4-bit 量化连起来，是个人显卡微调大模型时最值得掌握的论文之一。
